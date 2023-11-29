@@ -9,6 +9,10 @@ ALLOWED_RECONSTRUCTIONS = ["splinempe", "millipede"]
 DEFAULT_CATALOG = ALLOWED_CATALOGS[0]
 DEFAULT_RECO = ALLOWED_RECONSTRUCTIONS[0]
 MILLIQUAS_FILENAME = "milliquas.txt"
+MILLIQUAS_URL = "https://quasars.org/milliquas.zip"
+MILLIQUAS_ZIP = "milliquas.zip"
+TURIN_FILENAME = "Turin_Catalogue_Table2_SourceProperties.txt"
+TURIN_URL = "https://cdsarc.cds.unistra.fr/ftp/J/A+A/659/A32/tablea2.dat"
 
 input_list = sys.argv[1:]
 
@@ -51,28 +55,34 @@ cwd = Path(os.getcwd())
 data_path = cwd / "../data"
 figures_path = cwd / "../figures"
 
-if catalog == ALLOWED_CATALOGS[1]:
+if catalog == ALLOWED_CATALOGS[0]:
+    filename = TURIN_FILENAME
+    url = TURIN_URL
+elif catalog == ALLOWED_CATALOGS[1]:
+    filename = MILLIQUAS_FILENAME
+    url = MILLIQUAS_URL
 
-    print(f"Checking if '{MILLIQUAS_FILENAME}' is in '{data_path}'...")
+print(f"Checking if '{filename}' is in '{data_path}'...")
 
-    if os.path.isfile(data_path / MILLIQUAS_FILENAME):
+if os.path.isfile(data_path / filename):
+    print(f"'{filename}' in '{data_path}', no need to download")
 
-        print(f"'{MILLIQUAS_FILENAME}' in '{data_path}', no need to download")
+else:
+    print(f"{filename} not found, download {catalog} catalog...")
 
-    else:
+    r = requests.get(url, allow_redirects=True)
+    if catalog == ALLOWED_CATALOGS[1]:
+        zip_path = data_path / MILLIQUAS_ZIP
+        open(zip_path, "wb").write(r.content)
 
-        print(f"{MILLIQUAS_FILENAME} not found, download milliquas catalog...")
+        print(f"Unzipping {catalog} catalog...")
 
-        url_milliquas = "https://quasars.org/milliquas.zip"
-        r = requests.get(url_milliquas, allow_redirects=True)
-        milliquas_zip_path = data_path / 'milliquas.zip'
-        open(milliquas_zip_path, 'wb').write(r.content)
-
-        print("Unzipping milliquas catalog...")
-
-        with zipfile.ZipFile(milliquas_zip_path, 'r') as zip_ref:
+        with zipfile.ZipFile(zip_path, "r") as zip_ref:
             zip_ref.extractall(data_path)
 
-        print("Removing milliquas.zip...")
+        print(f"Removing {MILLIQUAS_ZIP}...")
 
-        os.remove(milliquas_zip_path)
+        os.remove(zip_path)
+    elif catalog == ALLOWED_CATALOGS[0]:
+        catalog_path = data_path / TURIN_FILENAME
+        open(catalog_path, "wb").write(r.content)
