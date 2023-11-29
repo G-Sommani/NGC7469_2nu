@@ -1,22 +1,26 @@
 import sys
 
-ALLOWED_CATALOGS = ['turin', 'milliquas']
-ALLOWED_RECONSTRUCTIONS = ['splinempe', 'millipede']
+ALLOWED_CATALOGS = ["turin", "milliquas"]
+ALLOWED_RECONSTRUCTIONS = ["splinempe", "millipede"]
 DEFAULT_CATALOG = ALLOWED_CATALOGS[0]
 DEFAULT_RECO = ALLOWED_RECONSTRUCTIONS[0]
 
 input_list = sys.argv[1:]
 
-def check_input_name(string : str, catalog: str, reco: str):
+
+def check_input_name(string: str, catalog: str, reco: str):
     if string in ALLOWED_CATALOGS:
         catalog = string
     elif string in ALLOWED_RECONSTRUCTIONS:
         reco = string
     else:
         print(f"\n******************\n\nAllowed catalogs: {ALLOWED_CATALOGS}")
-        print(f"Allowed reconstructions: {ALLOWED_RECONSTRUCTIONS}\n\n******************\n")
+        print(
+            f"Allowed reconstructions: {ALLOWED_RECONSTRUCTIONS}\n\n******************\n"
+        )
         raise NameError(f"'{string}' is an incorrect input")
     return catalog, reco
+
 
 catalog = DEFAULT_CATALOG
 reco = DEFAULT_RECO
