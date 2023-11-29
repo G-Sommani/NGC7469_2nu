@@ -1,4 +1,6 @@
 import sys
+from pathlib import Path
+import os
 
 ALLOWED_CATALOGS = ["turin", "milliquas"]
 ALLOWED_RECONSTRUCTIONS = ["splinempe", "millipede"]
@@ -39,4 +41,9 @@ elif len(input_list) == 2:
 elif len(input_list) > 2:
     raise Exception(f"Too many inputs")
 
-print(catalog, reco)
+print("Definition of paths...")
+
+# Definition of paths
+cwd = Path(os.getcwd())
+data_path = cwd / "../data"
+figures_path = cwd / "../figures"
