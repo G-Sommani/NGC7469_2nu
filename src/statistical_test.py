@@ -2,11 +2,13 @@ import sys
 from pathlib import Path
 import os
 import requests
+import zipfile
 
 ALLOWED_CATALOGS = ["turin", "milliquas"]
 ALLOWED_RECONSTRUCTIONS = ["splinempe", "millipede"]
 DEFAULT_CATALOG = ALLOWED_CATALOGS[0]
 DEFAULT_RECO = ALLOWED_RECONSTRUCTIONS[0]
+MILLIQUAS_FILENAME = "milliquas.txt"
 
 input_list = sys.argv[1:]
 
@@ -49,8 +51,28 @@ cwd = Path(os.getcwd())
 data_path = cwd / "../data"
 figures_path = cwd / "../figures"
 
-print("Download milliquas catalog...")
+if catalog == ALLOWED_CATALOGS[1]:
 
-url_milliquas = "https://quasars.org/milliquas.zip"
-r = requests.get(url, allow_redirects=True)
-open(data_path / 'milliquas.zip', 'wb').write(r.content)
+    print(f"Checking if '{MILLIQUAS_FILENAME}' is in '{data_path}'...")
+
+    if os.path.isfile(data_path / MILLIQUAS_FILENAME):
+
+        print(f"'{MILLIQUAS_FILENAME}' in '{data_path}', no need to download")
+
+    else:
+
+        print(f"{MILLIQUAS_FILENAME} not found, download milliquas catalog...")
+
+        url_milliquas = "https://quasars.org/milliquas.zip"
+        r = requests.get(url_milliquas, allow_redirects=True)
+        milliquas_zip_path = data_path / 'milliquas.zip'
+        open(milliquas_zip_path, 'wb').write(r.content)
+
+        print("Unzipping milliquas catalog...")
+
+        with zipfile.ZipFile(milliquas_zip_path, 'r') as zip_ref:
+            zip_ref.extractall(data_path)
+
+        print("Removing milliquas.zip...")
+
+        os.remove(milliquas_zip_path)
