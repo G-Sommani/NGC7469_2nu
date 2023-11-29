@@ -1,6 +1,7 @@
 import sys
 from pathlib import Path
 import os
+import requests
 
 ALLOWED_CATALOGS = ["turin", "milliquas"]
 ALLOWED_RECONSTRUCTIONS = ["splinempe", "millipede"]
@@ -47,3 +48,9 @@ print("Definition of paths...")
 cwd = Path(os.getcwd())
 data_path = cwd / "../data"
 figures_path = cwd / "../figures"
+
+print("Download milliquas catalog...")
+
+url_milliquas = "https://quasars.org/milliquas.zip"
+r = requests.get(url, allow_redirects=True)
+open(data_path / 'milliquas.zip', 'wb').write(r.content)
