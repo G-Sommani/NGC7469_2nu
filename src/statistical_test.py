@@ -102,6 +102,22 @@ TURIN_HEADER = [
     "r_ClassL2",
 ]
 TURIN_HEADER_PRESENT = None
+EFFECTIVE_AREA_FILENAME = "Effa_all_streams_gold_bronze.txt"
+EFFECTIVE_AREA_ENERGY_BINS_INDEX = 0
+EFFECTIVE_AREA_30_90_DEG_INDEX = 1
+EFFECTIVE_AREA_0_30_DEG_INDEX = 2
+EFFECTIVE_AREA_MIN5_0_DEG_INDEX = 3
+EFFECTIVE_AREA_MIN30_MIN5_DEG_INDEX = 4
+EFFECTIVE_AREA_MIN90_MIN30_DEG_INDEX = 5
+HUBBLE_CONSTANT = 73 # km s^-1 Mpc^-1
+MPC_TO_KM = 3.086e+19
+SPEED_OF_LIGHT = 299792458 # m s^-1
+MJD_07102023 = 60135
+MJD_GOLDBRONZE_START = 58635
+DAYS_IN_YEAR = 365
+SECONDS_IN_YEAR = DAYS_IN_YEAR * 24 * 60 * 60
+FLUX_NU = 1e36 # s-1 GeV-1 at 100 GeV
+E0 = 100 #GeV
 
 input_list = sys.argv[1:]
 
@@ -233,11 +249,81 @@ elif catalog == ALLOWED_CATALOGS[MILLIQUAS_INDEX]:
     dataframe_agn = dataframe[mask_agn]
     # Sources that are too far away are not significant for the test and slow down the program
     dataframe_nearby = dataframe_agn[dataframe_agn[MILLIQUAS_Z] < MILLIQUAS_Z_CUT]
-    print(len(dataframe_nearby))
-    #
+    # There are two blazars which are reported with a redshift of zero. This is unphyisical and
+    # these two sources are therefore removed.
     dataframe_nearby_no0 = dataframe_nearby[dataframe_nearby[MILLIQUAS_Z] != 0]
     RAs_catalog = dataframe_nearby_no0[MILLIQUAS_RA].to_numpy()
     DECs_catalog = dataframe_nearby_no0[MILLIQUAS_DEC].to_numpy()
     redshifts_catalog = dataframe_nearby_no0[MILLIQUAS_Z].to_numpy()
 
-print(redshifts_catalog)
+print("Defining the test statistic...")
+
+effective_area = np.genfromtxt(data_path / EFFECTIVE_AREA_FILENAME)
+energy_bins = effective_area[:, EFFECTIVE_AREA_ENERGY_BINS_INDEX]
+effective_area_array = np.array(
+    [
+        effective_area[:, EFFECTIVE_AREA_30_90_DEG_INDEX],
+        effective_area[:, EFFECTIVE_AREA_0_30_DEG_INDEX],
+        effective_area[:, EFFECTIVE_AREA_MIN5_0_DEG_INDEX],
+        effective_area[:, EFFECTIVE_AREA_MIN30_MIN5_DEG_INDEX],
+        effective_area[:, EFFECTIVE_AREA_MIN90_MIN30_DEG_INDEX],
+    ]
+)
+
+def energy_factor(bin_index):
+    """
+    Estimate energy factor for expected number of detected neutrinos
+    """
+    E_max = energy_bins[bin_index + 1]
+    E_min = energy_bins[bin_index]
+    factor = (E_max - E_min)/(E_max*E_min)
+    return factor
+
+def area_energy_factor(A_index):
+    """
+    Estimate area and energy factor for expected number of detected neutrinos
+    """
+    effective_area = effective_area_array[A_index]
+    factor = 0
+    for i in range(len(energy_bins)-1):
+        element = effective_area[i]*energy_factor(i)
+        factor += element
+    return factor # units: m^2 GeV^-1
+
+area_energy_factors = np.array([])
+for i in range(len(effective_area_array)):
+    area_energy_factors = np.append(area_energy_factors, area_energy_factor(i))
+hubble_in_s = HUBBLE_CONSTANT/MPC_TO_KM
+days = MJD_07102023 - MJD_GOLDBRONZE_START
+seconds = (days/DAYS_IN_YEAR)*SECONDS_IN_YEAR
+
+def expected_nu_from_source(z, dec):
+    """
+    Given the redshift and the declination of a source, determines the total
+    number of expected neutrinos from the source
+    """
+    if dec <= 90 and dec > 30 : area_energy_factor = area_energy_factors[EFFECTIVE_AREA_30_90_DEG_INDEX-1]
+    elif dec <= 30 and dec > 0 : area_energy_factor = area_energy_factors[EFFECTIVE_AREA_0_30_DEG_INDEX-1]
+    elif dec <= 0 and dec > -5 : area_energy_factor = area_energy_factors[EFFECTIVE_AREA_MIN5_0_DEG_INDEX-1]
+    elif dec <= -5 and dec > -30 : area_energy_factor = area_energy_factors[EFFECTIVE_AREA_MIN30_MIN5_DEG_INDEX-1]
+    elif dec <= -30 and dec >= -90 : area_energy_factor = area_energy_factors[EFFECTIVE_AREA_MIN90_MIN30_DEG_INDEX-1]
+    constant = (hubble_in_s**2) * seconds / ( 4 * np.pi * (z**2) * (SPEED_OF_LIGHT**2) ) # m^-2 * s
+    expected_nu = constant * FLUX_NU * (E0**2) * area_energy_factor
+    return expected_nu
+
+def flux_contribute(z, dec):
+    """
+    Given the redshift and the declination of a source, determines the contribution
+    to the test statistic related to the neutrino flux of the source
+    """
+    mu = expected_nu_from_source(z, dec)
+    contribute = np.log(0.5) + 2*np.log(mu) - mu # Here we assume the limit of low fluxes as valid
+    return contribute
+
+def unc_contribute(sigma1, sigma2):
+    """
+    Contribute to the test statistic related only to the uncertainties of the alerts
+    """
+    return - 2 * np.log( sigma1 * sigma2 )
+
+print(flux_contribute(.001,-2))
