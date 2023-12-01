@@ -128,11 +128,19 @@ SPLINEMPE_FILENAME = "gcn_notices_gold_bronze.txt"
 # IC211117A: Updated GCN Notice never reported
 # IC221223A: Updated GCN Notice never reported
 # IC230120A: Updated GCN Notice never reported
-SPLINEMPE_EXCEPTIONS = ["IC191231A", "IC190819A", "IC200227A", "IC210510A", "IC211117A", "IC221223A", "IC230220A"]
+SPLINEMPE_EXCEPTIONS = [
+    "IC191231A",
+    "IC190819A",
+    "IC200227A",
+    "IC210510A",
+    "IC211117A",
+    "IC221223A",
+    "IC230220A",
+]
 # IC200120A: likely background
 # IC230823A: likely background
 SPLINEMPE_BACKGROUND = ["IC200120A", "IC230823A"]
-SPLINEMPE_GCN_START = '<tr align=left>\n'
+SPLINEMPE_GCN_START = "<tr align=left>\n"
 SPLINEMPE_INDEX_START = 65
 SPLINEMPE_COMMENT_START = "<!--\n"
 MILLIPEDE_FILENAME = "IC_Alerts_Table.csv"
@@ -479,43 +487,47 @@ if reco == ALLOWED_RECONSTRUCTIONS[SPLINEMPE_INDEX]:
             is_data = False
         if is_data:
             if notice_line_index == 2:
-                rev_number = line.split('>')[1].split('<')[0]
-                if rev_number == '1' or rev_number == '2':
+                rev_number = line.split(">")[1].split("<")[0]
+                if rev_number == "1" or rev_number == "2":
                     rev0 = False
                     rev1 = True
-                if rev_number == '0':
+                if rev_number == "0":
                     rev0 = True
                     rev1 = False
             notice_line_index += 1
             if notice_line_index == 4:
-                date = line.split('>')[1].split('<')[0]
-                year = date.split('/')[0]
-                month = date.split('/')[1]
-                day = date.split('/')[2]
+                date = line.split(">")[1].split("<")[0]
+                year = date.split("/")[0]
+                month = date.split("/")[1]
+                day = date.split("/")[2]
                 name = f"IC{year}{month}{day}A"
                 if rev1:
                     if name in rev1_names:
                         if name == f"IC{year}{month}{day}B":
                             continue
-                        rev1_names[np.where(rev1_names==name)] = f"IC{year}{month}{day}B"
+                        rev1_names[
+                            np.where(rev1_names == name)
+                        ] = f"IC{year}{month}{day}B"
                     rev1_names = np.append(rev1_names, name)
                 elif rev0:
                     if name in NAMEs:
                         NAMEs[np.where(NAMEs == name)] = f"IC{year}{month}{day}B"
-                    if ( name in rev1_names or name in SPLINEMPE_EXCEPTIONS) and not name in SPLINEMPE_BACKGROUND:
+                    if (
+                        name in rev1_names or name in SPLINEMPE_EXCEPTIONS
+                    ) and not name in SPLINEMPE_BACKGROUND:
                         NAMEs = np.append(NAMEs, name)
                         has_rev1 = True
                     else:
                         has_rev1 = False
             if rev0 and is_data and has_rev1:
-                if notice_line_index == 7 :
-                    ra = float(line.split('>')[1].split('<')[0])
+                if notice_line_index == 7:
+                    ra = float(line.split(">")[1].split("<")[0])
                     RAs = np.append(RAs, ra)
-                if notice_line_index == 8 :
-                    dec = float(line.split('>')[1].split('<')[0])
+                if notice_line_index == 8:
+                    dec = float(line.split(">")[1].split("<")[0])
                     DECs = np.append(DECs, dec)
                 if notice_line_index == 10:
-                    err_50 = float(line.split('>')[1].split('<')[0])/60
+                    err_50 = float(line.split(">")[1].split("<")[0]) / 60
                     sigma = np.deg2rad(err_50) / RATIO_50_TO_SIGMA
                     sigmas = np.append(sigmas, sigma)
 elif reco == ALLOWED_RECONSTRUCTIONS[MILLIPEDE_INDEX]:
@@ -527,7 +539,6 @@ elif reco == ALLOWED_RECONSTRUCTIONS[MILLIPEDE_INDEX]:
     RAs_ERR_MINUS = alerts_df[MILLIPEDE_RA_MINUS].to_numpy()
     DECs_ERR_MINUS = alerts_df[MILLIPEDE_RA_PLUS].to_numpy()
     NAMEs = alerts_df[MILLIPEDE_IC_NAME].to_numpy()
-
 
     def millipede_area(index):
         """
@@ -543,7 +554,6 @@ elif reco == ALLOWED_RECONSTRUCTIONS[MILLIPEDE_INDEX]:
         delta2_rad = np.deg2rad(delta2_deg)
         A = (phi2_rad - phi1_rad) * (np.sin(delta2_rad) - np.sin(delta1_rad))
         return A
-
 
     sigmas = np.array([])
     for i in range(len(alerts_df)):
