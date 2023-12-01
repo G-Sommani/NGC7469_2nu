@@ -21,6 +21,7 @@ MILLIQUAS_RA = "RA"
 MILLIQUAS_DEC = "DEC"
 MILLIQUAS_Z = "Z"
 MILLIQUAS_TYPE = "Type"
+MILLIQUAS_NAME = "Name"
 MILLIQUAS_COLSPECS = [
     (0, 11),
     (12, 23),
@@ -44,7 +45,7 @@ MILLIQUAS_COLSPECS = [
 MILLIQUAS_HEADER = [
     MILLIQUAS_RA,
     MILLIQUAS_DEC,
-    "Name",
+    MILLIQUAS_NAME,
     MILLIQUAS_TYPE,
     "Rmag",
     "Bmag",
@@ -75,7 +76,13 @@ MILLIQUAS_AGN_CATEGORIES = [
     "NX",
 ]
 TURIN_FILENAME = "Turin_Catalogue_Table2_SourceProperties.txt"
+TURIN_NAMES_FILENAME = "Turin_Catalogue_Table1_SourceNames.txt"
 TURIN_URL = "https://cdsarc.cds.unistra.fr/ftp/J/A+A/659/A32/tablea2.dat"
+TURIN_NAMES_URL = "https://cdsarc.cds.unistra.fr/ftp/J/A+A/659/A32/tablea1.dat"
+TURIN_ID = "ID"
+TURIN_SWIFT = "BAT105-Swift"
+TURIN_WISE = "WISE"
+TURIN_NAME_SOURCE = "IBIS4CAT-IGR"
 TURIN_RAh = "RAh"
 TURIN_RAm = "RAm"
 TURIN_RAs = "RAs"
@@ -84,7 +91,7 @@ TURIN_DEm = "DEm"
 TURIN_DEs = "DEs"
 TURIN_z = "z"
 TURIN_HEADER = [
-    "ID",
+    TURIN_ID,
     "SYCAT",
     "WISE",
     TURIN_RAh,
@@ -100,6 +107,30 @@ TURIN_HEADER = [
     "ClassL",
     "r_ClassL1",
     "r_ClassL2",
+]
+TURIN_NAMES_HEADER = [
+    TURIN_ID,
+    "SYCAT",
+    "SUMSS",
+    "NVSS",
+    TURIN_WISE,
+    "Pan-STARRS",
+    "ROSAT",
+    "3PBC",
+    TURIN_SWIFT,
+    TURIN_NAME_SOURCE,
+]
+TURIN_NAMES_COLSPECS = [
+    (0, 2),
+    (4, 17),
+    (19, 38),
+    (40, 58),
+    (60, 79),
+    (80, 105),
+    (107, 122),
+    (124, 140),
+    (142, 161),
+    (162, 182),
 ]
 TURIN_HEADER_PRESENT = None
 EFFECTIVE_AREA_FILENAME = "Effa_all_streams_gold_bronze.txt"
@@ -154,6 +185,12 @@ MILLIPEDE_DEC_MINUS = "DEC_ERR_M"
 RATIO_90_TO_SIGMA = 2.416
 RATIO_68_TO_SIGMA = 1.515
 RATIO_50_TO_SIGMA = 1.177
+TOTAL_SCRAMBLINGS = 1
+ROUND_ANGLE = 360  # deg
+SPLINEMPE_ANG_DIST_FAST_SELECTION = 2  # deg
+MILLIPEDE_ANG_DIST_FAST_SELECTION = 2  # deg
+SPLINEMPE_SEARCH_RADIUS = 4  # deg
+MILLIPEDE_SEARCH_RADIUS = 4  # deg
 
 input_list = sys.argv[1:]
 
@@ -228,11 +265,31 @@ else:
 
         os.remove(zip_path)
 
+if catalog == ALLOWED_CATALOGS[TURIN_INDEX]:
+    names_filename = TURIN_NAMES_FILENAME
+    names_path = data_path / names_filename
+
+    print(f"Checking if '{names_filename}' is in '{data_path}'...")
+
+    if os.path.isfile(names_path):
+        print(f"'{names_filename}' in '{data_path}', no need to download")
+    else:
+        url_names = TURIN_NAMES_URL
+        print(f"{names_filename} not found, download from {url_names}...")
+        r_names = requests.get(url_names, allow_redirects=True)
+        open(names_path, "wb").write(r_names.content)
+
 print(f"Loading the {catalog} catalog...")
 
 if catalog == ALLOWED_CATALOGS[TURIN_INDEX]:
     dataframe = pd.read_fwf(
         data_path / TURIN_FILENAME, header=TURIN_HEADER_PRESENT, names=TURIN_HEADER
+    )
+    dataframe_names = pd.read_fwf(
+        names_path,
+        colspecs=TURIN_NAMES_COLSPECS,
+        header=TURIN_HEADER_PRESENT,
+        names=TURIN_NAMES_HEADER,
     )
 
     def hms_to_deg(h, m, s):
@@ -248,6 +305,13 @@ if catalog == ALLOWED_CATALOGS[TURIN_INDEX]:
         dataframe[TURIN_DEd], dataframe[TURIN_DEm], dataframe[TURIN_DEs]
     ).to_numpy()
     redshifts_catalog = dataframe[TURIN_z].to_numpy()
+    names_catalog = dataframe_names[TURIN_NAME_SOURCE].to_numpy()
+    names_catalog[pd.isna(names_catalog)] = dataframe_names[TURIN_SWIFT][
+        pd.isna(names_catalog)
+    ]
+    names_catalog[pd.isna(names_catalog)] = dataframe_names[TURIN_WISE][
+        pd.isna(names_catalog)
+    ]
 elif catalog == ALLOWED_CATALOGS[MILLIQUAS_INDEX]:
     dataframe = pd.read_fwf(
         data_path / MILLIQUAS_FILENAME,
@@ -291,6 +355,7 @@ elif catalog == ALLOWED_CATALOGS[MILLIQUAS_INDEX]:
     RAs_catalog = dataframe_nearby_no0[MILLIQUAS_RA].to_numpy()
     DECs_catalog = dataframe_nearby_no0[MILLIQUAS_DEC].to_numpy()
     redshifts_catalog = dataframe_nearby_no0[MILLIQUAS_Z].to_numpy()
+    names_catalog = dataframe_nearby_no0[MILLIQUAS_NAME].to_numpy()
 
 print("Defining the test statistic...")
 
@@ -502,16 +567,18 @@ if reco == ALLOWED_RECONSTRUCTIONS[SPLINEMPE_INDEX]:
                 day = date.split("/")[2]
                 name = f"IC{year}{month}{day}A"
                 if rev1:
-                    if name in rev1_names:
-                        if name == f"IC{year}{month}{day}B":
-                            continue
-                        rev1_names[
-                            np.where(rev1_names == name)
-                        ] = f"IC{year}{month}{day}B"
+                    if len(rev1_names) > 0:
+                        if name in rev1_names:
+                            if name == f"IC{year}{month}{day}B":
+                                continue
+                            rev1_names[
+                                np.where(rev1_names == name)
+                            ] = f"IC{year}{month}{day}B"
                     rev1_names = np.append(rev1_names, name)
                 elif rev0:
-                    if name in NAMEs:
-                        NAMEs[np.where(NAMEs == name)] = f"IC{year}{month}{day}B"
+                    if len(NAMEs) > 0:
+                        if name in NAMEs:
+                            NAMEs[np.where(NAMEs == name)] = f"IC{year}{month}{day}B"
                     if (
                         name in rev1_names or name in SPLINEMPE_EXCEPTIONS
                     ) and not name in SPLINEMPE_BACKGROUND:
@@ -561,4 +628,58 @@ elif reco == ALLOWED_RECONSTRUCTIONS[MILLIPEDE_INDEX]:
         sigma = np.sqrt(area / np.pi) / RATIO_90_TO_SIGMA
         sigmas = np.append(sigmas, sigma)
 
-print(NAMEs, sigmas)
+print("Estimating background...")
+
+if reco == ALLOWED_RECONSTRUCTIONS[SPLINEMPE_INDEX]:
+    ang_dist_fast_selection = SPLINEMPE_ANG_DIST_FAST_SELECTION
+    search_radius = SPLINEMPE_SEARCH_RADIUS
+elif reco == ALLOWED_RECONSTRUCTIONS[MILLIPEDE_INDEX]:
+    ang_dist_fast_selection = MILLIPEDE_ANG_DIST_FAST_SELECTION
+    search_radius = MILLIPEDE_SEARCH_RADIUS
+test_statistic_per_scramble = np.array([])
+for scrambling_number in range(TOTAL_SCRAMBLINGS):
+    rng = np.random.default_rng(seed=scrambling_number)
+    random_ras = rng.uniform(0.0, ROUND_ANGLE, size=len(RAs))
+    test_statistic_per_doublet = np.array([])
+    for first_alert_index in range(len(RAs)):
+        for second_alert_index in range(len(RAs)):
+            if first_alert_index == second_alert_index:
+                continue
+            ra1 = random_ras[first_alert_index]
+            ra2 = random_ras[second_alert_index]
+            dec1 = DECs[first_alert_index]
+            dec2 = DECs[second_alert_index]
+            higher_ra = max(ra1, ra2)
+            smaller_ra = min(ra1, ra2)
+            # First fast selection
+            ra_distance = min(higher_ra - smaller_ra, smaller_ra - higher_ra + 360)
+            dec_distance = np.abs(dec1 - dec2)
+            if (
+                ra_distance > ang_dist_fast_selection
+                or dec_distance > ang_dist_fast_selection
+            ):
+                continue
+            ra1_rad = np.deg2rad(ra1)
+            ra2_rad = np.deg2rad(ra2)
+            dec1_rad = np.deg2rad(dec1)
+            dec2_rad = np.deg2rad(dec2)
+            sigma1 = sigmas[first_alert_index]
+            sigma2 = sigmas[second_alert_index]
+            # Consider the sources nearest to the alert with best angular resolution
+            if sigma1 <= sigma2:
+                search_index = first_alert_index
+            else:
+                search_index = second_alert_index
+            mask_ra = np.logical_and(
+                RAs_catalog < random_ras[search_index] + search_radius,
+                RAs_catalog > random_ras[search_index] - search_radius,
+            )
+            mask_dec = np.logical_and(
+                DECs_catalog < DECs[search_index] + search_radius,
+                DECs_catalog > DECs[search_index] - search_radius,
+            )
+            mask_sources = np.logical_and(mask_ra, mask_dec)
+            test_statistic_per_source = np.array([])
+            RAs_sources_nearby = RAs_catalog[mask_sources]
+            DECs_sources_nearby = DECs_catalog[mask_sources]
+            redshifts_sources_nearby = redshifts_catalog[mask_sources]
