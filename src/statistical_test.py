@@ -5,6 +5,7 @@ import requests
 import zipfile
 import pandas as pd
 import numpy as np
+import time
 
 ALLOWED_CATALOGS = ["turin", "milliquas"]
 ALLOWED_RECONSTRUCTIONS = ["splinempe", "millipede"]
@@ -62,7 +63,7 @@ MILLIQUAS_HEADER = [
     "Lobe1",
     "Lobe2",
 ]
-MILLIQUAS_Z_CUT = 2
+MILLIQUAS_Z_CUT = 0.1
 MILLIQUAS_AGN_CATEGORIES = [
     "ARX",
     "AX",
@@ -182,15 +183,19 @@ MILLIPEDE_RA_MINUS = "RA_ERR_M"
 MILLIPEDE_DEC = "DEC"
 MILLIPEDE_DEC_PLUS = "DEC_ERR_P"
 MILLIPEDE_DEC_MINUS = "DEC_ERR_M"
-RATIO_90_TO_SIGMA = 2.416
+RATIO_90_TO_SIGMA = 2.146
 RATIO_68_TO_SIGMA = 1.515
 RATIO_50_TO_SIGMA = 1.177
-TOTAL_SCRAMBLINGS = 10
+TOTAL_SCRAMBLINGS_SPLINEMPE_TURIN = 1000
+TOTAL_SCRAMBLINGS_SPLINEMPE_MILLIQUAS = 10000
+TOTAL_SCRAMBLINGS_MILLIPEDE_TURIN = 1000
+TOTAL_SCRAMBLINGS_MILLIPEDE_MILLIQUAS = 100
 ROUND_ANGLE = 360  # deg
 SPLINEMPE_ANG_DIST_FAST_SELECTION = 4  # deg
 MILLIPEDE_ANG_DIST_FAST_SELECTION = 5  # deg
 SPLINEMPE_SEARCH_RADIUS = 3  # deg
 MILLIPEDE_SEARCH_RADIUS = 4  # deg
+TEST_STATISTIC_EMPTY_SCRAMBLE = -1000
 
 input_list = sys.argv[1:]
 
@@ -604,7 +609,7 @@ elif reco == ALLOWED_RECONSTRUCTIONS[MILLIPEDE_INDEX]:
     RAs_ERR_PLUS = alerts_df[MILLIPEDE_RA_PLUS].to_numpy()
     DECs_ERR_PLUS = alerts_df[MILLIPEDE_DEC_PLUS].to_numpy()
     RAs_ERR_MINUS = alerts_df[MILLIPEDE_RA_MINUS].to_numpy()
-    DECs_ERR_MINUS = alerts_df[MILLIPEDE_RA_PLUS].to_numpy()
+    DECs_ERR_MINUS = alerts_df[MILLIPEDE_DEC_MINUS].to_numpy()
     NAMEs = alerts_df[MILLIPEDE_IC_NAME].to_numpy()
 
     def millipede_area(index):
@@ -633,13 +638,31 @@ print("Estimating background...")
 if reco == ALLOWED_RECONSTRUCTIONS[SPLINEMPE_INDEX]:
     ang_dist_fast_selection = SPLINEMPE_ANG_DIST_FAST_SELECTION
     search_radius = SPLINEMPE_SEARCH_RADIUS
+    if catalog == ALLOWED_CATALOGS[TURIN_INDEX]:
+        total_scramblings = TOTAL_SCRAMBLINGS_SPLINEMPE_TURIN
+    elif catalog == ALLOWED_CATALOGS[MILLIQUAS_INDEX]:
+        total_scramblings = TOTAL_SCRAMBLINGS_SPLINEMPE_MILLIQUAS
 elif reco == ALLOWED_RECONSTRUCTIONS[MILLIPEDE_INDEX]:
     ang_dist_fast_selection = MILLIPEDE_ANG_DIST_FAST_SELECTION
     search_radius = MILLIPEDE_SEARCH_RADIUS
+    if catalog == ALLOWED_CATALOGS[TURIN_INDEX]:
+        total_scramblings = TOTAL_SCRAMBLINGS_MILLIPEDE_TURIN
+    elif catalog == ALLOWED_CATALOGS[MILLIQUAS_INDEX]:
+        total_scramblings = TOTAL_SCRAMBLINGS_MILLIPEDE_MILLIQUAS
 test_statistic_per_scramble = np.array([])
 names_alerts_per_scramble = np.array([])
 names_source_per_scramble = np.array([])
-for scrambling_number in range(TOTAL_SCRAMBLINGS):
+t0 = time.time()
+for scrambling_number in range(total_scramblings):
+    sys.stdout.write(
+        "\r"
+        + f"Scrumble nr {scrambling_number + 1:6}"
+        + " of "
+        + str(total_scramblings)
+        + f". Taken {round(time.time() - t0, 1):6}"
+        + f" seconds so far. Still {round((total_scramblings - (scrambling_number + 1)) * (time.time() - t0) / (scrambling_number + 1), 1):6}"
+        + " seconds remaining."
+    )
     rng = np.random.default_rng(seed=scrambling_number)
     random_ras = rng.uniform(0.0, ROUND_ANGLE, size=len(RAs))
     test_statistic_per_doublet = np.array([])
@@ -691,22 +714,149 @@ for scrambling_number in range(TOTAL_SCRAMBLINGS):
             for source_index in range(len(names_sources_nearby)):
                 ra_rad_source = np.deg2rad(RAs_sources_nearby[source_index])
                 de_rad_source = np.deg2rad(DECs_sources_nearby[source_index])
-                redshift_source = np.deg2rad(redshifts_sources_nearby[source_index])
-                test_statistic_source = test_statistic(ra1_rad, dec1_rad, sigma1, ra2_rad, dec2_rad, sigma2, ra_rad_source, de_rad_source, redshift_source)
-                test_statistic_per_source = np.append(test_statistic_per_source, test_statistic_source)
-            if len(test_statistic_per_source)==0:
+                redshift_source = redshifts_sources_nearby[source_index]
+                test_statistic_source = test_statistic(
+                    ra1_rad,
+                    dec1_rad,
+                    sigma1,
+                    ra2_rad,
+                    dec2_rad,
+                    sigma2,
+                    ra_rad_source,
+                    de_rad_source,
+                    redshift_source,
+                )
+                test_statistic_per_source = np.append(
+                    test_statistic_per_source, test_statistic_source
+                )
+            if len(test_statistic_per_source) == 0:
                 continue
             index_best_ts = np.argmax(test_statistic_per_source)
             test_statistic_doublet = test_statistic_per_source[index_best_ts]
             name_best_source = names_sources_nearby[index_best_ts]
-            test_statistic_per_doublet = np.append(test_statistic_per_doublet, test_statistic_doublet)
-            names_alerts_per_doublet = np.append(names_alerts_per_doublet, f"{NAMEs[first_alert_index]}, {NAMEs[second_alert_index]}")
-            names_source_per_doublet = np.append(names_source_per_doublet, name_best_source)
-            #print(test_statistic_doublet, names_alerts_per_doublet[-1], name_best_source)
-    index_best_doublet = np.argmax(test_statistic_per_doublet)
-    test_statistic_scramble = test_statistic_per_doublet[index_best_doublet]
-    names_alerts_scramble = names_alerts_per_doublet[index_best_doublet]
-    name_source_scramble = names_source_per_doublet[index_best_doublet]
-    test_statistic_per_scramble = np.append(test_statistic_per_scramble, test_statistic_scramble)
-    names_alerts_per_scramble = np.append(names_alerts_per_scramble, names_alerts_scramble)
-    names_source_per_scramble = np.append(names_source_per_scramble, name_source_scramble)
+            test_statistic_per_doublet = np.append(
+                test_statistic_per_doublet, test_statistic_doublet
+            )
+            names_alerts_per_doublet = np.append(
+                names_alerts_per_doublet,
+                f"{NAMEs[first_alert_index]}, {NAMEs[second_alert_index]}",
+            )
+            names_source_per_doublet = np.append(
+                names_source_per_doublet, name_best_source
+            )
+    if len(test_statistic_per_doublet) == 0:
+        testt_statistic_scramble = TEST_STATISTIC_EMPTY_SCRAMBLE
+        names_alerts_scramble = None
+        name_source_scramble = None
+    else:
+        index_best_doublet = np.argmax(test_statistic_per_doublet)
+        test_statistic_scramble = test_statistic_per_doublet[index_best_doublet]
+        names_alerts_scramble = names_alerts_per_doublet[index_best_doublet]
+        name_source_scramble = names_source_per_doublet[index_best_doublet]
+    test_statistic_per_scramble = np.append(
+        test_statistic_per_scramble, test_statistic_scramble
+    )
+    names_alerts_per_scramble = np.append(
+        names_alerts_per_scramble, names_alerts_scramble
+    )
+    names_source_per_scramble = np.append(
+        names_source_per_scramble, name_source_scramble
+    )
+
+print(f"\nEstimate ts value for {reco} with {catalog}...")
+
+test_statistic_per_doublet = np.array([])
+names_alerts_per_doublet = np.array([])
+names_source_per_doublet = np.array([])
+for first_alert_index in range(len(RAs)):
+    for second_alert_index in range(first_alert_index, len(RAs)):
+        if first_alert_index == second_alert_index:
+            continue
+        ra1 = RAs[first_alert_index]
+        ra2 = RAs[second_alert_index]
+        dec1 = DECs[first_alert_index]
+        dec2 = DECs[second_alert_index]
+        higher_ra = max(ra1, ra2)
+        smaller_ra = min(ra1, ra2)
+        # First fast selection
+        ra_distance = min(higher_ra - smaller_ra, smaller_ra - higher_ra + 360)
+        dec_distance = np.abs(dec1 - dec2)
+        if (
+            ra_distance > ang_dist_fast_selection
+            or dec_distance > ang_dist_fast_selection
+        ):
+            continue
+        ra1_rad = np.deg2rad(ra1)
+        ra2_rad = np.deg2rad(ra2)
+        dec1_rad = np.deg2rad(dec1)
+        dec2_rad = np.deg2rad(dec2)
+        sigma1 = sigmas[first_alert_index]
+        sigma2 = sigmas[second_alert_index]
+        # Consider the sources nearest to the alert with best angular resolution
+        if sigma1 <= sigma2:
+            search_index = first_alert_index
+        else:
+            search_index = second_alert_index
+        mask_ra = np.logical_and(
+            RAs_catalog < RAs[search_index] + search_radius,
+            RAs_catalog > RAs[search_index] - search_radius,
+        )
+        mask_dec = np.logical_and(
+            DECs_catalog < DECs[search_index] + search_radius,
+            DECs_catalog > DECs[search_index] - search_radius,
+        )
+        mask_sources = np.logical_and(mask_ra, mask_dec)
+        test_statistic_per_source = np.array([])
+        RAs_sources_nearby = RAs_catalog[mask_sources]
+        DECs_sources_nearby = DECs_catalog[mask_sources]
+        redshifts_sources_nearby = redshifts_catalog[mask_sources]
+        names_sources_nearby = names_catalog[mask_sources]
+        for source_index in range(len(names_sources_nearby)):
+            ra_rad_source = np.deg2rad(RAs_sources_nearby[source_index])
+            de_rad_source = np.deg2rad(DECs_sources_nearby[source_index])
+            redshift_source = redshifts_sources_nearby[source_index]
+            test_statistic_source = test_statistic(
+                ra1_rad,
+                dec1_rad,
+                sigma1,
+                ra2_rad,
+                dec2_rad,
+                sigma2,
+                ra_rad_source,
+                de_rad_source,
+                redshift_source,
+            )
+            test_statistic_per_source = np.append(
+                test_statistic_per_source, test_statistic_source
+            )
+        if len(test_statistic_per_source) == 0:
+            continue
+        index_best_ts = np.argmax(test_statistic_per_source)
+        test_statistic_doublet = test_statistic_per_source[index_best_ts]
+        name_best_source = names_sources_nearby[index_best_ts]
+        test_statistic_per_doublet = np.append(
+            test_statistic_per_doublet, test_statistic_doublet
+        )
+        names_alerts_per_doublet = np.append(
+            names_alerts_per_doublet,
+            f"{NAMEs[first_alert_index]}, {NAMEs[second_alert_index]}",
+        )
+        names_source_per_doublet = np.append(names_source_per_doublet, name_best_source)
+best_test_statistic_index = np.argmax(test_statistic_per_doublet)
+best_test_statistic = test_statistic_per_doublet[best_test_statistic_index]
+best_source = names_source_per_doublet[best_test_statistic_index]
+best_alerts = names_alerts_per_doublet[best_test_statistic_index]
+
+print(
+    f"\nTest statistic for {reco} with {catalog}: {best_test_statistic}\nSource: {best_source}. Doublet: {best_alerts}"
+)
+
+p_value = len(
+    test_statistic_per_scramble[test_statistic_per_scramble > best_test_statistic]
+) / len(test_statistic_per_scramble)
+
+print(
+    f"\n\n*********************\n\n"
+    f"p-value: {p_value} = {p_value*100}%"
+    f"\n\n*********************\n\n"
+)
