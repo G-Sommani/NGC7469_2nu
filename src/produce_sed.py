@@ -6,7 +6,7 @@ from math import factorial
 import csv
 
 # Definition of constants
-MJD_07102023 = 60135
+MJD_04102023 = 60132
 MJD_GOLDBRONZE_START = 58635
 DAYS_IN_YEAR = 365
 E_NU_2022 = 1.8399e05  # GeV
@@ -86,7 +86,7 @@ for x in f_1068_SED:
         flux_errs_1068 = np.append(flux_errs_1068, flux_err)
 
 # Define years of integration
-days_alerts = MJD_07102023 - MJD_GOLDBRONZE_START
+days_alerts = MJD_04102023 - MJD_GOLDBRONZE_START
 years_alerts = days_alerts / DAYS_IN_YEAR
 
 print("Calculating confidence intervals...")

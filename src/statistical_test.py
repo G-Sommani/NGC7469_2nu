@@ -144,7 +144,7 @@ EFFECTIVE_AREA_MIN90_MIN30_DEG_INDEX = 5
 HUBBLE_CONSTANT = 73  # km s^-1 Mpc^-1
 MPC_TO_KM = 3.086e19
 SPEED_OF_LIGHT = 299792458  # m s^-1
-MJD_07102023 = 60135
+MJD_04102023 = 60132
 MJD_GOLDBRONZE_START = 58635
 DAYS_IN_YEAR = 365
 SECONDS_IN_YEAR = DAYS_IN_YEAR * 24 * 60 * 60
@@ -403,7 +403,7 @@ area_energy_factors = np.array([])
 for i in range(len(effective_area_array)):
     area_energy_factors = np.append(area_energy_factors, area_energy_factor(i))
 hubble_in_s = HUBBLE_CONSTANT / MPC_TO_KM
-days = MJD_07102023 - MJD_GOLDBRONZE_START
+days = MJD_04102023 - MJD_GOLDBRONZE_START
 seconds = (days / DAYS_IN_YEAR) * SECONDS_IN_YEAR
 
 
