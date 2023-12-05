@@ -63,7 +63,7 @@ MILLIQUAS_HEADER = [
     "Lobe1",
     "Lobe2",
 ]
-MILLIQUAS_Z_CUT = 0.1
+MILLIQUAS_Z_CUT = 0.5
 MILLIQUAS_AGN_CATEGORIES = [
     "ARX",
     "AX",
@@ -186,8 +186,8 @@ MILLIPEDE_DEC_MINUS = "DEC_ERR_M"
 RATIO_90_TO_SIGMA = 2.146
 RATIO_68_TO_SIGMA = 1.515
 RATIO_50_TO_SIGMA = 1.177
-TOTAL_SCRAMBLINGS_SPLINEMPE_TURIN = 1000
-TOTAL_SCRAMBLINGS_SPLINEMPE_MILLIQUAS = 10000
+TOTAL_SCRAMBLINGS_SPLINEMPE_TURIN = 200000
+TOTAL_SCRAMBLINGS_SPLINEMPE_MILLIQUAS = 50000
 TOTAL_SCRAMBLINGS_MILLIPEDE_TURIN = 1000
 TOTAL_SCRAMBLINGS_MILLIPEDE_MILLIQUAS = 100
 ROUND_ANGLE = 360  # deg
@@ -654,15 +654,16 @@ names_alerts_per_scramble = np.array([])
 names_source_per_scramble = np.array([])
 t0 = time.time()
 for scrambling_number in range(total_scramblings):
-    sys.stdout.write(
-        "\r"
-        + f"Scrumble nr {scrambling_number + 1:6}"
-        + " of "
-        + str(total_scramblings)
-        + f". Taken {round(time.time() - t0, 1):6}"
-        + f" seconds so far. Still {round((total_scramblings - (scrambling_number + 1)) * (time.time() - t0) / (scrambling_number + 1), 1):6}"
-        + " seconds remaining."
-    )
+    if (scrambling_number+1)%100 == 0:
+        sys.stdout.write(
+            "\r"
+            + f"Scrumble nr {scrambling_number + 1:6}"
+            + " of "
+            + str(total_scramblings)
+            + f". Taken {round(time.time() - t0, 1):6}"
+            + f" seconds so far. Still {round((total_scramblings - (scrambling_number + 1)) * (time.time() - t0) / (scrambling_number + 1), 1):6}"
+            + " seconds remaining."
+        )
     rng = np.random.default_rng(seed=scrambling_number)
     random_ras = rng.uniform(0.0, ROUND_ANGLE, size=len(RAs))
     test_statistic_per_doublet = np.array([])
@@ -745,7 +746,7 @@ for scrambling_number in range(total_scramblings):
                 names_source_per_doublet, name_best_source
             )
     if len(test_statistic_per_doublet) == 0:
-        testt_statistic_scramble = TEST_STATISTIC_EMPTY_SCRAMBLE
+        test_statistic_scramble = TEST_STATISTIC_EMPTY_SCRAMBLE
         names_alerts_scramble = None
         name_source_scramble = None
     else:
