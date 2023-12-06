@@ -12,6 +12,7 @@ DAYS_IN_YEAR = 365
 E_NU_2022 = 1.8399e05  # GeV
 E_NU_2023 = 1.2729e05  # GeV
 GEV_TO_ERG = 1.60218e-3
+TEV_TO_ERG = 1e3 * GEV_TO_ERG
 SECONDS_IN_YEAR = DAYS_IN_YEAR * 24 * 60 * 60
 NUMBER_OF_NU = 2
 FLUX_NU_MIN_1068 = 2.9e-11 * 1.6  # erg*cm-2*s-1, at 1 TeV
@@ -261,9 +262,15 @@ energy_space_nu_flux_7469 = np.linspace(
     averaged_energy / 3.3, averaged_energy * 3.3, 100
 )
 
-print(f"Inferior limit on energy flux: {E_inf_Flux_2_nu:.2} erg cm-2 s-1")
+print(
+    f"Inferior limit on energy flux: {E_inf_Flux_2_nu:.2} erg cm-2 s-1, {E_inf_Flux_2_nu:.2}"
+)
 print(f"Superior limit on energy flux: {E_sup_Flux_2_nu:.2} erg cm-2 s-1")
-print(f"Energy flux calculated at energy: {averaged_energy/1e3:.0f} TeV")
+print(f"\n\n**************************************************\n\n")
+print(
+    f"90% CL of neutrino flux at {averaged_energy/1e3:.0f} TeV: [{E_inf_Flux_2_nu/(TEV_TO_ERG*(averaged_energy*1e-3)**2):.2},{E_sup_Flux_2_nu/(TEV_TO_ERG*(averaged_energy*1e-3)**2):.2}] TeV-1*cm-2*s-1"
+)
+print(f"\n\n**************************************************\n\n")
 
 print("Retrieving neutrino flux intervals for NGC1068...")
 
