@@ -268,7 +268,7 @@ print(
 print(f"Superior limit on energy flux: {E_sup_Flux_2_nu:.2} erg cm-2 s-1")
 print(f"\n\n**************************************************\n\n")
 print(
-    f"90% CL of neutrino flux at {averaged_energy/1e3:.0f} TeV: [{E_inf_Flux_2_nu/(TEV_TO_ERG*(averaged_energy*1e-3)**2):.2},{E_sup_Flux_2_nu/(TEV_TO_ERG*(averaged_energy*1e-3)**2):.2}] TeV-1*cm-2*s-1"
+    f"90% CL of neutrino flux at {averaged_energy/1e3:.0f} TeV: [{E_inf_Flux_2_nu/(TEV_TO_ERG*(averaged_energy*1e-3)**2):.3},{E_sup_Flux_2_nu/(TEV_TO_ERG*(averaged_energy*1e-3)**2):.3}] TeV-1*cm-2*s-1"
 )
 print(f"\n\n**************************************************\n\n")
 
