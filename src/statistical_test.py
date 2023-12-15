@@ -188,8 +188,8 @@ RATIO_68_TO_SIGMA = 1.515
 RATIO_50_TO_SIGMA = 1.177
 TOTAL_SCRAMBLINGS_SPLINEMPE_TURIN = 200000
 TOTAL_SCRAMBLINGS_SPLINEMPE_MILLIQUAS = 50000
-TOTAL_SCRAMBLINGS_MILLIPEDE_TURIN = 1000
-TOTAL_SCRAMBLINGS_MILLIPEDE_MILLIQUAS = 100
+TOTAL_SCRAMBLINGS_MILLIPEDE_TURIN = 10000
+TOTAL_SCRAMBLINGS_MILLIPEDE_MILLIQUAS = 500
 ROUND_ANGLE = 360  # deg
 SPLINEMPE_ANG_DIST_FAST_SELECTION = 4  # deg
 MILLIPEDE_ANG_DIST_FAST_SELECTION = 5  # deg
@@ -654,7 +654,7 @@ names_alerts_per_scramble = np.array([])
 names_source_per_scramble = np.array([])
 t0 = time.time()
 for scrambling_number in range(total_scramblings):
-    if (scrambling_number+1)%100 == 0:
+    if (scrambling_number + 1) % 100 == 0:
         sys.stdout.write(
             "\r"
             + f"Scrumble nr {scrambling_number + 1:6}"
