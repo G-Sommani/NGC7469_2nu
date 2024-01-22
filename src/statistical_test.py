@@ -6,6 +6,7 @@ import zipfile
 import pandas as pd
 import numpy as np
 import time
+import argparse
 
 ALLOWED_CATALOGS = ["turin", "milliquas"]
 ALLOWED_RECONSTRUCTIONS = ["splinempe", "millipede"]
@@ -197,40 +198,42 @@ SPLINEMPE_SEARCH_RADIUS = 3  # deg
 MILLIPEDE_SEARCH_RADIUS = 4  # deg
 TEST_STATISTIC_EMPTY_SCRAMBLE = -1000
 
-input_list = sys.argv[1:]
-
-
-def check_input_name(string: str, catalog: str, reco: str):
-    if string in ALLOWED_CATALOGS:
-        catalog = string
-    elif string in ALLOWED_RECONSTRUCTIONS:
-        reco = string
-    else:
-        print(f"\n******************\n\nAllowed catalogs: {ALLOWED_CATALOGS}")
-        print(
-            f"Allowed reconstructions: {ALLOWED_RECONSTRUCTIONS}\n\n******************\n"
-        )
-        raise NameError(f"'{string}' is an incorrect input")
-    return catalog, reco
-
 
 def main():
-    catalog = DEFAULT_CATALOG
-    reco = DEFAULT_RECO
-    if len(input_list) == 1:
-        input_string = input_list[0]
-        catalog, reco = check_input_name(input_string, catalog, reco)
-    elif len(input_list) == 2:
-        input_1 = input_list[0]
-        input_2 = input_list[1]
-        if input_1 in ALLOWED_CATALOGS and input_2 in ALLOWED_CATALOGS:
-            raise Exception(f"Possible to specify the catalog only once")
-        if input_1 in ALLOWED_RECONSTRUCTIONS and input_2 in ALLOWED_RECONSTRUCTIONS:
-            raise Exception(f"Possible to specify the reconstruction only once")
-        catalog, reco = check_input_name(input_1, catalog, reco)
-        catalog, reco = check_input_name(input_2, catalog, reco)
-    elif len(input_list) > 2:
-        raise Exception(f"Too many inputs")
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
+    parser.add_argument(
+        "--reco",
+        "-r",
+        type=str,
+        default=ALLOWED_RECONSTRUCTIONS[SPLINEMPE_INDEX],
+        help="reconstruction to use for the neutrino events",
+        choices=ALLOWED_RECONSTRUCTIONS,
+    )
+    parser.add_argument(
+        "--catalog",
+        "-c",
+        type=str,
+        default=ALLOWED_CATALOGS[TURIN_INDEX],
+        help="catalog of sources for the statistical test",
+        choices=ALLOWED_CATALOGS,
+    )
+    parser.add_argument(
+        "--flux",
+        "-f",
+        type=bool,
+        default=False,
+        help="weight the sources with x-ray flux, instead of using the redshift. Possible only with Turin catalog.",
+    )
+    args = parser.parse_args()
+    reco = args.reco
+    catalog = args.catalog
+    flux = args.flux
+    if flux and catalog == ALLOWED_CATALOGS[MILLIQUAS_INDEX]:
+        raise ValueError(
+            f"Possible to use the x-ray fluxes as weighting only with the Turin catalog."
+        )
 
     print("Definition of paths...")
 
