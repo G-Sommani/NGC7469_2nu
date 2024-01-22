@@ -405,7 +405,9 @@ def main():
 
     area_energy_factors = np.array([])
     for i in range(len(effective_area_array)):
-        area_energy_factors = np.append(area_energy_factors, area_energy_factor_calculator(i))
+        area_energy_factors = np.append(
+            area_energy_factors, area_energy_factor_calculator(i)
+        )
     hubble_in_s = HUBBLE_CONSTANT / MPC_TO_KM
     days = MJD_04102023 - MJD_GOLDBRONZE_START
     seconds = (days / DAYS_IN_YEAR) * SECONDS_IN_YEAR
@@ -421,7 +423,9 @@ def main():
         elif dec <= 30 and dec > 0:
             area_energy_factor = area_energy_factors[EFFECTIVE_AREA_0_30_DEG_INDEX - 1]
         elif dec <= 0 and dec > -5:
-            area_energy_factor = area_energy_factors[EFFECTIVE_AREA_MIN5_0_DEG_INDEX - 1]
+            area_energy_factor = area_energy_factors[
+                EFFECTIVE_AREA_MIN5_0_DEG_INDEX - 1
+            ]
         elif dec <= -5 and dec > -30:
             area_energy_factor = area_energy_factors[
                 EFFECTIVE_AREA_MIN30_MIN5_DEG_INDEX - 1
@@ -431,11 +435,12 @@ def main():
                 EFFECTIVE_AREA_MIN90_MIN30_DEG_INDEX - 1
             ]
         constant = (
-            (hubble_in_s**2) * seconds / (4 * np.pi * (z**2) * (SPEED_OF_LIGHT**2))
+            (hubble_in_s**2)
+            * seconds
+            / (4 * np.pi * (z**2) * (SPEED_OF_LIGHT**2))
         )  # m^-2 * s
         expected_nu = constant * FLUX_NU * (E0**2) * area_energy_factor
         return expected_nu
-
 
     def flux_contribute(z, dec):
         """
@@ -448,13 +453,11 @@ def main():
         )  # Here we assume the limit of low fluxes as valid
         return contribute
 
-
     def unc_contribute(sigma1, sigma2):
         """
         Contribute to the test statistic related only to the uncertainties of the alerts
         """
         return -2 * np.log(sigma1 * sigma2)
-
 
     def angular_dist_score(az_true, zen_true, az_pred, zen_pred):
         """
@@ -506,7 +509,6 @@ def main():
         # convert back to an angle (in radian)
         return np.average(np.abs(np.arccos(scalar_prod)))
 
-
     def dir_contribute(ra1, dec1, ra2, dec2, raS, decS, sigma1, sigma2):  # in radiants
         """
         Contribute to the test statistic related to
@@ -518,14 +520,12 @@ def main():
         cont = -0.5 * ((phi1 / sigma1) ** 2 + (phi2 / sigma2) ** 2)
         return cont
 
-
     def noise_contribute(dec1, dec2):
         """
         Contribute to the test statistic related to
         the null hypothesis
         """
         return -np.log(np.cos(dec1) * np.cos(dec2))
-
 
     def test_statistic(ra1, dec1, sigma1, ra2, dec2, sigma2, raS, decS, z):
         """
@@ -537,7 +537,6 @@ def main():
         c4 = noise_contribute(dec1, dec2)
         ts = c1 + c2 + c3 + c4
         return ts
-
 
     print(f"Retrieving the alerts reconstructed with {reco}...")
 
@@ -588,7 +587,9 @@ def main():
                     elif rev0:
                         if len(NAMEs) > 0:
                             if name in NAMEs:
-                                NAMEs[np.where(NAMEs == name)] = f"IC{year}{month}{day}B"
+                                NAMEs[
+                                    np.where(NAMEs == name)
+                                ] = f"IC{year}{month}{day}B"
                         if (
                             name in rev1_names or name in SPLINEMPE_EXCEPTIONS
                         ) and not name in SPLINEMPE_BACKGROUND:
@@ -850,7 +851,9 @@ def main():
                 names_alerts_per_doublet,
                 f"{NAMEs[first_alert_index]}, {NAMEs[second_alert_index]}",
             )
-            names_source_per_doublet = np.append(names_source_per_doublet, name_best_source)
+            names_source_per_doublet = np.append(
+                names_source_per_doublet, name_best_source
+            )
     best_test_statistic_index = np.argmax(test_statistic_per_doublet)
     best_test_statistic = test_statistic_per_doublet[best_test_statistic_index]
     best_source = names_source_per_doublet[best_test_statistic_index]
@@ -869,6 +872,7 @@ def main():
         f"p-value: {p_value} = {p_value*100}%"
         f"\n\n*********************\n\n"
     )
+
 
 if __name__ == "__main__":
     main()
