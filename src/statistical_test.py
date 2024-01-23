@@ -124,6 +124,27 @@ TURIN_NAMES_HEADER = [
     TURIN_SWIFT,
     TURIN_NAME_SOURCE,
 ]
+TURIN_XRAY_HEADER = [
+    TURIN_ID,
+    "SYCAT",
+    "WISE",
+    "ROSAT",
+    "counts",
+    "e_counts",
+    "thetarw",
+    "3PBC",
+    "3PBCCtp",
+    "3PBCClass",
+    "FHX",
+    "e_FHX",
+    "theta3w",
+    "BAT105-Swift",
+    "BAT105Class",
+    "thetabw",
+    "IBIS4CAT-IGR",
+    "IBISClass",
+    "thetaiw",
+]
 TURIN_NAMES_COLSPECS = [
     (0, 2),
     (4, 17),
@@ -135,6 +156,27 @@ TURIN_NAMES_COLSPECS = [
     (124, 140),
     (142, 161),
     (162, 182),
+]
+TURIN_XRAY_COLSPECS = [
+    (0, 3),
+    (4, 17),
+    (19, 37),
+    (39, 54),
+    (56, 62),
+    (63, 70),
+    (71, 89),
+    (91, 107),
+    (109, 131),
+    (133, 135),
+    (137, 159),
+    (160, 182),
+    (183, 202),
+    (204, 222),
+    (224, 234),
+    (236, 259),
+    (261, 281),
+    (283, 295),
+    (297, 315),
 ]
 TURIN_HEADER_PRESENT = None
 EFFECTIVE_AREA_FILENAME = "Effa_all_streams_gold_bronze.txt"
@@ -322,6 +364,10 @@ def main():
             header=TURIN_HEADER_PRESENT,
             names=TURIN_NAMES_HEADER,
         )
+        if flux:
+            dataframe_flux = pd.read_fwf(data_path / TURIN_XRAY_FILENAME, header=TURIN_HEADER_PRESENT, names=TURIN_XRAY_HEADER, colspecs=TURIN_XRAY_COLSPECS)
+            print(dataframe_flux["counts"])
+            print(dataframe_flux["e_counts"])
 
         def hms_to_deg(h, m, s):
             return 15.0 * (h + (m + s / 60.0) / 60.0)
