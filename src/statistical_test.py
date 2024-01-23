@@ -79,8 +79,10 @@ MILLIQUAS_AGN_CATEGORIES = [
 ]
 TURIN_FILENAME = "Turin_Catalogue_Table2_SourceProperties.txt"
 TURIN_NAMES_FILENAME = "Turin_Catalogue_Table1_SourceNames.txt"
+TURIN_XRAY_FILENAME = "Turin_Catalogue_Table5_SourceXRay.txt"
 TURIN_URL = "https://cdsarc.cds.unistra.fr/ftp/J/A+A/659/A32/tablea2.dat"
 TURIN_NAMES_URL = "https://cdsarc.cds.unistra.fr/ftp/J/A+A/659/A32/tablea1.dat"
+TURIN_XRAY_URL = "https://cdsarc.cds.unistra.fr/ftp/J/A+A/659/A32/tablea5.dat"
 TURIN_ID = "ID"
 TURIN_SWIFT = "BAT105-Swift"
 TURIN_WISE = "WISE"
@@ -293,6 +295,20 @@ def main():
             print(f"{names_filename} not found, download from {url_names}...")
             r_names = requests.get(url_names, allow_redirects=True)
             open(names_path, "wb").write(r_names.content)
+
+        if flux:
+            xray_filename = TURIN_XRAY_FILENAME
+            xray_path = data_path / xray_filename
+
+            print(f"Checking if '{xray_filename}' is in '{data_path}'...")
+
+            if os.path.isfile(xray_path):
+                print(f"'{xray_filename}' in '{data_path}', no need to download")
+            else:
+                url_xray = TURIN_XRAY_URL
+                print(f"{xray_filename} not found, download from {url_xray}...")
+                r_xray = requests.get(url_xray, allow_redirects=True)
+                open(xray_path, "wb").write(r_xray.content)
 
     print(f"Loading the {catalog} catalog...")
 
