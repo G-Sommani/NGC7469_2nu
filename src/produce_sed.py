@@ -11,6 +11,7 @@ MJD_GOLDBRONZE_START = 58635
 DAYS_IN_YEAR = 365
 E_NU_2022 = 1.8399e05  # GeV
 E_NU_2023 = 1.2729e05  # GeV
+SUPERIOR_ENERGY_BOUND = 2e7 # GeV
 GEV_TO_ERG = 1.60218e-3
 TEV_TO_ERG = 1e3 * GEV_TO_ERG
 SECONDS_IN_YEAR = DAYS_IN_YEAR * 24 * 60 * 60
@@ -211,11 +212,13 @@ f_effA = open(data_path / "Effa_all_streams_gold_bronze.txt", "r")
 effA2022_found = False
 effA2023_found = False
 areas = list()
+energies = list()
 k = 0
 for i, x in enumerate(f_effA):
     if i > 0:
         Energy = float(x.split()[0])
         Area = float(x.split()[2])
+        energies.append(Energy)
         areas.append(Area)
         k += 1
         # Energy bins that concern the neutrino energies
@@ -257,10 +260,24 @@ yerr_2_nu = [
 # Calculate averaged energy of the two neutrinos
 averaged_energy = (E_NU_2022 * effA2022 + E_NU_2023 * effA2023) / (effA2022 + effA2023)
 
-# Span confidence intervals over 1 decade around averaged energy
-energy_space_nu_flux_7469 = np.linspace(
-    averaged_energy / 3.3, averaged_energy * 3.3, 100
+# As lower bound in energy we take 100 TeV less than the average energy.
+# (Similar to TXS paper)
+min_energy = min(E_NU_2022, E_NU_2023)
+lower_energy_bound = min_energy - 1e5
+
+# As superior bound in energy we take 20 PeV (circa the highest energy neutrinos that IceCube can hope to detect)
+energy_space_nu_flux_7469 = np.logspace(
+    1, 12, 100
 )
+#energy_space_nu_flux_7469 = np.logspace(
+#    np.log10(lower_energy_bound), np.log10(SUPERIOR_ENERGY_BOUND), 100
+#)
+
+effas_interp = np.interp(energy_space_nu_flux_7469, energies, areas)*1e4
+
+#effas = np.logspace(np.log10(min(A22_cm, A23_cm)), np.log10(areas[-4]*1e4), 100)
+E_sup_Flux_2_nu_alt = energy_space_nu_flux_7469*GEV_TO_ERG*rate_sup_2nu/(effas_interp)
+E_inf_Flux_2_nu_alt = energy_space_nu_flux_7469*GEV_TO_ERG*rate_inf_2nu/(effas_interp)
 
 print(
     f"Inferior limit on energy flux: {E_inf_Flux_2_nu:.2} erg cm-2 s-1, {E_inf_Flux_2_nu:.2}"
@@ -269,6 +286,9 @@ print(f"Superior limit on energy flux: {E_sup_Flux_2_nu:.2} erg cm-2 s-1")
 print(f"\n\n**************************************************\n\n")
 print(
     f"90% CL of neutrino flux at {averaged_energy/1e3:.0f} TeV: [{E_inf_Flux_2_nu/(TEV_TO_ERG*(averaged_energy*1e-3)**2):.3},{E_sup_Flux_2_nu/(TEV_TO_ERG*(averaged_energy*1e-3)**2):.3}] TeV-1*cm-2*s-1"
+)
+print(
+    f"Lower and superior bounds in energy: {lower_energy_bound/1e3:.0f} TeV, {SUPERIOR_ENERGY_BOUND/1e6:.0f} PeV"
 )
 print(f"\n\n**************************************************\n\n")
 
@@ -412,10 +432,19 @@ plt.errorbar(
     label="NGC 1068, electromagnetic observations",
     color="darkgrey",
 )
+"""
 plt.fill_between(
     energy_space_nu_flux_7469,
     half_log_space_2_nu - yerr_2_nu[0][0],
     half_log_space_2_nu + yerr_2_nu[1][0],
+    alpha=0.3,
+    label=r"NGC 7469 $\nu_\mu+\bar{\nu}_\mu$, 90% CL, this work",
+)
+"""
+plt.fill_between(
+    energy_space_nu_flux_7469,
+    E_sup_Flux_2_nu_alt,
+    E_inf_Flux_2_nu_alt,
     alpha=0.3,
     label=r"NGC 7469 $\nu_\mu+\bar{\nu}_\mu$, 90% CL, this work",
 )
@@ -431,7 +460,7 @@ plt.plot(
     bins_7yrs,
     fluxes_7yrs,
     label="Differential sensitivities, IceCube 7 years",
-    color="lightgrey",
+    color="orange",
     linestyle="--",
 )
 plt.errorbar(
