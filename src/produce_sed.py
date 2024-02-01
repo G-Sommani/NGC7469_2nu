@@ -35,6 +35,7 @@ INTRINSIC_GAMMA_7469 = 2.09
 INTRINSIC_GAMMA_ERR_7469 = 0.12
 ENERGY1_INTRINSIC_FLUX = 30  # keV
 ENERGY2_INTRINSIC_FLUX = 70  # keV
+M2_TO_CM2 = 1e4
 
 print("Definition of paths...")
 
@@ -227,11 +228,9 @@ for i, x in enumerate(f_effA):
         if Energy > E_NU_2022 and not effA2022_found:
             effA2022 = areas[k - 1]
             effA2022_found = True
-            print(Energy, E_NU_2022, effA2022)
         if Energy > E_NU_2023 and not effA2023_found:
             effA2023 = areas[k - 1]
             effA2023_found = True
-            print(Energy, E_NU_2023, effA2023)
 
 print("Converting rates to energy fluxes...")
 
@@ -244,23 +243,15 @@ A22_cm = effA2022 * 1e4
 A23_cm = effA2023 * 1e4
 
 # Average energy over effective area for the two neutrinos
-# Avg_en_effA = (E22_erg / A22_cm + E23_erg / A23_cm) / NUMBER_OF_NU
-Avg_en_effA = E23_erg / A23_cm
+Avg_en_effA = (E22_erg / A22_cm + E23_erg / A23_cm) / NUMBER_OF_NU
 
 # Convert rate in s^-1
 rate_sup_2nu = lim_sup_2_nu / SECONDS_IN_YEAR
 rate_inf_2nu = lim_inf_2_nu / SECONDS_IN_YEAR
 
-# Calculate superior limit over energy flux
+# Calculate superior limit over energy flux, for the average energy of the two neutrinos (THIS IS NOT PLOTTED)
 E_sup_Flux_2_nu = Avg_en_effA * rate_sup_2nu
 E_inf_Flux_2_nu = Avg_en_effA * rate_inf_2nu
-
-# Translate limits in something easy to plot
-half_log_space_2_nu = 10 ** (np.log10(E_inf_Flux_2_nu * E_sup_Flux_2_nu) / 2)
-yerr_2_nu = [
-    [half_log_space_2_nu - E_inf_Flux_2_nu],
-    [E_sup_Flux_2_nu - half_log_space_2_nu],
-]
 
 # Calculate averaged energy of the two neutrinos
 averaged_energy = (E_NU_2022 * effA2022 + E_NU_2023 * effA2023) / (effA2022 + effA2023)
@@ -271,42 +262,52 @@ min_energy = min(E_NU_2022, E_NU_2023)
 max_energy = max(E_NU_2022, E_NU_2023)
 lower_energy_bound = min_energy - 1e5
 
-# As superior bound in energy we take 20 PeV (circa the highest energy neutrinos that IceCube can hope to detect)
-energy_space_nu_flux_7469 = np.logspace(
+# As superior bound in energy we take 20 PeV (circa the highest energy neutrinos that IceCube can hope to detect).
+energy_space_nu_flux_7469_general = np.logspace(
     np.log10(lower_energy_bound), np.log10(SUPERIOR_ENERGY_BOUND), 500
 )
+# We also define another energy space just between the two reported neutrino energies.
 energy_space_nu_flux_7469_between_nu = np.logspace(
     np.log10(min_energy), np.log10(max_energy), 100
 )
 
-effas_interp = np.interp(energy_space_nu_flux_7469, energies, areas) * 1e4
+# interpolate the effective areas over the various energy spaces and convert them in cm.
+effas_interp_general = (
+    np.interp(energy_space_nu_flux_7469_general, energies, areas) * M2_TO_CM2
+)
 effas_interp_between_nu = (
-    np.interp(energy_space_nu_flux_7469_between_nu, energies, areas) * 1e4
+    np.interp(energy_space_nu_flux_7469_between_nu, energies, areas) * M2_TO_CM2
 )
 
-# effas = np.logspace(np.log10(min(A22_cm, A23_cm)), np.log10(areas[-4]*1e4), 100)
-E_sup_Flux_2_nu_alt = (
-    energy_space_nu_flux_7469 * GEV_TO_ERG * rate_sup_2nu / (effas_interp)
+# estimate superior and lower limits on energies (THESE ARE PLOTTED):
+#     1) Over the whole energy uncertainty;
+#     2) Between the two reported neutrino energies.
+E_sup_Flux_2_nu_general = (
+    energy_space_nu_flux_7469_general
+    * GEV_TO_ERG
+    * rate_sup_2nu
+    / (effas_interp_general)
 )
-E_inf_Flux_2_nu_alt = (
-    energy_space_nu_flux_7469 * GEV_TO_ERG * rate_inf_2nu / (effas_interp)
+E_inf_Flux_2_nu_general = (
+    energy_space_nu_flux_7469_general
+    * GEV_TO_ERG
+    * rate_inf_2nu
+    / (effas_interp_general)
 )
-E_sup_Flux_2_nu_alt_between_nu = (
+E_sup_Flux_2_nu_between_nu = (
     energy_space_nu_flux_7469_between_nu
     * GEV_TO_ERG
     * rate_sup_2nu
     / (effas_interp_between_nu)
 )
-E_inf_Flux_2_nu_alt_between_nu = (
+E_inf_Flux_2_nu_between_nu = (
     energy_space_nu_flux_7469_between_nu
     * GEV_TO_ERG
     * rate_inf_2nu
     / (effas_interp_between_nu)
 )
 
-print(
-    f"Inferior limit on energy flux: {E_inf_Flux_2_nu:.2} erg cm-2 s-1, {E_inf_Flux_2_nu:.2}"
-)
+print(f"Inferior limit on energy flux: {E_inf_Flux_2_nu:.2} erg cm-2 s-1")
 print(f"Superior limit on energy flux: {E_sup_Flux_2_nu:.2} erg cm-2 s-1")
 print(f"\n\n**************************************************\n\n")
 print(
@@ -457,20 +458,10 @@ plt.errorbar(
     label="NGC 1068, electromagnetic observations",
     color="darkgrey",
 )
-"""
 plt.fill_between(
-    energy_space_nu_flux_7469,
-    E_inf_Flux_2_nu,
-    E_sup_Flux_2_nu,
-    alpha=0.3,
-    color="orange",
-    label=r"NGC 7469 $\nu_\mu+\bar{\nu}_\mu$, 90% CL, this work",
-)
-"""
-plt.fill_between(
-    energy_space_nu_flux_7469,
-    E_sup_Flux_2_nu_alt,
-    E_inf_Flux_2_nu_alt,
+    energy_space_nu_flux_7469_general,
+    E_sup_Flux_2_nu_general,
+    E_inf_Flux_2_nu_general,
     alpha=0.3,
     color="white",
     hatch="////",
@@ -479,11 +470,11 @@ plt.fill_between(
 )
 plt.fill_between(
     energy_space_nu_flux_7469_between_nu,
-    E_sup_Flux_2_nu_alt_between_nu,
-    E_inf_Flux_2_nu_alt_between_nu,
+    E_sup_Flux_2_nu_between_nu,
+    E_inf_Flux_2_nu_between_nu,
     alpha=1,
     color="darkblue",
-    label=r"NGC 7469 $\nu_\mu+\bar{\nu}_\mu$, 90% CL, this work, between the two nu energies",
+    label=r"NGC 7469 $\nu_\mu+\bar{\nu}_\mu$, 90% CL, this work, between neutrino energies",
 )
 plt.fill_between(
     energies_1068_nu,
