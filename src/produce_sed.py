@@ -11,7 +11,7 @@ MJD_GOLDBRONZE_START = 58635
 DAYS_IN_YEAR = 365
 E_NU_2022 = 1.8399e05  # GeV
 E_NU_2023 = 1.2729e05  # GeV
-SUPERIOR_ENERGY_BOUND = 2e7 # GeV
+SUPERIOR_ENERGY_BOUND = 2e7  # GeV
 GEV_TO_ERG = 1.60218e-3
 TEV_TO_ERG = 1e3 * GEV_TO_ERG
 SECONDS_IN_YEAR = DAYS_IN_YEAR * 24 * 60 * 60
@@ -102,7 +102,7 @@ def lr(N, lam, T):
     if N == 0:
         return np.exp(-lam * T)
     y = lam * T / N
-    return (y**N) * np.exp(N - lam * T)
+    return (y ** N) * np.exp(N - lam * T)
 
 
 def lr_evaluator(lam, T=years_alerts, until=100):
@@ -140,6 +140,8 @@ def find_coverage_interval(lam, CL=0.9, T=years_alerts, until=100):
     counts_space, outcomes = lr_evaluator(lam, T=T, until=until)
     antithreshold_space = np.linspace(0, 1, 1000)
     probabilities = np.array([])
+    inf_count_limit = None
+    sup_count_limit = None
     for count in counts_space:
         probability = pois(count, lam, T=T)
         probabilities = np.append(probabilities, probability)
@@ -223,11 +225,13 @@ for i, x in enumerate(f_effA):
         k += 1
         # Energy bins that concern the neutrino energies
         if Energy > E_NU_2022 and not effA2022_found:
-            effA2022 = areas[k - 2]
+            effA2022 = areas[k - 1]
             effA2022_found = True
+            print(Energy, E_NU_2022, effA2022)
         if Energy > E_NU_2023 and not effA2023_found:
-            effA2023 = areas[k - 2]
+            effA2023 = areas[k - 1]
             effA2023_found = True
+            print(Energy, E_NU_2023, effA2023)
 
 print("Converting rates to energy fluxes...")
 
@@ -240,7 +244,8 @@ A22_cm = effA2022 * 1e4
 A23_cm = effA2023 * 1e4
 
 # Average energy over effective area for the two neutrinos
-Avg_en_effA = (E22_erg / A22_cm + E23_erg / A23_cm) / NUMBER_OF_NU
+# Avg_en_effA = (E22_erg / A22_cm + E23_erg / A23_cm) / NUMBER_OF_NU
+Avg_en_effA = E23_erg / A23_cm
 
 # Convert rate in s^-1
 rate_sup_2nu = lim_sup_2_nu / SECONDS_IN_YEAR
@@ -263,21 +268,41 @@ averaged_energy = (E_NU_2022 * effA2022 + E_NU_2023 * effA2023) / (effA2022 + ef
 # As lower bound in energy we take 100 TeV less than the average energy.
 # (Similar to TXS paper)
 min_energy = min(E_NU_2022, E_NU_2023)
+max_energy = max(E_NU_2022, E_NU_2023)
 lower_energy_bound = min_energy - 1e5
 
 # As superior bound in energy we take 20 PeV (circa the highest energy neutrinos that IceCube can hope to detect)
 energy_space_nu_flux_7469 = np.logspace(
-    1, 12, 100
+    np.log10(lower_energy_bound), np.log10(SUPERIOR_ENERGY_BOUND), 500
 )
-#energy_space_nu_flux_7469 = np.logspace(
-#    np.log10(lower_energy_bound), np.log10(SUPERIOR_ENERGY_BOUND), 100
-#)
+energy_space_nu_flux_7469_between_nu = np.logspace(
+    np.log10(min_energy), np.log10(max_energy), 100
+)
 
-effas_interp = np.interp(energy_space_nu_flux_7469, energies, areas)*1e4
+effas_interp = np.interp(energy_space_nu_flux_7469, energies, areas) * 1e4
+effas_interp_between_nu = (
+    np.interp(energy_space_nu_flux_7469_between_nu, energies, areas) * 1e4
+)
 
-#effas = np.logspace(np.log10(min(A22_cm, A23_cm)), np.log10(areas[-4]*1e4), 100)
-E_sup_Flux_2_nu_alt = energy_space_nu_flux_7469*GEV_TO_ERG*rate_sup_2nu/(effas_interp)
-E_inf_Flux_2_nu_alt = energy_space_nu_flux_7469*GEV_TO_ERG*rate_inf_2nu/(effas_interp)
+# effas = np.logspace(np.log10(min(A22_cm, A23_cm)), np.log10(areas[-4]*1e4), 100)
+E_sup_Flux_2_nu_alt = (
+    energy_space_nu_flux_7469 * GEV_TO_ERG * rate_sup_2nu / (effas_interp)
+)
+E_inf_Flux_2_nu_alt = (
+    energy_space_nu_flux_7469 * GEV_TO_ERG * rate_inf_2nu / (effas_interp)
+)
+E_sup_Flux_2_nu_alt_between_nu = (
+    energy_space_nu_flux_7469_between_nu
+    * GEV_TO_ERG
+    * rate_sup_2nu
+    / (effas_interp_between_nu)
+)
+E_inf_Flux_2_nu_alt_between_nu = (
+    energy_space_nu_flux_7469_between_nu
+    * GEV_TO_ERG
+    * rate_inf_2nu
+    / (effas_interp_between_nu)
+)
 
 print(
     f"Inferior limit on energy flux: {E_inf_Flux_2_nu:.2} erg cm-2 s-1, {E_inf_Flux_2_nu:.2}"
@@ -382,10 +407,10 @@ def find_fluxes(
     phi_2_err = np.sqrt(
         (gamma_err * dphi_2dgamma) ** 2 + (phi_1_err * dphi_2dphi_1) ** 2
     )
-    E2phi_1 = phi_1 * (E_1**2)
-    E2phi_2 = phi_2 * (E_2**2)
-    E2phi_1_err = phi_1_err * (E_1**2)
-    E2phi_2_err = phi_2_err * (E_2**2)
+    E2phi_1 = phi_1 * (E_1 ** 2)
+    E2phi_2 = phi_2 * (E_2 ** 2)
+    E2phi_1_err = phi_1_err * (E_1 ** 2)
+    E2phi_2_err = phi_2_err * (E_2 ** 2)
     return E2phi_1, E2phi_2, E2phi_1_err, E2phi_2_err
 
 
@@ -435,9 +460,10 @@ plt.errorbar(
 """
 plt.fill_between(
     energy_space_nu_flux_7469,
-    half_log_space_2_nu - yerr_2_nu[0][0],
-    half_log_space_2_nu + yerr_2_nu[1][0],
+    E_inf_Flux_2_nu,
+    E_sup_Flux_2_nu,
     alpha=0.3,
+    color="orange",
     label=r"NGC 7469 $\nu_\mu+\bar{\nu}_\mu$, 90% CL, this work",
 )
 """
@@ -446,7 +472,18 @@ plt.fill_between(
     E_sup_Flux_2_nu_alt,
     E_inf_Flux_2_nu_alt,
     alpha=0.3,
-    label=r"NGC 7469 $\nu_\mu+\bar{\nu}_\mu$, 90% CL, this work",
+    color="white",
+    hatch="////",
+    edgecolor="tab:blue",
+    label=r"NGC 7469 $\nu_\mu+\bar{\nu}_\mu$, 90% CL, this work, energy uncertainty",
+)
+plt.fill_between(
+    energy_space_nu_flux_7469_between_nu,
+    E_sup_Flux_2_nu_alt_between_nu,
+    E_inf_Flux_2_nu_alt_between_nu,
+    alpha=1,
+    color="darkblue",
+    label=r"NGC 7469 $\nu_\mu+\bar{\nu}_\mu$, 90% CL, this work, between the two nu energies",
 )
 plt.fill_between(
     energies_1068_nu,
