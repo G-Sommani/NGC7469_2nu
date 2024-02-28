@@ -99,6 +99,7 @@ TURIN_DEs = "DEs"
 TURIN_z = "z"
 BASS_SKIPROWS = 28
 BASS_SEP = "\s+"
+FLUX_FACTOR = 1e-12
 TURIN_HEADER = [
     TURIN_ID,
     "SYCAT",
@@ -382,7 +383,7 @@ def main():
                 namecode = name[:5] + name[6:]
                 name_idx = flux_source_names.index(namecode)
                 intr_xray_flux = all_xray_fluxes[name_idx]
-                xray_catalog = np.append(xray_catalog, intr_xray_flux)
+                xray_catalog = np.append(xray_catalog, intr_xray_flux*FLUX_FACTOR)
 
         def hms_to_deg(h, m, s):
             return 15.0 * (h + (m + s / 60.0) / 60.0)
@@ -521,6 +522,37 @@ def main():
         )  # m^-2 * s
         expected_nu = constant * FLUX_NU * (E0 ** 2) * area_energy_factor
         return expected_nu
+    
+    if flux:
+        def expected_nu_from_source(z, dec):
+            """
+            Given the redshift and the declination of a source, determines the total
+            number of expected neutrinos from the source
+            """
+            area_energy_factor = None
+            if 90 >= dec > 30:
+                area_energy_factor = area_energy_factors[EFFECTIVE_AREA_30_90_DEG_INDEX - 1]
+            elif dec <= 30 and dec > 0:
+                area_energy_factor = area_energy_factors[EFFECTIVE_AREA_0_30_DEG_INDEX - 1]
+            elif dec <= 0 and dec > -5:
+                area_energy_factor = area_energy_factors[
+                    EFFECTIVE_AREA_MIN5_0_DEG_INDEX - 1
+                ]
+            elif dec <= -5 and dec > -30:
+                area_energy_factor = area_energy_factors[
+                    EFFECTIVE_AREA_MIN30_MIN5_DEG_INDEX - 1
+                ]
+            elif dec <= -30 and dec >= -90:
+                area_energy_factor = area_energy_factors[
+                    EFFECTIVE_AREA_MIN90_MIN30_DEG_INDEX - 1
+                ]
+            constant = (
+                (hubble_in_s ** 2)
+                * seconds
+                / (4 * np.pi * (z ** 2) * (SPEED_OF_LIGHT ** 2))
+            )  # m^-2 * s
+            expected_nu = constant * FLUX_NU * (E0 ** 2) * area_energy_factor
+            return expected_nu
 
     def flux_contribute(z, dec):
         """
