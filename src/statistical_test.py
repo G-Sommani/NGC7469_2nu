@@ -79,12 +79,15 @@ MILLIQUAS_AGN_CATEGORIES = [
 ]
 TURIN_FILENAME = "Turin_Catalogue_Table2_SourceProperties.txt"
 TURIN_NAMES_FILENAME = "Turin_Catalogue_Table1_SourceNames.txt"
-TURIN_XRAY_FILENAME = "Turin_Catalogue_Table5_SourceXRay.txt"
+BASS_XRAY_FILENAME = "Bass_Catalogue_SourceXRay.txt"
 TURIN_URL = "https://cdsarc.cds.unistra.fr/ftp/J/A+A/659/A32/tablea2.dat"
 TURIN_NAMES_URL = "https://cdsarc.cds.unistra.fr/ftp/J/A+A/659/A32/tablea1.dat"
-TURIN_XRAY_URL = "https://cdsarc.cds.unistra.fr/ftp/J/A+A/659/A32/tablea5.dat"
+BASS_XRAY_URL = "https://content.cld.iop.org/journals/0067-0049/233/2/17/revision1/apjsaa96adt12_mrt.txt"
 TURIN_ID = "ID"
+TURIN_SYCAT = "SYCAT"
 TURIN_SWIFT = "BAT105-Swift"
+BASS_SWIFT = "SwiftID"
+XRAY_FLUX_NAME = "F14-195-intr"
 TURIN_WISE = "WISE"
 TURIN_NAME_SOURCE = "IBIS4CAT-IGR"
 TURIN_RAh = "RAh"
@@ -94,6 +97,8 @@ TURIN_DEd = "DEd"
 TURIN_DEm = "DEm"
 TURIN_DEs = "DEs"
 TURIN_z = "z"
+BASS_SKIPROWS = 28
+BASS_SEP = "\s+"
 TURIN_HEADER = [
     TURIN_ID,
     "SYCAT",
@@ -114,7 +119,7 @@ TURIN_HEADER = [
 ]
 TURIN_NAMES_HEADER = [
     TURIN_ID,
-    "SYCAT",
+    TURIN_SYCAT,
     "SUMSS",
     "NVSS",
     TURIN_WISE,
@@ -124,30 +129,18 @@ TURIN_NAMES_HEADER = [
     TURIN_SWIFT,
     TURIN_NAME_SOURCE,
 ]
-TURIN_XRAY_HEADER = [
-    TURIN_ID,
-    "SYCAT",
-    "WISE",
-    "ROSAT",
-    "counts",
-    "e_counts",
-    "thetarw",
-    "3PBC",
-    "3PBCCtp",
-    "3PBCClass",
-    "FHX",
-    "e_FHX",
-    "theta3w",
-    "BAT105-Swift",
-    "BAT105Class",
-    "thetabw",
-    "IBIS4CAT-IGR",
-    "IBISClass",
-    "thetaiw",
+BASS_XRAY_HEADER = [
+    BASS_SWIFT,
+    "F2-10-obs",
+    "F14-195-obs",
+    "F2-10-intr",
+    "F20-50-intr",
+    "F14-150-intr",
+    XRAY_FLUX_NAME,
 ]
 TURIN_NAMES_COLSPECS = [
     (0, 2),
-    (4, 17),
+    (4, 18),
     (19, 38),
     (40, 58),
     (60, 79),
@@ -156,27 +149,6 @@ TURIN_NAMES_COLSPECS = [
     (124, 140),
     (142, 161),
     (162, 182),
-]
-TURIN_XRAY_COLSPECS = [
-    (0, 3),
-    (4, 17),
-    (19, 37),
-    (39, 54),
-    (56, 62),
-    (63, 70),
-    (71, 89),
-    (91, 107),
-    (109, 131),
-    (133, 135),
-    (137, 159),
-    (160, 182),
-    (183, 202),
-    (204, 222),
-    (224, 234),
-    (236, 259),
-    (261, 281),
-    (283, 295),
-    (297, 315),
 ]
 TURIN_HEADER_PRESENT = None
 EFFECTIVE_AREA_FILENAME = "Effa_all_streams_gold_bronze.txt"
@@ -339,7 +311,7 @@ def main():
             open(names_path, "wb").write(r_names.content)
 
         if flux:
-            xray_filename = TURIN_XRAY_FILENAME
+            xray_filename = BASS_XRAY_FILENAME
             xray_path = data_path / xray_filename
 
             print(f"Checking if '{xray_filename}' is in '{data_path}'...")
@@ -347,7 +319,7 @@ def main():
             if os.path.isfile(xray_path):
                 print(f"'{xray_filename}' in '{data_path}', no need to download")
             else:
-                url_xray = TURIN_XRAY_URL
+                url_xray = BASS_XRAY_URL
                 print(f"{xray_filename} not found, download from {url_xray}...")
                 r_xray = requests.get(url_xray, allow_redirects=True)
                 open(xray_path, "wb").write(r_xray.content)
@@ -365,9 +337,52 @@ def main():
             names=TURIN_NAMES_HEADER,
         )
         if flux:
-            dataframe_flux = pd.read_fwf(data_path / TURIN_XRAY_FILENAME, header=TURIN_HEADER_PRESENT, names=TURIN_XRAY_HEADER, colspecs=TURIN_XRAY_COLSPECS)
-            print(dataframe_flux["counts"])
-            print(dataframe_flux["e_counts"])
+            dataframe_flux = pd.read_csv(
+                data_path / BASS_XRAY_FILENAME,
+                names=BASS_XRAY_HEADER,
+                skiprows=BASS_SKIPROWS,
+                sep=BASS_SEP,
+            )
+
+            # Drop sources in no BAT-Swift catalog.
+            turin_swift_names_array = dataframe_names[TURIN_SWIFT].to_numpy()
+            turin_swift_names_list = list(turin_swift_names_array)
+            (idxs_sources_no_intr,) = np.where(pd.isnull(turin_swift_names_array))
+            sycat_names = dataframe_names[TURIN_SYCAT].to_numpy()
+            print(
+                "Dropping the following sources (SYCAT IDs) because they are not in any BAT Swift catalog:"
+            )
+            print(sycat_names[idxs_sources_no_intr])
+            dataframe = dataframe.drop(idxs_sources_no_intr)
+            dataframe_names = dataframe_names.drop(idxs_sources_no_intr)
+
+            # Drop sources that are in Swift BAT 105-Month, but not in Swift BAT 70-Month
+            swift_names = dataframe_names[TURIN_SWIFT].to_numpy()
+            flux_source_names = list(dataframe_flux[BASS_SWIFT].to_numpy())
+            notfound_sources = list()
+            notfound_idxs = list()
+            for i, name in enumerate(swift_names):
+                namecode = name[:5] + name[6:]
+                if namecode not in flux_source_names:
+                    notfound_sources.append(name)
+                    idx = turin_swift_names_list.index(name)
+                    notfound_idxs.append(idx)
+            print(
+                "Dropping the following sources (Swift BAT IDs) because they are not in the 70 Month BAT Swift catalog:"
+            )
+            print(turin_swift_names_array[notfound_idxs])
+            dataframe = dataframe.drop(notfound_idxs)
+            dataframe_names = dataframe_names.drop(notfound_idxs)
+
+            # Define array with intrinsic x-ray fluxes
+            swift_bat_names = dataframe_names[TURIN_SWIFT].to_numpy()
+            all_xray_fluxes = dataframe_flux[XRAY_FLUX_NAME].to_numpy()
+            xray_catalog = np.array([])
+            for name in swift_bat_names:
+                namecode = name[:5] + name[6:]
+                name_idx = flux_source_names.index(namecode)
+                intr_xray_flux = all_xray_fluxes[name_idx]
+                xray_catalog = np.append(xray_catalog, intr_xray_flux)
 
         def hms_to_deg(h, m, s):
             return 15.0 * (h + (m + s / 60.0) / 60.0)
@@ -500,11 +515,11 @@ def main():
                 EFFECTIVE_AREA_MIN90_MIN30_DEG_INDEX - 1
             ]
         constant = (
-            (hubble_in_s**2)
+            (hubble_in_s ** 2)
             * seconds
-            / (4 * np.pi * (z**2) * (SPEED_OF_LIGHT**2))
+            / (4 * np.pi * (z ** 2) * (SPEED_OF_LIGHT ** 2))
         )  # m^-2 * s
-        expected_nu = constant * FLUX_NU * (E0**2) * area_energy_factor
+        expected_nu = constant * FLUX_NU * (E0 ** 2) * area_energy_factor
         return expected_nu
 
     def flux_contribute(z, dec):
