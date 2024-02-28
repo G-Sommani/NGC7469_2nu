@@ -167,6 +167,7 @@ MJD_GOLDBRONZE_START = 58635
 DAYS_IN_YEAR = 365
 SECONDS_IN_YEAR = DAYS_IN_YEAR * 24 * 60 * 60
 FLUX_NU = 1e36  # s-1 GeV-1 at 100 GeV
+CONSTANT_XRAY = 1e-4 # GeV-2
 E0 = 100  # GeV
 SPLINEMPE_FILENAME = "gcn_notices_gold_bronze.txt"
 # IC190819A: Updated GCN Notice never reported
@@ -214,6 +215,7 @@ MILLIPEDE_ANG_DIST_FAST_SELECTION = 5  # deg
 SPLINEMPE_SEARCH_RADIUS = 3  # deg
 MILLIPEDE_SEARCH_RADIUS = 4  # deg
 TEST_STATISTIC_EMPTY_SCRAMBLE = -1000
+ERG_TO_GEV = 624.151
 
 
 def main():
@@ -522,11 +524,22 @@ def main():
         )  # m^-2 * s
         expected_nu = constant * FLUX_NU * (E0 ** 2) * area_energy_factor
         return expected_nu
+
+    def flux_contribute(z, dec):
+        """
+        Given the redshift and the declination of a source, determines the contribution
+        to the test statistic related to the neutrino flux of the source
+        """
+        mu = expected_nu_from_source(z, dec)
+        contribute = (
+            np.log(0.5) + 2 * np.log(mu) - mu
+        )  # Here we assume the limit of low fluxes as valid
+        return contribute
     
     if flux:
-        def expected_nu_from_source(z, dec):
+        def expected_nu_from_source_xray(xray, dec):
             """
-            Given the redshift and the declination of a source, determines the total
+            Given the xray flux and the declination of a source, determines the total
             number of expected neutrinos from the source
             """
             area_energy_factor = None
@@ -546,24 +559,19 @@ def main():
                 area_energy_factor = area_energy_factors[
                     EFFECTIVE_AREA_MIN90_MIN30_DEG_INDEX - 1
                 ]
-            constant = (
-                (hubble_in_s ** 2)
-                * seconds
-                / (4 * np.pi * (z ** 2) * (SPEED_OF_LIGHT ** 2))
-            )  # m^-2 * s
-            expected_nu = constant * FLUX_NU * (E0 ** 2) * area_energy_factor
+            expected_nu = CONSTANT_XRAY * xray * ERG_TO_GEV * (E0 ** 2) * area_energy_factor
             return expected_nu
-
-    def flux_contribute(z, dec):
-        """
-        Given the redshift and the declination of a source, determines the contribution
-        to the test statistic related to the neutrino flux of the source
-        """
-        mu = expected_nu_from_source(z, dec)
-        contribute = (
-            np.log(0.5) + 2 * np.log(mu) - mu
-        )  # Here we assume the limit of low fluxes as valid
-        return contribute
+        
+        def flux_contribute(xray, dec):
+            """
+            Given the xray flux and the declination of a source, determines the contribution
+            to the test statistic related to the neutrino flux of the source
+            """
+            mu = expected_nu_from_source_xray(xray, dec)
+            contribute = (
+                np.log(0.5) + 2 * np.log(mu) - mu
+            )  # Here we assume the limit of low fluxes as valid
+            return contribute
 
     def unc_contribute(sigma1, sigma2):
         """
@@ -639,11 +647,11 @@ def main():
         """
         return -np.log(np.cos(dec1) * np.cos(dec2))
 
-    def test_statistic(ra1, dec1, sigma1, ra2, dec2, sigma2, raS, decS, z):
+    def test_statistic(ra1, dec1, sigma1, ra2, dec2, sigma2, raS, decS, z_or_xray):
         """
         Test statistic related to two alerts and a source
         """
-        c1 = flux_contribute(z, decS)
+        c1 = flux_contribute(z_or_xray, decS)
         c2 = unc_contribute(sigma1, sigma2)
         c3 = dir_contribute(ra1, dec1, ra2, dec2, raS, decS, sigma1, sigma2)
         c4 = noise_contribute(dec1, dec2)
@@ -831,12 +839,18 @@ def main():
                 test_statistic_per_source = np.array([])
                 RAs_sources_nearby = ras_catalog[mask_sources]
                 DECs_sources_nearby = decs_catalog[mask_sources]
-                redshifts_sources_nearby = redshifts_catalog[mask_sources]
+                if flux:
+                    xray_sources_nearby = xray_catalog[mask_sources]
+                else:
+                    redshifts_sources_nearby = redshifts_catalog[mask_sources]
                 names_sources_nearby = names_catalog[mask_sources]
                 for source_index in range(len(names_sources_nearby)):
                     ra_rad_source = np.deg2rad(RAs_sources_nearby[source_index])
                     de_rad_source = np.deg2rad(DECs_sources_nearby[source_index])
-                    redshift_source = redshifts_sources_nearby[source_index]
+                    if flux:
+                        redshift_or_flux = xray_sources_nearby[source_index]
+                    else:
+                        redshift_or_flux = redshifts_sources_nearby[source_index]
                     test_statistic_source = test_statistic(
                         ra1_rad,
                         dec1_rad,
@@ -846,7 +860,7 @@ def main():
                         sigma2,
                         ra_rad_source,
                         de_rad_source,
-                        redshift_source,
+                        redshift_or_flux,
                     )
                     test_statistic_per_source = np.append(
                         test_statistic_per_source, test_statistic_source
