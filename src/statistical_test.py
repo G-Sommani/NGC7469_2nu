@@ -207,10 +207,9 @@ RATIO_90_TO_SIGMA = 2.146
 RATIO_68_TO_SIGMA = 1.515
 RATIO_50_TO_SIGMA = 1.177
 TOTAL_SCRAMBLINGS_SPLINEMPE_TURIN = 300000
-#TOTAL_SCRAMBLINGS_SPLINEMPE_TURIN = 6000
 TOTAL_SCRAMBLINGS_SPLINEMPE_MILLIQUAS = 70000
 TOTAL_SCRAMBLINGS_MILLIPEDE_TURIN = 10000
-TOTAL_SCRAMBLINGS_MILLIPEDE_MILLIQUAS = 100
+TOTAL_SCRAMBLINGS_MILLIPEDE_MILLIQUAS = 500
 ROUND_ANGLE = 360  # deg
 SPLINEMPE_ANG_DIST_FAST_SELECTION = 4  # deg
 MILLIPEDE_ANG_DIST_FAST_SELECTION = 5  # deg
@@ -536,11 +535,9 @@ def main():
         to the test statistic related to the neutrino flux of the source
         """
         mu = expected_nu_from_source(z, dec)
-        #contribute = (
-        #    np.log(0.5) + 2 * np.log(mu) - mu
-        #)  # Here we assume the limit of low fluxes as valid      
-        contribute = np.log(1 - np.exp(-mu) - mu*np.exp(-mu))
-        #print(z, mu, contribute)
+        contribute = (
+            np.log(0.5) + 2 * np.log(mu) - mu
+        )  # Here we assume the limit of low fluxes as valid    
         return contribute
 
     def select_effective_area(dec, energy):
