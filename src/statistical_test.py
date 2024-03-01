@@ -64,7 +64,7 @@ MILLIQUAS_HEADER = [
     "Lobe1",
     "Lobe2",
 ]
-MILLIQUAS_Z_CUT = 0.5
+MILLIQUAS_Z_CUT = .5
 MILLIQUAS_AGN_CATEGORIES = [
     "ARX",
     "AX",
@@ -194,7 +194,7 @@ SPLINEMPE_BACKGROUND = ["IC200120A", "IC230823A"]
 SPLINEMPE_GCN_START = "<tr align=left>\n"
 SPLINEMPE_INDEX_START = 65
 SPLINEMPE_COMMENT_START = "<!--\n"
-MILLIPEDE_FILENAME = "IC_Alerts_Table.csv"
+MILLIPEDE_FILENAME = "IC_Alerts_Table_Energies.csv"
 MILLIPEDE_IC_NAME = "IC_NAME"
 MILLIPEDE_RA = "RA"
 MILLIPEDE_RA_PLUS = "RA_ERR_P"
@@ -202,13 +202,15 @@ MILLIPEDE_RA_MINUS = "RA_ERR_M"
 MILLIPEDE_DEC = "DEC"
 MILLIPEDE_DEC_PLUS = "DEC_ERR_P"
 MILLIPEDE_DEC_MINUS = "DEC_ERR_M"
+MILLIPEDE_ENERGY = "E [GeV]"
 RATIO_90_TO_SIGMA = 2.146
 RATIO_68_TO_SIGMA = 1.515
 RATIO_50_TO_SIGMA = 1.177
 TOTAL_SCRAMBLINGS_SPLINEMPE_TURIN = 300000
+#TOTAL_SCRAMBLINGS_SPLINEMPE_TURIN = 6000
 TOTAL_SCRAMBLINGS_SPLINEMPE_MILLIQUAS = 70000
 TOTAL_SCRAMBLINGS_MILLIPEDE_TURIN = 10000
-TOTAL_SCRAMBLINGS_MILLIPEDE_MILLIQUAS = 500
+TOTAL_SCRAMBLINGS_MILLIPEDE_MILLIQUAS = 100
 ROUND_ANGLE = 360  # deg
 SPLINEMPE_ANG_DIST_FAST_SELECTION = 4  # deg
 MILLIPEDE_ANG_DIST_FAST_SELECTION = 5  # deg
@@ -216,6 +218,7 @@ SPLINEMPE_SEARCH_RADIUS = 3  # deg
 MILLIPEDE_SEARCH_RADIUS = 4  # deg
 TEST_STATISTIC_EMPTY_SCRAMBLE = -1000
 ERG_TO_GEV = 624.151
+TEV_TO_GEV = 1e3
 
 
 def main():
@@ -442,8 +445,10 @@ def main():
         mask01234567 = np.ma.mask_or(mask0123, mask4567)
         mask_agn = np.ma.mask_or(mask01234567, mask89)
         dataframe_agn = dataframe[mask_agn]
+
         # Sources that are too far away are not significant for the test and slow down the program
         dataframe_nearby = dataframe_agn[dataframe_agn[MILLIQUAS_Z] < MILLIQUAS_Z_CUT]
+
         # There are two blazars which are reported with a redshift of zero. This is unphyisical and
         # these two sources are therefore removed.
         dataframe_nearby_no0 = dataframe_nearby[dataframe_nearby[MILLIQUAS_Z] != 0]
@@ -531,10 +536,35 @@ def main():
         to the test statistic related to the neutrino flux of the source
         """
         mu = expected_nu_from_source(z, dec)
-        contribute = (
-            np.log(0.5) + 2 * np.log(mu) - mu
-        )  # Here we assume the limit of low fluxes as valid
+        #contribute = (
+        #    np.log(0.5) + 2 * np.log(mu) - mu
+        #)  # Here we assume the limit of low fluxes as valid      
+        contribute = np.log(1 - np.exp(-mu) - mu*np.exp(-mu))
+        #print(z, mu, contribute)
         return contribute
+
+    def select_effective_area(dec, energy):
+        if 90 >= dec > 30:
+            effa = effective_area_array[EFFECTIVE_AREA_30_90_DEG_INDEX - 1]
+        elif dec <= 30 and dec > 0:
+            effa = effective_area_array[EFFECTIVE_AREA_0_30_DEG_INDEX - 1]
+        elif dec <= 0 and dec > -5:
+            effa = effective_area_array[
+                EFFECTIVE_AREA_MIN5_0_DEG_INDEX - 1
+            ]
+        elif dec <= -5 and dec > -30:
+            effa = effective_area_array[
+                EFFECTIVE_AREA_MIN30_MIN5_DEG_INDEX - 1
+            ]
+        elif dec <= -30 and dec >= -90:
+            effa = effective_area_array[
+                EFFECTIVE_AREA_MIN90_MIN30_DEG_INDEX - 1
+            ]
+        for index in range(len(energy_bins)):
+            next_ebin = energy_bins[index+1]
+            if next_ebin >= energy:
+                break
+        return effa[index] 
     
     if flux:
         def expected_nu_from_source_xray(xray, dec):
@@ -640,21 +670,23 @@ def main():
         cont = -0.5 * ((phi1 / sigma1) ** 2 + (phi2 / sigma2) ** 2)
         return cont
 
-    def noise_contribute(dec1, dec2):
+    def noise_contribute(dec1, dec2, energy1, energy2):
         """
         Contribute to the test statistic related to
         the null hypothesis
         """
-        return -np.log(np.cos(dec1) * np.cos(dec2))
+        effa1 = select_effective_area(dec1, energy1)
+        effa2 = select_effective_area(dec2, energy2)
+        return -np.log(np.cos(dec1) * np.cos(dec2) * effa1 * effa2)
 
-    def test_statistic(ra1, dec1, sigma1, ra2, dec2, sigma2, raS, decS, z_or_xray):
+    def test_statistic(ra1, dec1, sigma1, energy1, ra2, dec2, sigma2, energy2,raS, decS, z_or_xray):
         """
         Test statistic related to two alerts and a source
         """
         c1 = flux_contribute(z_or_xray, decS)
         c2 = unc_contribute(sigma1, sigma2)
         c3 = dir_contribute(ra1, dec1, ra2, dec2, raS, decS, sigma1, sigma2)
-        c4 = noise_contribute(dec1, dec2)
+        c4 = noise_contribute(dec1, dec2, energy1, energy2)
         ts = c1 + c2 + c3 + c4
         return ts
 
@@ -664,6 +696,7 @@ def main():
     DECs = np.array([])
     sigmas = np.array([])
     NAMEs = np.array([])
+    ENERGIES = np.array([])
     if reco == ALLOWED_RECONSTRUCTIONS[SPLINEMPE_INDEX]:
         rev0 = False
         rev1 = False
@@ -728,6 +761,9 @@ def main():
                         err_50 = float(line.split(">")[1].split("<")[0]) / 60
                         sigma = np.deg2rad(err_50) / RATIO_50_TO_SIGMA
                         sigmas = np.append(sigmas, sigma)
+                    if notice_line_index == 11:
+                        energy = float(line.split(">")[1].split("<")[0])*TEV_TO_GEV
+                        ENERGIES = np.append(ENERGIES, energy)
     elif reco == ALLOWED_RECONSTRUCTIONS[MILLIPEDE_INDEX]:
         alerts_df = pd.read_csv(data_path / MILLIPEDE_FILENAME)
         RAs = alerts_df[MILLIPEDE_RA].to_numpy()
@@ -737,6 +773,7 @@ def main():
         RAs_ERR_MINUS = alerts_df[MILLIPEDE_RA_MINUS].to_numpy()
         DECs_ERR_MINUS = alerts_df[MILLIPEDE_DEC_MINUS].to_numpy()
         NAMEs = alerts_df[MILLIPEDE_IC_NAME].to_numpy()
+        ENERGIES = alerts_df[MILLIPEDE_ENERGY].to_numpy()
 
         def millipede_area(index):
             """
@@ -822,6 +859,8 @@ def main():
                 dec2_rad = np.deg2rad(dec2)
                 sigma1 = sigmas[first_alert_index]
                 sigma2 = sigmas[second_alert_index]
+                energy1 = ENERGIES[first_alert_index]
+                energy2 = ENERGIES[second_alert_index]
                 # Consider the sources nearest to the alert with best angular resolution
                 if sigma1 <= sigma2:
                     search_index = first_alert_index
@@ -855,9 +894,11 @@ def main():
                         ra1_rad,
                         dec1_rad,
                         sigma1,
+                        energy1,
                         ra2_rad,
                         dec2_rad,
                         sigma2,
+                        energy2,
                         ra_rad_source,
                         de_rad_source,
                         redshift_or_flux,
@@ -898,7 +939,7 @@ def main():
         names_source_per_scramble = np.append(
             names_source_per_scramble, name_source_scramble
         )
-
+    
     print(f"\nEstimate ts value for {reco} with {catalog}...")
 
     test_statistic_per_doublet = np.array([])
@@ -928,6 +969,8 @@ def main():
             dec2_rad = np.deg2rad(dec2)
             sigma1 = sigmas[first_alert_index]
             sigma2 = sigmas[second_alert_index]
+            energy1 = ENERGIES[first_alert_index]
+            energy2 = ENERGIES[second_alert_index]
             # Consider the sources nearest to the alert with best angular resolution
             if sigma1 <= sigma2:
                 search_index = first_alert_index
@@ -945,22 +988,30 @@ def main():
             test_statistic_per_source = np.array([])
             RAs_sources_nearby = ras_catalog[mask_sources]
             DECs_sources_nearby = decs_catalog[mask_sources]
-            redshifts_sources_nearby = redshifts_catalog[mask_sources]
+            if flux:
+                xray_sources_nearby = xray_catalog[mask_sources]
+            else:
+                redshifts_sources_nearby = redshifts_catalog[mask_sources]
             names_sources_nearby = names_catalog[mask_sources]
             for source_index in range(len(names_sources_nearby)):
                 ra_rad_source = np.deg2rad(RAs_sources_nearby[source_index])
                 de_rad_source = np.deg2rad(DECs_sources_nearby[source_index])
-                redshift_source = redshifts_sources_nearby[source_index]
+                if flux:
+                    redshift_or_flux = xray_sources_nearby[source_index]
+                else:
+                    redshift_or_flux = redshifts_sources_nearby[source_index]
                 test_statistic_source = test_statistic(
                     ra1_rad,
                     dec1_rad,
                     sigma1,
+                    energy1,
                     ra2_rad,
                     dec2_rad,
                     sigma2,
+                    energy2,
                     ra_rad_source,
                     de_rad_source,
-                    redshift_source,
+                    redshift_or_flux,
                 )
                 test_statistic_per_source = np.append(
                     test_statistic_per_source, test_statistic_source
