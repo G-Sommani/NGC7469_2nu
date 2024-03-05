@@ -514,6 +514,7 @@ plt.legend(fontsize="small")
 plt.xlabel("Energy [GeV]")
 plt.ylabel(r"$E^2\Phi$ [erg cm$^{-2}$ s$^{-1}$]")
 plt.savefig(figures_path / "SED_nu_flux", bbox_inches="tight", dpi=200)
+plt.savefig(figures_path / "SED_nu_flux.pdf", bbox_inches="tight", dpi=200)
 plt.close()
 
 print(f"SED saved in {figures_path / 'SED_nu_flux.png'}.")

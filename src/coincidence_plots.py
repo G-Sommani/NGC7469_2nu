@@ -113,6 +113,8 @@ ax.set_yticklabels(ax.get_yticks(), size="x-large")
 print("Saving GCN Circulars plot...")
 
 plt.savefig(figures_path / CIRCULAR_PLOT_FILENAME, bbox_inches="tight")
+circular_plot_filename_pdf = CIRCULAR_PLOT_FILENAME + ".pdf"
+plt.savefig(figures_path / circular_plot_filename_pdf, bbox_inches="tight")
 plt.close()
 
 print("Plotting first GCN Notices...")
@@ -171,4 +173,6 @@ ax.set_yticklabels(ax.get_yticks(), size="x-large")
 print("Saving GCN Notices plot...")
 
 plt.savefig(figures_path / NOTICE_PLOT_FILENAME, bbox_inches="tight")
+notice_plot_filename_pdf = NOTICE_PLOT_FILENAME + ".pdf"
+plt.savefig(figures_path / notice_plot_filename_pdf, bbox_inches="tight")
 plt.close()

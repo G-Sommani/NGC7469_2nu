@@ -64,7 +64,7 @@ MILLIQUAS_HEADER = [
     "Lobe1",
     "Lobe2",
 ]
-MILLIQUAS_Z_CUT = .5
+MILLIQUAS_Z_CUT = 0.5
 MILLIQUAS_AGN_CATEGORIES = [
     "ARX",
     "AX",
@@ -167,7 +167,7 @@ MJD_GOLDBRONZE_START = 58635
 DAYS_IN_YEAR = 365
 SECONDS_IN_YEAR = DAYS_IN_YEAR * 24 * 60 * 60
 FLUX_NU = 1e36  # s-1 GeV-1 at 100 GeV
-CONSTANT_XRAY = 1e-4 # GeV-2
+CONSTANT_XRAY = 1e-4  # GeV-2
 E0 = 100  # GeV
 SPLINEMPE_FILENAME = "gcn_notices_gold_bronze.txt"
 # IC190819A: Updated GCN Notice never reported
@@ -209,6 +209,7 @@ RATIO_50_TO_SIGMA = 1.177
 TOTAL_SCRAMBLINGS_SPLINEMPE_TURIN = 300000
 TOTAL_SCRAMBLINGS_SPLINEMPE_MILLIQUAS = 70000
 TOTAL_SCRAMBLINGS_MILLIPEDE_TURIN = 10000
+TOTAL_SCRAMBLINGS_MILLIPEDE_TURIN_XRAY = 100000
 TOTAL_SCRAMBLINGS_MILLIPEDE_MILLIQUAS = 500
 ROUND_ANGLE = 360  # deg
 SPLINEMPE_ANG_DIST_FAST_SELECTION = 4  # deg
@@ -387,7 +388,7 @@ def main():
                 namecode = name[:5] + name[6:]
                 name_idx = flux_source_names.index(namecode)
                 intr_xray_flux = all_xray_fluxes[name_idx]
-                xray_catalog = np.append(xray_catalog, intr_xray_flux*FLUX_FACTOR)
+                xray_catalog = np.append(xray_catalog, intr_xray_flux * FLUX_FACTOR)
 
         def hms_to_deg(h, m, s):
             return 15.0 * (h + (m + s / 60.0) / 60.0)
@@ -537,7 +538,7 @@ def main():
         mu = expected_nu_from_source(z, dec)
         contribute = (
             np.log(0.5) + 2 * np.log(mu) - mu
-        )  # Here we assume the limit of low fluxes as valid    
+        )  # Here we assume the limit of low fluxes as valid
         return contribute
 
     def select_effective_area(dec, energy):
@@ -546,24 +547,19 @@ def main():
         elif dec <= 30 and dec > 0:
             effa = effective_area_array[EFFECTIVE_AREA_0_30_DEG_INDEX - 1]
         elif dec <= 0 and dec > -5:
-            effa = effective_area_array[
-                EFFECTIVE_AREA_MIN5_0_DEG_INDEX - 1
-            ]
+            effa = effective_area_array[EFFECTIVE_AREA_MIN5_0_DEG_INDEX - 1]
         elif dec <= -5 and dec > -30:
-            effa = effective_area_array[
-                EFFECTIVE_AREA_MIN30_MIN5_DEG_INDEX - 1
-            ]
+            effa = effective_area_array[EFFECTIVE_AREA_MIN30_MIN5_DEG_INDEX - 1]
         elif dec <= -30 and dec >= -90:
-            effa = effective_area_array[
-                EFFECTIVE_AREA_MIN90_MIN30_DEG_INDEX - 1
-            ]
+            effa = effective_area_array[EFFECTIVE_AREA_MIN90_MIN30_DEG_INDEX - 1]
         for index in range(len(energy_bins)):
-            next_ebin = energy_bins[index+1]
+            next_ebin = energy_bins[index + 1]
             if next_ebin >= energy:
                 break
-        return effa[index] 
-    
+        return effa[index]
+
     if flux:
+
         def expected_nu_from_source_xray(xray, dec):
             """
             Given the xray flux and the declination of a source, determines the total
@@ -571,9 +567,13 @@ def main():
             """
             area_energy_factor = None
             if 90 >= dec > 30:
-                area_energy_factor = area_energy_factors[EFFECTIVE_AREA_30_90_DEG_INDEX - 1]
+                area_energy_factor = area_energy_factors[
+                    EFFECTIVE_AREA_30_90_DEG_INDEX - 1
+                ]
             elif dec <= 30 and dec > 0:
-                area_energy_factor = area_energy_factors[EFFECTIVE_AREA_0_30_DEG_INDEX - 1]
+                area_energy_factor = area_energy_factors[
+                    EFFECTIVE_AREA_0_30_DEG_INDEX - 1
+                ]
             elif dec <= 0 and dec > -5:
                 area_energy_factor = area_energy_factors[
                     EFFECTIVE_AREA_MIN5_0_DEG_INDEX - 1
@@ -586,9 +586,11 @@ def main():
                 area_energy_factor = area_energy_factors[
                     EFFECTIVE_AREA_MIN90_MIN30_DEG_INDEX - 1
                 ]
-            expected_nu = CONSTANT_XRAY * xray * ERG_TO_GEV * (E0 ** 2) * area_energy_factor
+            expected_nu = (
+                CONSTANT_XRAY * xray * ERG_TO_GEV * (E0 ** 2) * area_energy_factor
+            )
             return expected_nu
-        
+
         def flux_contribute(xray, dec):
             """
             Given the xray flux and the declination of a source, determines the contribution
@@ -676,7 +678,9 @@ def main():
         effa2 = select_effective_area(dec2, energy2)
         return -np.log(np.cos(dec1) * np.cos(dec2) * effa1 * effa2)
 
-    def test_statistic(ra1, dec1, sigma1, energy1, ra2, dec2, sigma2, energy2,raS, decS, z_or_xray):
+    def test_statistic(
+        ra1, dec1, sigma1, energy1, ra2, dec2, sigma2, energy2, raS, decS, z_or_xray
+    ):
         """
         Test statistic related to two alerts and a source
         """
@@ -759,7 +763,7 @@ def main():
                         sigma = np.deg2rad(err_50) / RATIO_50_TO_SIGMA
                         sigmas = np.append(sigmas, sigma)
                     if notice_line_index == 11:
-                        energy = float(line.split(">")[1].split("<")[0])*TEV_TO_GEV
+                        energy = float(line.split(">")[1].split("<")[0]) * TEV_TO_GEV
                         ENERGIES = np.append(ENERGIES, energy)
     elif reco == ALLOWED_RECONSTRUCTIONS[MILLIPEDE_INDEX]:
         alerts_df = pd.read_csv(data_path / MILLIPEDE_FILENAME)
@@ -810,6 +814,8 @@ def main():
         search_radius = MILLIPEDE_SEARCH_RADIUS
         if catalog == ALLOWED_CATALOGS[TURIN_INDEX]:
             total_scramblings = TOTAL_SCRAMBLINGS_MILLIPEDE_TURIN
+            if flux:
+                total_scramblings = TOTAL_SCRAMBLINGS_MILLIPEDE_TURIN_XRAY
         elif catalog == ALLOWED_CATALOGS[MILLIQUAS_INDEX]:
             total_scramblings = TOTAL_SCRAMBLINGS_MILLIPEDE_MILLIQUAS
     test_statistic_per_scramble = np.array([])
@@ -936,7 +942,7 @@ def main():
         names_source_per_scramble = np.append(
             names_source_per_scramble, name_source_scramble
         )
-    
+
     print(f"\nEstimate ts value for {reco} with {catalog}...")
 
     test_statistic_per_doublet = np.array([])

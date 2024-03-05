@@ -33,7 +33,7 @@ SPLINEMPE_BACKGROUND = ["IC200120A", "IC230823A"]
 SPLINEMPE_GCN_START = "<tr align=left>\n"
 SPLINEMPE_INDEX_START = 65
 SPLINEMPE_COMMENT_START = "<!--\n"
-MILLIPEDE_FILENAME = "IC_Alerts_Table.csv"
+MILLIPEDE_FILENAME = "IC_Alerts_Table_Energies.csv"
 MILLIPEDE_IC_NAME = "IC_NAME"
 MILLIPEDE_RA = "RA"
 MILLIPEDE_RA_PLUS = "RA_ERR_P"
@@ -195,3 +195,5 @@ plt.xlabel(XLABEL, size=AXIS_FONTSIZE)
 plt.ylabel(YLABEL, size=AXIS_FONTSIZE)
 plt.title(TITLE, size=TITLE_FONTSIZE)
 plt.savefig(figures_path / PLOTNAME, bbox_inches="tight")
+plotname_pdf = PLOTNAME + ".pdf"
+plt.savefig(figures_path / plotname_pdf, bbox_inches="tight")
