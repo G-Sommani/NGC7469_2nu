@@ -10,14 +10,15 @@ MILLIQUAS = "milliquas"
 REDSHIFT = "redshift"
 XRAY = "xray"
 TS_FILENAME = "test_statistic"
-FIGSIZE = (6.5, 4)
-TURIN_LABEL = "Background distrubution, Turin catalog"
-MILLIQUAS_LABEL = "Background distrubution, Milliquas catalog"
+FIGSIZE = (5, 3.5)
+TURIN_LABEL = "Background distrubution,\nTurin catalog"
+MILLIQUAS_LABEL = "Background distrubution,\nMilliquas catalog"
 HISTTYPE = "step"
-NBINS = 100
+NBINS = 50
+LINEWIDTH = 2
 AXVCOLOR = "red"
 AXVLINESTYLE = "--"
-AXVLABEL = "IC220424A & IC230416A with NGC 7469"
+AXVLABEL = "IC220424A & IC230416A\nwith NGC 7469"
 XLABEL = "Negative test statistic"
 YLABEL = "N Events"
 TITLE = "Goodness of Fit test"
@@ -48,12 +49,14 @@ plt.hist(
     -ts_spl_tur_z,
     histtype=HISTTYPE,
     bins=logbins,
+    linewidth = LINEWIDTH,
     label= TURIN_LABEL
 )
 plt.hist(
     -ts_spl_mil_z,
     histtype=HISTTYPE,
     bins=logbins,
+    linewidth = LINEWIDTH,
     label= MILLIQUAS_LABEL
 )
 plt.axvline(
