@@ -219,6 +219,7 @@ MILLIPEDE_SEARCH_RADIUS = 4  # deg
 TEST_STATISTIC_EMPTY_SCRAMBLE = -1000
 ERG_TO_GEV = 624.151
 TEV_TO_GEV = 1e3
+TEST_STATISTIC_FILENAME = "test_statistic"
 
 
 def main():
@@ -262,6 +263,7 @@ def main():
     # Definition of paths
     cwd = Path(os.getcwd())
     data_path = cwd / "../data"
+    data_results_path = cwd / "../data_results"
 
     filename = None
     url = None
@@ -942,6 +944,15 @@ def main():
         names_source_per_scramble = np.append(
             names_source_per_scramble, name_source_scramble
         )
+    
+    print("Saving the ts distribution under the background hypothesis...")
+
+    test_statistic_filename = f"{TEST_STATISTIC_FILENAME}_{reco}_{catalog}"
+    if flux:
+        test_statistic_filename = f"{test_statistic_filename}_xray"
+    else:
+        test_statistic_filename = f"{test_statistic_filename}_redshift"
+    np.save(data_results_path / test_statistic_filename, test_statistic_per_scramble)
 
     print(f"\nEstimate ts value for {reco} with {catalog}...")
 
@@ -1042,6 +1053,11 @@ def main():
     print(
         f"\nTest statistic for {reco} with {catalog}: {best_test_statistic}\nSource: {best_source}. Doublet: {best_alerts}"
     )
+
+    print("Saving test_statistic result...")
+
+    test_statistic_filename_result = f"{test_statistic_filename}_result"
+    np.save(data_results_path / test_statistic_filename_result, best_test_statistic)
 
     p_value = len(
         test_statistic_per_scramble[test_statistic_per_scramble > best_test_statistic]
