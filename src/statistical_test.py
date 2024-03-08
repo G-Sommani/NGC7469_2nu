@@ -220,6 +220,9 @@ TEST_STATISTIC_EMPTY_SCRAMBLE = -1000
 ERG_TO_GEV = 624.151
 TEV_TO_GEV = 1e3
 TEST_STATISTIC_FILENAME = "test_statistic"
+FLUX_CHOICES = ["False", "True"]
+TRUE_INDEX = 1
+FALSE_INDEX = 0
 
 
 def main():
@@ -245,14 +248,19 @@ def main():
     parser.add_argument(
         "--flux",
         "-f",
-        type=bool,
-        default=False,
+        type=str,
+        default=FLUX_CHOICES[FALSE_INDEX],
         help="weight the sources with x-ray flux, instead of using the redshift. Possible only with Turin catalog.",
+        choices=FLUX_CHOICES
     )
     args = parser.parse_args()
     reco = args.reco
     catalog = args.catalog
     flux = args.flux
+    if flux == FLUX_CHOICES[TRUE_INDEX]:
+        flux = True
+    elif flux == FLUX_CHOICES[FALSE_INDEX]:
+        flux = False
     if flux and catalog == ALLOWED_CATALOGS[MILLIQUAS_INDEX]:
         raise ValueError(
             f"Possible to use the x-ray fluxes as weighting only with the Turin catalog."
