@@ -12,4 +12,8 @@ The project contains 5 folders:
   - `produce_sed.py`, to reproduce Figure 6, about the SEDs of NGC 7469 and NGC 1068 and the measured neutrino flux. It also estimates upper and lower limits for the neutrino flux of NGC 7469.
 - `data`, it contains the various data needed by the programs in `src`, in particular:
   - `IC_Alerts_Table_Energies.csv`, all the data about the GCN Circulars for the neutrino alerts from 2019 until October 2023;
-  
+  - `gcn_notices_gold_bronze.txt`, all the data about the GCN Notices for the neutrino alerts from 2019 until October 2023, the file consists of the source of the webpage https://gcn.gsfc.nasa.gov/amon_icecube_gold_bronze_events.html;
+  - `NGC1068_SED_with_sources.txt`, the electromagnetic data for the SED of NGC 1068, with references;
+  - `NGC7469_SED_with_sources.txt`, the electromagnetic data for the SED of NGC 7469, with references;
+  - `Effa_all_streams_gold_bronze.txt`, the effective areas depending on declination and energy for realtime alerts, from [here](https://icecube.wisc.edu/news/research/2023/04/icecat-1-icecubes-first-event-catalog-of-neutrino-track-alerts/);
+  - `pstracks_7yrs_diffsens.csv`, the diffential sensitivities of [this IceCube search](https://iopscience.iop.org/article/10.3847/1538-4357/835/2/151).
