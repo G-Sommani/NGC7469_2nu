@@ -19,3 +19,13 @@ The project contains 4 folders:
   - `pstracks_7yrs_diffsens.csv`, the diffential sensitivities of [this IceCube search](https://iopscience.iop.org/article/10.3847/1538-4357/835/2/151).
 - `figures`, it contains all the figures produced by the programs in `src`, so all the figures in the paper in `png` and `pdf` format. It also contains the distribution of the background statistics for all the tests with Millipede and for the test with SplineMPE and the X-ray flux, these plots are not in the paper.
 - `data_results`, it contains the numpy files produced by the program `statistical_test.py`, the data-file names for the test-statistic background distributions are structured as `test_statistic_reconstruction_catalog_weight.npy`, where `reconstruction` can be `splinempe` or `millipede`, `catalog` can be `turin` or `milliquas`, and `weight` can be `redshift` or `xray`. The single test-statistic value for IC220424A & IC230416A with NGC 7469 is stored in the files `test_statistic_reconstruction_catalog_weight_result.npy`;
+
+### How to run the code
+To run the code, it is necessary to go in the `src` folder and digit `python program.py`. It is important to start the programs from the `src` folder.
+Regarding `statistical_test.py`, there are several possible inputs to produce different tests. All the possibilities are described in the following table.
+| | Reconstruction | Catalog | Weight|
+| -- | -- | -- | -- |
+| Identifier | `--reco` or `-r` | `--catalog` or `-c` | `--flux` or `-f` |
+| Possibilities | `splinempe` and `millipede` | `turin` and `milliquas` | `True` or `False`|
+| Default | `splinempe` | `turin` | `False` |
+| Description | Reconstruction for the realtime alerts | Catalog of sources for the test, a more detailed description about the catalogs is on the paper | Weight to use in the test statistic for the sources, if `True` the X-ray flux is used, if `False` the redshift is used|
