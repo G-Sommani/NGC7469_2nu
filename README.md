@@ -28,4 +28,4 @@ Regarding `statistical_test.py`, there are several possible inputs to produce di
 | Identifier | `--reco` or `-r` | `--catalog` or `-c` | `--flux` or `-f` |
 | Possibilities | `splinempe` and `millipede` | `turin` and `milliquas` | `True` or `False`|
 | Default | `splinempe` | `turin` | `False` |
-| Description | Reconstruction for the realtime alerts | Catalog of sources for the test, a more detailed description about the catalogs is on the paper | Weight to use in the test statistic for the sources, if `True` the X-ray flux is used, if `False` the redshift is used|
+| Description | Reconstruction for the realtime alerts | Catalog of sources for the test, a more detailed description about the catalogs is in the paper | Weight to use in the test statistic for the sources, if `True` the X-ray flux is used, if `False` the redshift is used|
