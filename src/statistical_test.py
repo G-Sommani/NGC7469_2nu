@@ -7,222 +7,7 @@ import pandas as pd
 import numpy as np
 import time
 import argparse
-
-ALLOWED_CATALOGS = ["turin", "milliquas"]
-ALLOWED_RECONSTRUCTIONS = ["splinempe", "millipede"]
-TURIN_INDEX = 0
-MILLIQUAS_INDEX = 1
-SPLINEMPE_INDEX = 0
-MILLIPEDE_INDEX = 1
-DEFAULT_CATALOG = ALLOWED_CATALOGS[TURIN_INDEX]
-DEFAULT_RECO = ALLOWED_RECONSTRUCTIONS[SPLINEMPE_INDEX]
-MILLIQUAS_FILENAME = "milliquas.txt"
-MILLIQUAS_URL = "https://quasars.org/milliquas.zip"
-MILLIQUAS_ZIP = "milliquas.zip"
-MILLIQUAS_RA = "RA"
-MILLIQUAS_DEC = "DEC"
-MILLIQUAS_Z = "Z"
-MILLIQUAS_TYPE = "Type"
-MILLIQUAS_NAME = "Name"
-MILLIQUAS_COLSPECS = [
-    (0, 11),
-    (12, 23),
-    (25, 50),
-    (51, 55),
-    (56, 61),
-    (62, 67),
-    (68, 70),
-    (71, 72),
-    (73, 74),
-    (76, 82),
-    (83, 88),
-    (90, 95),
-    (97, 99),
-    (101, 103),
-    (105, 126),
-    (128, 149),
-    (151, 172),
-    (174, 195),
-]
-MILLIQUAS_HEADER = [
-    MILLIQUAS_RA,
-    MILLIQUAS_DEC,
-    MILLIQUAS_NAME,
-    MILLIQUAS_TYPE,
-    "Rmag",
-    "Bmag",
-    "Comment",
-    "R",
-    "B",
-    MILLIQUAS_Z,
-    "Cite",
-    "Zcite",
-    "RXpct",
-    "Qpct",
-    "Xname",
-    "Rname",
-    "Lobe1",
-    "Lobe2",
-]
-MILLIQUAS_Z_CUT = 0.5
-MILLIQUAS_AGN_CATEGORIES = [
-    "ARX",
-    "AX",
-    "QRX",
-    "QX",
-    "BRX",
-    "BX",
-    "KRX",
-    "KX",
-    "NRX",
-    "NX",
-]
-TURIN_FILENAME = "Turin_Catalogue_Table2_SourceProperties.txt"
-TURIN_NAMES_FILENAME = "Turin_Catalogue_Table1_SourceNames.txt"
-BASS_XRAY_FILENAME = "Bass_Catalogue_SourceXRay.txt"
-TURIN_URL = "https://cdsarc.cds.unistra.fr/ftp/J/A+A/659/A32/tablea2.dat"
-TURIN_NAMES_URL = "https://cdsarc.cds.unistra.fr/ftp/J/A+A/659/A32/tablea1.dat"
-BASS_XRAY_URL = "https://content.cld.iop.org/journals/0067-0049/233/2/17/revision1/apjsaa96adt12_mrt.txt"
-TURIN_ID = "ID"
-TURIN_SYCAT = "SYCAT"
-TURIN_SWIFT = "BAT105-Swift"
-BASS_SWIFT = "SwiftID"
-XRAY_FLUX_NAME = "F14-195-intr"
-TURIN_WISE = "WISE"
-TURIN_NAME_SOURCE = "IBIS4CAT-IGR"
-TURIN_RAh = "RAh"
-TURIN_RAm = "RAm"
-TURIN_RAs = "RAs"
-TURIN_DEd = "DEd"
-TURIN_DEm = "DEm"
-TURIN_DEs = "DEs"
-TURIN_z = "z"
-BASS_SKIPROWS = 28
-BASS_SEP = "\s+"
-FLUX_FACTOR = 1e-12
-TURIN_HEADER = [
-    TURIN_ID,
-    "SYCAT",
-    "WISE",
-    TURIN_RAh,
-    TURIN_RAm,
-    TURIN_RAs,
-    TURIN_DEd,
-    TURIN_DEm,
-    TURIN_DEs,
-    TURIN_z,
-    "LD",
-    "Class",
-    "r_z",
-    "ClassL",
-    "r_ClassL1",
-    "r_ClassL2",
-]
-TURIN_NAMES_HEADER = [
-    TURIN_ID,
-    TURIN_SYCAT,
-    "SUMSS",
-    "NVSS",
-    TURIN_WISE,
-    "Pan-STARRS",
-    "ROSAT",
-    "3PBC",
-    TURIN_SWIFT,
-    TURIN_NAME_SOURCE,
-]
-BASS_XRAY_HEADER = [
-    BASS_SWIFT,
-    "F2-10-obs",
-    "F14-195-obs",
-    "F2-10-intr",
-    "F20-50-intr",
-    "F14-150-intr",
-    XRAY_FLUX_NAME,
-]
-TURIN_NAMES_COLSPECS = [
-    (0, 2),
-    (4, 18),
-    (19, 38),
-    (40, 58),
-    (60, 79),
-    (80, 105),
-    (107, 122),
-    (124, 140),
-    (142, 161),
-    (162, 182),
-]
-TURIN_HEADER_PRESENT = None
-EFFECTIVE_AREA_FILENAME = "Effa_all_streams_gold_bronze.txt"
-EFFECTIVE_AREA_ENERGY_BINS_INDEX = 0
-EFFECTIVE_AREA_30_90_DEG_INDEX = 1
-EFFECTIVE_AREA_0_30_DEG_INDEX = 2
-EFFECTIVE_AREA_MIN5_0_DEG_INDEX = 3
-EFFECTIVE_AREA_MIN30_MIN5_DEG_INDEX = 4
-EFFECTIVE_AREA_MIN90_MIN30_DEG_INDEX = 5
-HUBBLE_CONSTANT = 73  # km s^-1 Mpc^-1
-MPC_TO_KM = 3.086e19
-SPEED_OF_LIGHT = 299792458  # m s^-1
-MJD_04102023 = 60132
-MJD_GOLDBRONZE_START = 58635
-DAYS_IN_YEAR = 365
-SECONDS_IN_YEAR = DAYS_IN_YEAR * 24 * 60 * 60
-FLUX_NU = 1e36  # s-1 GeV-1 at 100 GeV
-CONSTANT_XRAY = 1e-4  # GeV-2
-E0 = 100  # GeV
-SPLINEMPE_FILENAME = "gcn_notices_gold_bronze.txt"
-# IC190819A: Updated GCN Notice never reported
-# IC191231A: in GCN Circular reported the day after
-# IC200227A: Updated GCN Notice never reported
-# IC210503A: Never reconstructed with SplineMPE because detector
-# was in a test run configuration. Missing in SplineMPE catalog
-# IC210510A: Updated GCN Notice never reported
-# IC211117A: Updated GCN Notice never reported
-# IC221223A: Updated GCN Notice never reported
-# IC230120A: Updated GCN Notice never reported
-SPLINEMPE_EXCEPTIONS = [
-    "IC191231A",
-    "IC190819A",
-    "IC200227A",
-    "IC210510A",
-    "IC211117A",
-    "IC221223A",
-    "IC230220A",
-]
-# IC200120A: likely background
-# IC230823A: likely background
-SPLINEMPE_BACKGROUND = ["IC200120A", "IC230823A"]
-SPLINEMPE_GCN_START = "<tr align=left>\n"
-SPLINEMPE_INDEX_START = 65
-SPLINEMPE_COMMENT_START = "<!--\n"
-MILLIPEDE_FILENAME = "IC_Alerts_Table_Energies.csv"
-MILLIPEDE_IC_NAME = "IC_NAME"
-MILLIPEDE_RA = "RA"
-MILLIPEDE_RA_PLUS = "RA_ERR_P"
-MILLIPEDE_RA_MINUS = "RA_ERR_M"
-MILLIPEDE_DEC = "DEC"
-MILLIPEDE_DEC_PLUS = "DEC_ERR_P"
-MILLIPEDE_DEC_MINUS = "DEC_ERR_M"
-MILLIPEDE_ENERGY = "E [GeV]"
-RATIO_90_TO_SIGMA = 2.146
-RATIO_68_TO_SIGMA = 1.515
-RATIO_50_TO_SIGMA = 1.177
-TOTAL_SCRAMBLINGS_SPLINEMPE_TURIN = 300000
-TOTAL_SCRAMBLINGS_SPLINEMPE_MILLIQUAS = 70000
-TOTAL_SCRAMBLINGS_MILLIPEDE_TURIN = 10000
-TOTAL_SCRAMBLINGS_MILLIPEDE_TURIN_XRAY = 100000
-TOTAL_SCRAMBLINGS_MILLIPEDE_MILLIQUAS = 500
-ROUND_ANGLE = 360  # deg
-SPLINEMPE_ANG_DIST_FAST_SELECTION = 4  # deg
-MILLIPEDE_ANG_DIST_FAST_SELECTION = 5  # deg
-SPLINEMPE_SEARCH_RADIUS = 3  # deg
-MILLIPEDE_SEARCH_RADIUS = 4  # deg
-TEST_STATISTIC_EMPTY_SCRAMBLE = -1000
-ERG_TO_GEV = 624.151
-TEV_TO_GEV = 1e3
-TEST_STATISTIC_FILENAME = "test_statistic"
-FLUX_CHOICES = ["False", "True"]
-TRUE_INDEX = 1
-FALSE_INDEX = 0
+import config as cfg
 
 
 def main():
@@ -233,35 +18,35 @@ def main():
         "--reco",
         "-r",
         type=str,
-        default=ALLOWED_RECONSTRUCTIONS[SPLINEMPE_INDEX],
+        default=cfg.ALLOWED_RECONSTRUCTIONS[cfg.SPLINEMPE_INDEX],
         help="reconstruction to use for the neutrino events",
-        choices=ALLOWED_RECONSTRUCTIONS,
+        choices=cfg.ALLOWED_RECONSTRUCTIONS,
     )
     parser.add_argument(
         "--catalog",
         "-c",
         type=str,
-        default=ALLOWED_CATALOGS[TURIN_INDEX],
+        default=cfg.ALLOWED_CATALOGS[cfg.TURIN_INDEX],
         help="catalog of sources for the statistical test",
-        choices=ALLOWED_CATALOGS,
+        choices=cfg.ALLOWED_CATALOGS,
     )
     parser.add_argument(
         "--flux",
         "-f",
         type=str,
-        default=FLUX_CHOICES[FALSE_INDEX],
+        default=cfg.FLUX_CHOICES[cfg.FALSE_INDEX],
         help="weight the sources with x-ray flux, instead of using the redshift. Possible only with Turin catalog.",
-        choices=FLUX_CHOICES
+        choices=cfg.FLUX_CHOICES,
     )
     args = parser.parse_args()
     reco = args.reco
     catalog = args.catalog
     flux = args.flux
-    if flux == FLUX_CHOICES[TRUE_INDEX]:
+    if flux == cfg.FLUX_CHOICES[cfg.TRUE_INDEX]:
         flux = True
-    elif flux == FLUX_CHOICES[FALSE_INDEX]:
+    elif flux == cfg.FLUX_CHOICES[cfg.FALSE_INDEX]:
         flux = False
-    if flux and catalog == ALLOWED_CATALOGS[MILLIQUAS_INDEX]:
+    if flux and catalog == cfg.ALLOWED_CATALOGS[cfg.MILLIQUAS_INDEX]:
         raise ValueError(
             f"Possible to use the x-ray fluxes as weighting only with the Turin catalog."
         )
@@ -275,12 +60,12 @@ def main():
 
     filename = None
     url = None
-    if catalog == ALLOWED_CATALOGS[TURIN_INDEX]:
-        filename = TURIN_FILENAME
-        url = TURIN_URL
-    elif catalog == ALLOWED_CATALOGS[MILLIQUAS_INDEX]:
-        filename = MILLIQUAS_FILENAME
-        url = MILLIQUAS_URL
+    if catalog == cfg.ALLOWED_CATALOGS[cfg.TURIN_INDEX]:
+        filename = cfg.TURIN_FILENAME
+        url = cfg.TURIN_URL
+    elif catalog == cfg.ALLOWED_CATALOGS[cfg.MILLIQUAS_INDEX]:
+        filename = cfg.MILLIQUAS_FILENAME
+        url = cfg.MILLIQUAS_URL
 
     print(f"Checking if '{filename}' is in '{data_path}'...")
 
@@ -291,11 +76,11 @@ def main():
         print(f"{filename} not found, download {catalog} catalog...")
 
         r = requests.get(url, allow_redirects=True)
-        if catalog == ALLOWED_CATALOGS[TURIN_INDEX]:
-            catalog_path = data_path / TURIN_FILENAME
+        if catalog == cfg.ALLOWED_CATALOGS[cfg.TURIN_INDEX]:
+            catalog_path = data_path / cfg.TURIN_FILENAME
             open(catalog_path, "wb").write(r.content)
-        elif catalog == ALLOWED_CATALOGS[MILLIQUAS_INDEX]:
-            zip_path = data_path / MILLIQUAS_ZIP
+        elif catalog == cfg.ALLOWED_CATALOGS[cfg.MILLIQUAS_INDEX]:
+            zip_path = data_path / cfg.MILLIQUAS_ZIP
             open(zip_path, "wb").write(r.content)
 
             print(f"Unzipping {catalog} catalog...")
@@ -303,7 +88,7 @@ def main():
             with zipfile.ZipFile(zip_path, "r") as zip_ref:
                 zip_ref.extractall(data_path)
 
-            print(f"Removing {MILLIQUAS_ZIP}...")
+            print(f"Removing {cfg.MILLIQUAS_ZIP}...")
 
             os.remove(zip_path)
 
@@ -312,8 +97,8 @@ def main():
     decs_catalog = np.array([])
     redshifts_catalog = np.array([])
     names_catalog = np.array([])
-    if catalog == ALLOWED_CATALOGS[TURIN_INDEX]:
-        names_filename = TURIN_NAMES_FILENAME
+    if catalog == cfg.ALLOWED_CATALOGS[cfg.TURIN_INDEX]:
+        names_filename = cfg.TURIN_NAMES_FILENAME
         names_path = data_path / names_filename
 
         print(f"Checking if '{names_filename}' is in '{data_path}'...")
@@ -321,13 +106,13 @@ def main():
         if os.path.isfile(names_path):
             print(f"'{names_filename}' in '{data_path}', no need to download")
         else:
-            url_names = TURIN_NAMES_URL
+            url_names = cfg.TURIN_NAMES_URL
             print(f"{names_filename} not found, download from {url_names}...")
             r_names = requests.get(url_names, allow_redirects=True)
             open(names_path, "wb").write(r_names.content)
 
         if flux:
-            xray_filename = BASS_XRAY_FILENAME
+            xray_filename = cfg.BASS_XRAY_FILENAME
             xray_path = data_path / xray_filename
 
             print(f"Checking if '{xray_filename}' is in '{data_path}'...")
@@ -335,36 +120,38 @@ def main():
             if os.path.isfile(xray_path):
                 print(f"'{xray_filename}' in '{data_path}', no need to download")
             else:
-                url_xray = BASS_XRAY_URL
+                url_xray = cfg.BASS_XRAY_URL
                 print(f"{xray_filename} not found, download from {url_xray}...")
                 r_xray = requests.get(url_xray, allow_redirects=True)
                 open(xray_path, "wb").write(r_xray.content)
 
     print(f"Loading the {catalog} catalog...")
 
-    if catalog == ALLOWED_CATALOGS[TURIN_INDEX]:
+    if catalog == cfg.ALLOWED_CATALOGS[cfg.TURIN_INDEX]:
         dataframe = pd.read_fwf(
-            data_path / TURIN_FILENAME, header=TURIN_HEADER_PRESENT, names=TURIN_HEADER
+            data_path / cfg.TURIN_FILENAME,
+            header=cfg.TURIN_HEADER_PRESENT,
+            names=cfg.TURIN_HEADER,
         )
         dataframe_names = pd.read_fwf(
             names_path,
-            colspecs=TURIN_NAMES_COLSPECS,
-            header=TURIN_HEADER_PRESENT,
-            names=TURIN_NAMES_HEADER,
+            colspecs=cfg.TURIN_NAMES_COLSPECS,
+            header=cfg.TURIN_HEADER_PRESENT,
+            names=cfg.TURIN_NAMES_HEADER,
         )
         if flux:
             dataframe_flux = pd.read_csv(
-                data_path / BASS_XRAY_FILENAME,
-                names=BASS_XRAY_HEADER,
-                skiprows=BASS_SKIPROWS,
-                sep=BASS_SEP,
+                data_path / cfg.BASS_XRAY_FILENAME,
+                names=cfg.BASS_XRAY_HEADER,
+                skiprows=cfg.BASS_SKIPROWS,
+                sep=cfg.BASS_SEP,
             )
 
             # Drop sources in no BAT-Swift catalog.
-            turin_swift_names_array = dataframe_names[TURIN_SWIFT].to_numpy()
+            turin_swift_names_array = dataframe_names[cfg.TURIN_SWIFT].to_numpy()
             turin_swift_names_list = list(turin_swift_names_array)
             (idxs_sources_no_intr,) = np.where(pd.isnull(turin_swift_names_array))
-            sycat_names = dataframe_names[TURIN_SYCAT].to_numpy()
+            sycat_names = dataframe_names[cfg.TURIN_SYCAT].to_numpy()
             print(
                 "Dropping the following sources (SYCAT IDs) because they are not in any BAT Swift catalog:"
             )
@@ -373,8 +160,8 @@ def main():
             dataframe_names = dataframe_names.drop(idxs_sources_no_intr)
 
             # Drop sources that are in Swift BAT 105-Month, but not in Swift BAT 70-Month
-            swift_names = dataframe_names[TURIN_SWIFT].to_numpy()
-            flux_source_names = list(dataframe_flux[BASS_SWIFT].to_numpy())
+            swift_names = dataframe_names[cfg.TURIN_SWIFT].to_numpy()
+            flux_source_names = list(dataframe_flux[cfg.BASS_SWIFT].to_numpy())
             notfound_sources = list()
             notfound_idxs = list()
             for i, name in enumerate(swift_names):
@@ -391,14 +178,14 @@ def main():
             dataframe_names = dataframe_names.drop(notfound_idxs)
 
             # Define array with intrinsic x-ray fluxes
-            swift_bat_names = dataframe_names[TURIN_SWIFT].to_numpy()
-            all_xray_fluxes = dataframe_flux[XRAY_FLUX_NAME].to_numpy()
+            swift_bat_names = dataframe_names[cfg.TURIN_SWIFT].to_numpy()
+            all_xray_fluxes = dataframe_flux[cfg.XRAY_FLUX_NAME].to_numpy()
             xray_catalog = np.array([])
             for name in swift_bat_names:
                 namecode = name[:5] + name[6:]
                 name_idx = flux_source_names.index(namecode)
                 intr_xray_flux = all_xray_fluxes[name_idx]
-                xray_catalog = np.append(xray_catalog, intr_xray_flux * FLUX_FACTOR)
+                xray_catalog = np.append(xray_catalog, intr_xray_flux * cfg.FLUX_FACTOR)
 
         def hms_to_deg(h, m, s):
             return 15.0 * (h + (m + s / 60.0) / 60.0)
@@ -407,48 +194,48 @@ def main():
             return d + (m + s / 60.0) / 60.0
 
         ras_catalog = hms_to_deg(
-            dataframe[TURIN_RAh], dataframe[TURIN_RAm], dataframe[TURIN_RAs]
+            dataframe[cfg.TURIN_RAh], dataframe[cfg.TURIN_RAm], dataframe[cfg.TURIN_RAs]
         ).to_numpy()
         decs_catalog = dms_to_deg(
-            dataframe[TURIN_DEd], dataframe[TURIN_DEm], dataframe[TURIN_DEs]
+            dataframe[cfg.TURIN_DEd], dataframe[cfg.TURIN_DEm], dataframe[cfg.TURIN_DEs]
         ).to_numpy()
-        redshifts_catalog = dataframe[TURIN_z].to_numpy()
-        names_catalog = dataframe_names[TURIN_NAME_SOURCE].to_numpy()
-        names_catalog[pd.isna(names_catalog)] = dataframe_names[TURIN_SWIFT][
+        redshifts_catalog = dataframe[cfg.TURIN_z].to_numpy()
+        names_catalog = dataframe_names[cfg.TURIN_NAME_SOURCE].to_numpy()
+        names_catalog[pd.isna(names_catalog)] = dataframe_names[cfg.TURIN_SWIFT][
             pd.isna(names_catalog)
         ]
-        names_catalog[pd.isna(names_catalog)] = dataframe_names[TURIN_WISE][
+        names_catalog[pd.isna(names_catalog)] = dataframe_names[cfg.TURIN_WISE][
             pd.isna(names_catalog)
         ]
-    elif catalog == ALLOWED_CATALOGS[MILLIQUAS_INDEX]:
+    elif catalog == cfg.ALLOWED_CATALOGS[cfg.MILLIQUAS_INDEX]:
         dataframe = pd.read_fwf(
-            data_path / MILLIQUAS_FILENAME,
-            colspecs=MILLIQUAS_COLSPECS,
-            names=MILLIQUAS_HEADER,
+            data_path / cfg.MILLIQUAS_FILENAME,
+            colspecs=cfg.MILLIQUAS_COLSPECS,
+            names=cfg.MILLIQUAS_HEADER,
         )
 
-        print(f"Selecting only AGN within a redshift of {MILLIQUAS_Z_CUT}..")
+        print(f"Selecting only AGN within a redshift of {cfg.MILLIQUAS_Z_CUT}..")
 
         # Consider only the agn in the milliquas catalog
         mask01 = np.ma.mask_or(
-            dataframe[MILLIQUAS_TYPE] == MILLIQUAS_AGN_CATEGORIES[0],
-            dataframe[MILLIQUAS_TYPE] == MILLIQUAS_AGN_CATEGORIES[1],
+            dataframe[cfg.MILLIQUAS_TYPE] == cfg.MILLIQUAS_AGN_CATEGORIES[0],
+            dataframe[cfg.MILLIQUAS_TYPE] == cfg.MILLIQUAS_AGN_CATEGORIES[1],
         )
         mask23 = np.ma.mask_or(
-            dataframe[MILLIQUAS_TYPE] == MILLIQUAS_AGN_CATEGORIES[2],
-            dataframe[MILLIQUAS_TYPE] == MILLIQUAS_AGN_CATEGORIES[3],
+            dataframe[cfg.MILLIQUAS_TYPE] == cfg.MILLIQUAS_AGN_CATEGORIES[2],
+            dataframe[cfg.MILLIQUAS_TYPE] == cfg.MILLIQUAS_AGN_CATEGORIES[3],
         )
         mask45 = np.ma.mask_or(
-            dataframe[MILLIQUAS_TYPE] == MILLIQUAS_AGN_CATEGORIES[4],
-            dataframe[MILLIQUAS_TYPE] == MILLIQUAS_AGN_CATEGORIES[5],
+            dataframe[cfg.MILLIQUAS_TYPE] == cfg.MILLIQUAS_AGN_CATEGORIES[4],
+            dataframe[cfg.MILLIQUAS_TYPE] == cfg.MILLIQUAS_AGN_CATEGORIES[5],
         )
         mask67 = np.ma.mask_or(
-            dataframe[MILLIQUAS_TYPE] == MILLIQUAS_AGN_CATEGORIES[6],
-            dataframe[MILLIQUAS_TYPE] == MILLIQUAS_AGN_CATEGORIES[7],
+            dataframe[cfg.MILLIQUAS_TYPE] == cfg.MILLIQUAS_AGN_CATEGORIES[6],
+            dataframe[cfg.MILLIQUAS_TYPE] == cfg.MILLIQUAS_AGN_CATEGORIES[7],
         )
         mask89 = np.ma.mask_or(
-            dataframe[MILLIQUAS_TYPE] == MILLIQUAS_AGN_CATEGORIES[8],
-            dataframe[MILLIQUAS_TYPE] == MILLIQUAS_AGN_CATEGORIES[9],
+            dataframe[cfg.MILLIQUAS_TYPE] == cfg.MILLIQUAS_AGN_CATEGORIES[8],
+            dataframe[cfg.MILLIQUAS_TYPE] == cfg.MILLIQUAS_AGN_CATEGORIES[9],
         )
         mask0123 = np.ma.mask_or(mask01, mask23)
         mask4567 = np.ma.mask_or(mask45, mask67)
@@ -457,27 +244,29 @@ def main():
         dataframe_agn = dataframe[mask_agn]
 
         # Sources that are too far away are not significant for the test and slow down the program
-        dataframe_nearby = dataframe_agn[dataframe_agn[MILLIQUAS_Z] < MILLIQUAS_Z_CUT]
+        dataframe_nearby = dataframe_agn[
+            dataframe_agn[cfg.MILLIQUAS_Z] < cfg.MILLIQUAS_Z_CUT
+        ]
 
         # There are two blazars which are reported with a redshift of zero. This is unphyisical and
         # these two sources are therefore removed.
-        dataframe_nearby_no0 = dataframe_nearby[dataframe_nearby[MILLIQUAS_Z] != 0]
-        ras_catalog = dataframe_nearby_no0[MILLIQUAS_RA].to_numpy()
-        decs_catalog = dataframe_nearby_no0[MILLIQUAS_DEC].to_numpy()
-        redshifts_catalog = dataframe_nearby_no0[MILLIQUAS_Z].to_numpy()
-        names_catalog = dataframe_nearby_no0[MILLIQUAS_NAME].to_numpy()
+        dataframe_nearby_no0 = dataframe_nearby[dataframe_nearby[cfg.MILLIQUAS_Z] != 0]
+        ras_catalog = dataframe_nearby_no0[cfg.MILLIQUAS_RA].to_numpy()
+        decs_catalog = dataframe_nearby_no0[cfg.MILLIQUAS_DEC].to_numpy()
+        redshifts_catalog = dataframe_nearby_no0[cfg.MILLIQUAS_Z].to_numpy()
+        names_catalog = dataframe_nearby_no0[cfg.MILLIQUAS_NAME].to_numpy()
 
     print("Defining the test statistic...")
 
-    effective_area = np.genfromtxt(data_path / EFFECTIVE_AREA_FILENAME)
-    energy_bins = effective_area[:, EFFECTIVE_AREA_ENERGY_BINS_INDEX]
+    effective_area = np.genfromtxt(data_path / cfg.EFFECTIVE_AREA_FILENAME)
+    energy_bins = effective_area[:, cfg.EFFECTIVE_AREA_ENERGY_BINS_INDEX]
     effective_area_array = np.array(
         [
-            effective_area[:, EFFECTIVE_AREA_30_90_DEG_INDEX],
-            effective_area[:, EFFECTIVE_AREA_0_30_DEG_INDEX],
-            effective_area[:, EFFECTIVE_AREA_MIN5_0_DEG_INDEX],
-            effective_area[:, EFFECTIVE_AREA_MIN30_MIN5_DEG_INDEX],
-            effective_area[:, EFFECTIVE_AREA_MIN90_MIN30_DEG_INDEX],
+            effective_area[:, cfg.EFFECTIVE_AREA_30_90_DEG_INDEX],
+            effective_area[:, cfg.EFFECTIVE_AREA_0_30_DEG_INDEX],
+            effective_area[:, cfg.EFFECTIVE_AREA_MIN5_0_DEG_INDEX],
+            effective_area[:, cfg.EFFECTIVE_AREA_MIN30_MIN5_DEG_INDEX],
+            effective_area[:, cfg.EFFECTIVE_AREA_MIN90_MIN30_DEG_INDEX],
         ]
     )
 
@@ -506,9 +295,9 @@ def main():
         area_energy_factors = np.append(
             area_energy_factors, area_energy_factor_calculator(i)
         )
-    hubble_in_s = HUBBLE_CONSTANT / MPC_TO_KM
-    days = MJD_04102023 - MJD_GOLDBRONZE_START
-    seconds = (days / DAYS_IN_YEAR) * SECONDS_IN_YEAR
+    hubble_in_s = cfg.HUBBLE_CONSTANT / cfg.MPC_TO_KM
+    days = cfg.MJD_04102023 - cfg.MJD_GOLDBRONZE_START
+    seconds = (days / cfg.DAYS_IN_YEAR) * cfg.SECONDS_IN_YEAR
 
     def expected_nu_from_source(z, dec):
         """
@@ -517,27 +306,31 @@ def main():
         """
         area_energy_factor = None
         if 90 >= dec > 30:
-            area_energy_factor = area_energy_factors[EFFECTIVE_AREA_30_90_DEG_INDEX - 1]
+            area_energy_factor = area_energy_factors[
+                cfg.EFFECTIVE_AREA_30_90_DEG_INDEX - 1
+            ]
         elif dec <= 30 and dec > 0:
-            area_energy_factor = area_energy_factors[EFFECTIVE_AREA_0_30_DEG_INDEX - 1]
+            area_energy_factor = area_energy_factors[
+                cfg.EFFECTIVE_AREA_0_30_DEG_INDEX - 1
+            ]
         elif dec <= 0 and dec > -5:
             area_energy_factor = area_energy_factors[
-                EFFECTIVE_AREA_MIN5_0_DEG_INDEX - 1
+                cfg.EFFECTIVE_AREA_MIN5_0_DEG_INDEX - 1
             ]
         elif dec <= -5 and dec > -30:
             area_energy_factor = area_energy_factors[
-                EFFECTIVE_AREA_MIN30_MIN5_DEG_INDEX - 1
+                cfg.EFFECTIVE_AREA_MIN30_MIN5_DEG_INDEX - 1
             ]
         elif dec <= -30 and dec >= -90:
             area_energy_factor = area_energy_factors[
-                EFFECTIVE_AREA_MIN90_MIN30_DEG_INDEX - 1
+                cfg.EFFECTIVE_AREA_MIN90_MIN30_DEG_INDEX - 1
             ]
         constant = (
             (hubble_in_s ** 2)
             * seconds
-            / (4 * np.pi * (z ** 2) * (SPEED_OF_LIGHT ** 2))
+            / (4 * np.pi * (z ** 2) * (cfg.SPEED_OF_LIGHT ** 2))
         )  # m^-2 * s
-        expected_nu = constant * FLUX_NU * (E0 ** 2) * area_energy_factor
+        expected_nu = constant * cfg.FLUX_NU * (cfg.E0 ** 2) * area_energy_factor
         return expected_nu
 
     def flux_contribute(z, dec):
@@ -553,15 +346,15 @@ def main():
 
     def select_effective_area(dec, energy):
         if 90 >= dec > 30:
-            effa = effective_area_array[EFFECTIVE_AREA_30_90_DEG_INDEX - 1]
+            effa = effective_area_array[cfg.EFFECTIVE_AREA_30_90_DEG_INDEX - 1]
         elif dec <= 30 and dec > 0:
-            effa = effective_area_array[EFFECTIVE_AREA_0_30_DEG_INDEX - 1]
+            effa = effective_area_array[cfg.EFFECTIVE_AREA_0_30_DEG_INDEX - 1]
         elif dec <= 0 and dec > -5:
-            effa = effective_area_array[EFFECTIVE_AREA_MIN5_0_DEG_INDEX - 1]
+            effa = effective_area_array[cfg.EFFECTIVE_AREA_MIN5_0_DEG_INDEX - 1]
         elif dec <= -5 and dec > -30:
-            effa = effective_area_array[EFFECTIVE_AREA_MIN30_MIN5_DEG_INDEX - 1]
+            effa = effective_area_array[cfg.EFFECTIVE_AREA_MIN30_MIN5_DEG_INDEX - 1]
         elif dec <= -30 and dec >= -90:
-            effa = effective_area_array[EFFECTIVE_AREA_MIN90_MIN30_DEG_INDEX - 1]
+            effa = effective_area_array[cfg.EFFECTIVE_AREA_MIN90_MIN30_DEG_INDEX - 1]
         for index in range(len(energy_bins)):
             next_ebin = energy_bins[index + 1]
             if next_ebin >= energy:
@@ -578,26 +371,30 @@ def main():
             area_energy_factor = None
             if 90 >= dec > 30:
                 area_energy_factor = area_energy_factors[
-                    EFFECTIVE_AREA_30_90_DEG_INDEX - 1
+                    cfg.EFFECTIVE_AREA_30_90_DEG_INDEX - 1
                 ]
             elif dec <= 30 and dec > 0:
                 area_energy_factor = area_energy_factors[
-                    EFFECTIVE_AREA_0_30_DEG_INDEX - 1
+                    cfg.EFFECTIVE_AREA_0_30_DEG_INDEX - 1
                 ]
             elif dec <= 0 and dec > -5:
                 area_energy_factor = area_energy_factors[
-                    EFFECTIVE_AREA_MIN5_0_DEG_INDEX - 1
+                    cfg.EFFECTIVE_AREA_MIN5_0_DEG_INDEX - 1
                 ]
             elif dec <= -5 and dec > -30:
                 area_energy_factor = area_energy_factors[
-                    EFFECTIVE_AREA_MIN30_MIN5_DEG_INDEX - 1
+                    cfg.EFFECTIVE_AREA_MIN30_MIN5_DEG_INDEX - 1
                 ]
             elif dec <= -30 and dec >= -90:
                 area_energy_factor = area_energy_factors[
-                    EFFECTIVE_AREA_MIN90_MIN30_DEG_INDEX - 1
+                    cfg.EFFECTIVE_AREA_MIN90_MIN30_DEG_INDEX - 1
                 ]
             expected_nu = (
-                CONSTANT_XRAY * xray * ERG_TO_GEV * (E0 ** 2) * area_energy_factor
+                cfg.CONSTANT_XRAY
+                * xray
+                * cfg.ERG_TO_GEV
+                * (cfg.E0 ** 2)
+                * area_energy_factor
             )
             return expected_nu
 
@@ -708,20 +505,20 @@ def main():
     sigmas = np.array([])
     NAMEs = np.array([])
     ENERGIES = np.array([])
-    if reco == ALLOWED_RECONSTRUCTIONS[SPLINEMPE_INDEX]:
+    if reco == cfg.ALLOWED_RECONSTRUCTIONS[cfg.SPLINEMPE_INDEX]:
         rev0 = False
         rev1 = False
         has_rev1 = False
         is_data = False
         rev1_names = np.array([])
-        splinempe_f = open(data_path / SPLINEMPE_FILENAME)
+        splinempe_f = open(data_path / cfg.SPLINEMPE_FILENAME)
         notice_line_index = 0
         for index, line in enumerate(splinempe_f):
-            if line == SPLINEMPE_GCN_START and index > SPLINEMPE_INDEX_START:
+            if line == cfg.SPLINEMPE_GCN_START and index > cfg.SPLINEMPE_INDEX_START:
                 notice_line_index = 0
                 if index < 100:
                     is_data = True
-            if line == SPLINEMPE_COMMENT_START:
+            if line == cfg.SPLINEMPE_COMMENT_START:
                 is_data = False
             if is_data:
                 if notice_line_index == 2:
@@ -755,8 +552,8 @@ def main():
                                     np.where(NAMEs == name)
                                 ] = f"IC{year}{month}{day}B"
                         if (
-                            name in rev1_names or name in SPLINEMPE_EXCEPTIONS
-                        ) and not name in SPLINEMPE_BACKGROUND:
+                            name in rev1_names or name in cfg.SPLINEMPE_EXCEPTIONS
+                        ) and not name in cfg.SPLINEMPE_BACKGROUND:
                             NAMEs = np.append(NAMEs, name)
                             has_rev1 = True
                         else:
@@ -770,21 +567,23 @@ def main():
                         DECs = np.append(DECs, de)
                     if notice_line_index == 10:
                         err_50 = float(line.split(">")[1].split("<")[0]) / 60
-                        sigma = np.deg2rad(err_50) / RATIO_50_TO_SIGMA
+                        sigma = np.deg2rad(err_50) / cfg.RATIO_50_TO_SIGMA
                         sigmas = np.append(sigmas, sigma)
                     if notice_line_index == 11:
-                        energy = float(line.split(">")[1].split("<")[0]) * TEV_TO_GEV
+                        energy = (
+                            float(line.split(">")[1].split("<")[0]) * cfg.TEV_TO_GEV
+                        )
                         ENERGIES = np.append(ENERGIES, energy)
-    elif reco == ALLOWED_RECONSTRUCTIONS[MILLIPEDE_INDEX]:
-        alerts_df = pd.read_csv(data_path / MILLIPEDE_FILENAME)
-        RAs = alerts_df[MILLIPEDE_RA].to_numpy()
-        DECs = alerts_df[MILLIPEDE_DEC].to_numpy()
-        RAs_ERR_PLUS = alerts_df[MILLIPEDE_RA_PLUS].to_numpy()
-        DECs_ERR_PLUS = alerts_df[MILLIPEDE_DEC_PLUS].to_numpy()
-        RAs_ERR_MINUS = alerts_df[MILLIPEDE_RA_MINUS].to_numpy()
-        DECs_ERR_MINUS = alerts_df[MILLIPEDE_DEC_MINUS].to_numpy()
-        NAMEs = alerts_df[MILLIPEDE_IC_NAME].to_numpy()
-        ENERGIES = alerts_df[MILLIPEDE_ENERGY].to_numpy()
+    elif reco == cfg.ALLOWED_RECONSTRUCTIONS[cfg.MILLIPEDE_INDEX]:
+        alerts_df = pd.read_csv(data_path / cfg.MILLIPEDE_FILENAME)
+        RAs = alerts_df[cfg.MILLIPEDE_RA].to_numpy()
+        DECs = alerts_df[cfg.MILLIPEDE_DEC].to_numpy()
+        RAs_ERR_PLUS = alerts_df[cfg.MILLIPEDE_RA_PLUS].to_numpy()
+        DECs_ERR_PLUS = alerts_df[cfg.MILLIPEDE_DEC_PLUS].to_numpy()
+        RAs_ERR_MINUS = alerts_df[cfg.MILLIPEDE_RA_MINUS].to_numpy()
+        DECs_ERR_MINUS = alerts_df[cfg.MILLIPEDE_DEC_MINUS].to_numpy()
+        NAMEs = alerts_df[cfg.MILLIPEDE_IC_NAME].to_numpy()
+        ENERGIES = alerts_df[cfg.MILLIPEDE_ENERGY].to_numpy()
 
         def millipede_area(index):
             """
@@ -804,7 +603,7 @@ def main():
         sigmas = np.array([])
         for i in range(len(alerts_df)):
             area = millipede_area(i)
-            sigma = np.sqrt(area / np.pi) / RATIO_90_TO_SIGMA
+            sigma = np.sqrt(area / np.pi) / cfg.RATIO_90_TO_SIGMA
             sigmas = np.append(sigmas, sigma)
 
     print("Estimating background...")
@@ -812,22 +611,22 @@ def main():
     total_scramblings = 0
     ang_dist_fast_selection = 0
     search_radius = 0
-    if reco == ALLOWED_RECONSTRUCTIONS[SPLINEMPE_INDEX]:
-        ang_dist_fast_selection = SPLINEMPE_ANG_DIST_FAST_SELECTION
-        search_radius = SPLINEMPE_SEARCH_RADIUS
-        if catalog == ALLOWED_CATALOGS[TURIN_INDEX]:
-            total_scramblings = TOTAL_SCRAMBLINGS_SPLINEMPE_TURIN
-        elif catalog == ALLOWED_CATALOGS[MILLIQUAS_INDEX]:
-            total_scramblings = TOTAL_SCRAMBLINGS_SPLINEMPE_MILLIQUAS
-    elif reco == ALLOWED_RECONSTRUCTIONS[MILLIPEDE_INDEX]:
-        ang_dist_fast_selection = MILLIPEDE_ANG_DIST_FAST_SELECTION
-        search_radius = MILLIPEDE_SEARCH_RADIUS
-        if catalog == ALLOWED_CATALOGS[TURIN_INDEX]:
-            total_scramblings = TOTAL_SCRAMBLINGS_MILLIPEDE_TURIN
+    if reco == cfg.ALLOWED_RECONSTRUCTIONS[cfg.SPLINEMPE_INDEX]:
+        ang_dist_fast_selection = cfg.SPLINEMPE_ANG_DIST_FAST_SELECTION
+        search_radius = cfg.SPLINEMPE_SEARCH_RADIUS
+        if catalog == cfg.ALLOWED_CATALOGS[cfg.TURIN_INDEX]:
+            total_scramblings = cfg.TOTAL_SCRAMBLINGS_SPLINEMPE_TURIN
+        elif catalog == cfg.ALLOWED_CATALOGS[cfg.MILLIQUAS_INDEX]:
+            total_scramblings = cfg.TOTAL_SCRAMBLINGS_SPLINEMPE_MILLIQUAS
+    elif reco == cfg.ALLOWED_RECONSTRUCTIONS[cfg.MILLIPEDE_INDEX]:
+        ang_dist_fast_selection = cfg.MILLIPEDE_ANG_DIST_FAST_SELECTION
+        search_radius = cfg.MILLIPEDE_SEARCH_RADIUS
+        if catalog == cfg.ALLOWED_CATALOGS[cfg.TURIN_INDEX]:
+            total_scramblings = cfg.TOTAL_SCRAMBLINGS_MILLIPEDE_TURIN
             if flux:
-                total_scramblings = TOTAL_SCRAMBLINGS_MILLIPEDE_TURIN_XRAY
-        elif catalog == ALLOWED_CATALOGS[MILLIQUAS_INDEX]:
-            total_scramblings = TOTAL_SCRAMBLINGS_MILLIPEDE_MILLIQUAS
+                total_scramblings = cfg.TOTAL_SCRAMBLINGS_MILLIPEDE_TURIN_XRAY
+        elif catalog == cfg.ALLOWED_CATALOGS[cfg.MILLIQUAS_INDEX]:
+            total_scramblings = cfg.TOTAL_SCRAMBLINGS_MILLIPEDE_MILLIQUAS
     test_statistic_per_scramble = np.array([])
     names_alerts_per_scramble = np.array([])
     names_source_per_scramble = np.array([])
@@ -844,7 +643,7 @@ def main():
                 + " seconds remaining."
             )
         rng = np.random.default_rng(seed=scrambling_number)
-        random_ras = rng.uniform(0.0, ROUND_ANGLE, size=len(RAs))
+        random_ras = rng.uniform(0.0, cfg.ROUND_ANGLE, size=len(RAs))
         test_statistic_per_doublet = np.array([])
         names_alerts_per_doublet = np.array([])
         names_source_per_doublet = np.array([])
@@ -935,7 +734,7 @@ def main():
                     names_source_per_doublet, name_best_source
                 )
         if len(test_statistic_per_doublet) == 0:
-            test_statistic_scramble = TEST_STATISTIC_EMPTY_SCRAMBLE
+            test_statistic_scramble = cfg.TEST_STATISTIC_EMPTY_SCRAMBLE
             names_alerts_scramble = None
             name_source_scramble = None
         else:
@@ -952,10 +751,10 @@ def main():
         names_source_per_scramble = np.append(
             names_source_per_scramble, name_source_scramble
         )
-    
+
     print("Saving the ts distribution under the background hypothesis...")
 
-    test_statistic_filename = f"{TEST_STATISTIC_FILENAME}_{reco}_{catalog}"
+    test_statistic_filename = f"{cfg.TEST_STATISTIC_FILENAME}_{reco}_{catalog}"
     if flux:
         test_statistic_filename = f"{test_statistic_filename}_xray"
     else:
