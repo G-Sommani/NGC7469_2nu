@@ -2,22 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from pathlib import Path
 import os
-
-RA_INDEX = 0
-DE_INDEX = 1
-PLUS_INDEX = 1
-MINUS_INDEX = 0
-NGC7469_COORDS = [345.8156, 8.873861]
-CIRCULAR_23_COORDS = [345.85, 9.14]
-CIRCULAR_23_ERRS = [[1.04, 0.90], [0.76, 0.81]]
-CIRCULAR_22_COORDS = [346.11, 8.91]
-CIRCULAR_22_ERRS = [[1.33, 1.26], [1.01, 0.95]]
-CIRCULAR_PLOT_FILENAME = "GCNCirculars_ngc7469"
-NOTICE_22_COORDS = [345.757, 8.856]
-NOTICE_22_ERR = 0.66
-NOTICE_23_COORDS = [345.825, 9.007]
-NOTICE_23_ERR = 0.513
-NOTICE_PLOT_FILENAME = "GCNNotices_ngc7469"
+import config as cfg
 
 print("Definition of paths...")
 
@@ -28,29 +13,33 @@ figures_path = cwd / "../figures"
 
 
 def build_vertices(coords, errs):
-    ra = coords[RA_INDEX]
-    de = coords[DE_INDEX]
+    ra_index = cfg.RA_INDEX
+    de_index = cfg.DE_INDEX
+    plus_index = cfg.PLUS_INDEX
+    minus_index = cfg.MINUS_INDEX
+    ra = coords[ra_index]
+    de = coords[de_index]
     ra_vertices = [
-        ra - errs[RA_INDEX][MINUS_INDEX],
-        ra - errs[RA_INDEX][MINUS_INDEX],
-        ra + errs[RA_INDEX][PLUS_INDEX],
-        ra + errs[RA_INDEX][PLUS_INDEX],
-        ra - errs[RA_INDEX][MINUS_INDEX],
+        ra - errs[ra_index][minus_index],
+        ra - errs[ra_index][minus_index],
+        ra + errs[ra_index][plus_index],
+        ra + errs[ra_index][plus_index],
+        ra - errs[ra_index][minus_index],
     ]
     de_vertices = [
-        de - errs[DE_INDEX][MINUS_INDEX],
-        de + errs[DE_INDEX][PLUS_INDEX],
-        de + errs[DE_INDEX][PLUS_INDEX],
-        de - errs[DE_INDEX][MINUS_INDEX],
-        de - errs[DE_INDEX][MINUS_INDEX],
+        de - errs[de_index][minus_index],
+        de + errs[de_index][plus_index],
+        de + errs[de_index][plus_index],
+        de - errs[de_index][minus_index],
+        de - errs[de_index][minus_index],
     ]
     return ra_vertices, de_vertices
 
 
 def uncertainty_circle(coords, err):
     angles = np.linspace(0, 2 * np.pi, 100)
-    ras = coords[RA_INDEX] + err * np.cos(angles)
-    des = coords[DE_INDEX] + err * np.sin(angles)
+    ras = coords[cfg.RA_INDEX] + err * np.cos(angles)
+    des = coords[cfg.DE_INDEX] + err * np.sin(angles)
     return ras, des
 
 
@@ -58,8 +47,12 @@ print("Plotting GCN Circulars...")
 
 fig, ax = plt.subplots(figsize=(5, 5))
 
-ra_vertices_22, de_vertices_22 = build_vertices(CIRCULAR_22_COORDS, CIRCULAR_22_ERRS)
-ra_vertices_23, de_vertices_23 = build_vertices(CIRCULAR_23_COORDS, CIRCULAR_23_ERRS)
+ra_vertices_22, de_vertices_22 = build_vertices(
+    cfg.CIRCULAR_22_COORDS, cfg.CIRCULAR_22_ERRS
+)
+ra_vertices_23, de_vertices_23 = build_vertices(
+    cfg.CIRCULAR_23_COORDS, cfg.CIRCULAR_23_ERRS
+)
 
 plt.plot(
     ra_vertices_22,
@@ -78,20 +71,20 @@ plt.plot(
     linewidth=3,
 )
 plt.plot(
-    CIRCULAR_22_COORDS[RA_INDEX],
-    CIRCULAR_22_COORDS[DE_INDEX],
+    cfg.CIRCULAR_22_COORDS[cfg.RA_INDEX],
+    cfg.CIRCULAR_22_COORDS[cfg.DE_INDEX],
     marker="o",
     color="tab:blue",
 )
 plt.plot(
-    CIRCULAR_23_COORDS[RA_INDEX],
-    CIRCULAR_23_COORDS[DE_INDEX],
+    cfg.CIRCULAR_23_COORDS[cfg.RA_INDEX],
+    cfg.CIRCULAR_23_COORDS[cfg.DE_INDEX],
     color="tab:orange",
     marker="o",
 )
 plt.plot(
-    NGC7469_COORDS[RA_INDEX],
-    NGC7469_COORDS[DE_INDEX],
+    cfg.NGC7469_COORDS[cfg.RA_INDEX],
+    cfg.NGC7469_COORDS[cfg.DE_INDEX],
     marker="*",
     markeredgecolor="black",
     color="yellow",
@@ -112,8 +105,8 @@ ax.set_yticklabels(ax.get_yticks(), size="x-large")
 
 print("Saving GCN Circulars plot...")
 
-plt.savefig(figures_path / CIRCULAR_PLOT_FILENAME, bbox_inches="tight")
-circular_plot_filename_pdf = CIRCULAR_PLOT_FILENAME + ".pdf"
+plt.savefig(figures_path / cfg.CIRCULAR_PLOT_FILENAME, bbox_inches="tight")
+circular_plot_filename_pdf = cfg.CIRCULAR_PLOT_FILENAME + ".pdf"
 plt.savefig(figures_path / circular_plot_filename_pdf, bbox_inches="tight")
 plt.close()
 
@@ -121,8 +114,8 @@ print("Plotting first GCN Notices...")
 
 fig, ax = plt.subplots(figsize=(5, 5))
 
-ras_err_22, des_err_22 = uncertainty_circle(NOTICE_22_COORDS, NOTICE_22_ERR)
-ras_err_23, des_err_23 = uncertainty_circle(NOTICE_23_COORDS, NOTICE_23_ERR)
+ras_err_22, des_err_22 = uncertainty_circle(cfg.NOTICE_22_COORDS, cfg.NOTICE_22_ERR)
+ras_err_23, des_err_23 = uncertainty_circle(cfg.NOTICE_23_COORDS, cfg.NOTICE_23_ERR)
 
 plt.plot(
     ras_err_22,
@@ -141,17 +134,20 @@ plt.plot(
     linewidth=3,
 )
 plt.plot(
-    NOTICE_22_COORDS[RA_INDEX], NOTICE_22_COORDS[DE_INDEX], marker="o", color="tab:blue"
+    cfg.NOTICE_22_COORDS[cfg.RA_INDEX],
+    cfg.NOTICE_22_COORDS[cfg.DE_INDEX],
+    marker="o",
+    color="tab:blue",
 )
 plt.plot(
-    NOTICE_23_COORDS[RA_INDEX],
-    NOTICE_23_COORDS[DE_INDEX],
+    cfg.NOTICE_23_COORDS[cfg.RA_INDEX],
+    cfg.NOTICE_23_COORDS[cfg.DE_INDEX],
     color="tab:orange",
     marker="o",
 )
 plt.plot(
-    NGC7469_COORDS[RA_INDEX],
-    NGC7469_COORDS[DE_INDEX],
+    cfg.NGC7469_COORDS[cfg.RA_INDEX],
+    cfg.NGC7469_COORDS[cfg.DE_INDEX],
     marker="*",
     markeredgecolor="black",
     color="yellow",
@@ -172,7 +168,7 @@ ax.set_yticklabels(ax.get_yticks(), size="x-large")
 
 print("Saving GCN Notices plot...")
 
-plt.savefig(figures_path / NOTICE_PLOT_FILENAME, bbox_inches="tight")
-notice_plot_filename_pdf = NOTICE_PLOT_FILENAME + ".pdf"
+plt.savefig(figures_path / cfg.NOTICE_PLOT_FILENAME, bbox_inches="tight")
+notice_plot_filename_pdf = cfg.NOTICE_PLOT_FILENAME + ".pdf"
 plt.savefig(figures_path / notice_plot_filename_pdf, bbox_inches="tight")
 plt.close()
