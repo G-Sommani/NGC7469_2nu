@@ -3,12 +3,9 @@ import matplotlib.pyplot as plt
 import os
 from pathlib import Path
 import config as cfg
+from loading_functions import define_paths
 
-print("Definition of paths...")
-
-cwd = Path(os.getcwd())
-data_results_path = cwd / "../data_results"
-figures_path = cwd / "../figures"
+data_results_path, figures_path = define_paths(data=False, results=True, figures=True)
 
 print("Loading results...")
 

@@ -1,15 +1,9 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from pathlib import Path
-import os
 import config as cfg
+from loading_functions import define_paths
 
-print("Definition of paths...")
-
-# Definition of paths
-cwd = Path(os.getcwd())
-data_path = cwd / "../data"
-figures_path = cwd / "../figures"
+data_path, figures_path = define_paths(figures=True)
 
 
 def build_vertices(coords, errs):

@@ -1,21 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from pathlib import Path
-import os
 from math import factorial
 import csv
 import config as cfg
+from loading_functions import define_paths
 
-print("Definition of paths...")
-
-# Definition of paths
-cwd = Path(os.getcwd())
-data_path = cwd / "../data"
-figures_path = cwd / "../figures"
-
-print(f"Current dir: {cwd}")
-print(f"Data dir: {data_path}")
-print(f"Figures dir: {figures_path}")
+data_path, figures_path = define_paths(figures=True)
 
 print("Loading NGC7469 SED...")
 

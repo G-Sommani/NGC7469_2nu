@@ -50,8 +50,8 @@ def main():
         raise ValueError(
             f"Possible to use the x-ray fluxes as weighting only with the Turin catalog."
         )
-    
-    data_path, data_results_path = define_paths()
+
+    data_path, data_results_path = define_paths(results=True)
 
     filename = None
     url = None

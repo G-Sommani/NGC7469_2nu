@@ -1,15 +1,9 @@
 import numpy as np
-import os
-from pathlib import Path
 import matplotlib.pyplot as plt
 import config as cfg
+from loading_functions import define_paths
 
-print("Definition of paths...")
-
-# Definition of paths
-cwd = Path(os.getcwd())
-data_path = cwd / "../data"
-figures_path = cwd / "../figures"
+data_path, figures_path = define_paths(figures=True)
 
 effective_area = np.genfromtxt(data_path / cfg.EFFECTIVE_AREA_FILENAME)
 energy_bins = effective_area[:, cfg.EFFECTIVE_AREA_ENERGY_BINS_INDEX]

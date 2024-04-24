@@ -1,16 +1,10 @@
-from pathlib import Path
-import os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import config as cfg
+from loading_functions import define_paths
 
-print("Definition of paths...")
-
-# Definition of paths
-cwd = Path(os.getcwd())
-data_path = cwd / "../data"
-figures_path = cwd / "../figures"
+data_path, figures_path = define_paths(figures=True)
 
 print(
     f"Retrieving the alerts reconstructed with {cfg.ALLOWED_RECONSTRUCTIONS[cfg.SPLINEMPE_INDEX]}..."
