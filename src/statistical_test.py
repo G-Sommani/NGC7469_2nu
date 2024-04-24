@@ -7,7 +7,7 @@ import numpy as np
 import time
 import argparse
 import config as cfg
-from loading_functions import define_paths, define_catalog
+from loading_functions import Loader, define_catalog
 
 
 def main():
@@ -51,7 +51,9 @@ def main():
             f"Possible to use the x-ray fluxes as weighting only with the Turin catalog."
         )
 
-    data_path, data_results_path = define_paths(results=True)
+    loader = Loader()
+    data_path = loader.data_path
+    data_results_path = loader.data_results_path
     filename, url = define_catalog(catalog)
 
     print(f"Checking if '{filename}' is in '{data_path}'...")

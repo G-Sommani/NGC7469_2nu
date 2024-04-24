@@ -3,9 +3,11 @@ import matplotlib.pyplot as plt
 from math import factorial
 import csv
 import config as cfg
-from loading_functions import define_paths
+from loading_functions import Loader
 
-data_path, figures_path = define_paths(figures=True)
+loader = Loader()
+data_path = loader.data_path
+figures_path = loader.figures_path
 
 print("Loading NGC7469 SED...")
 

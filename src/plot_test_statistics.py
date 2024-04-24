@@ -3,9 +3,11 @@ import matplotlib.pyplot as plt
 import os
 from pathlib import Path
 import config as cfg
-from loading_functions import define_paths
+from loading_functions import Loader
 
-data_results_path, figures_path = define_paths(data=False, results=True, figures=True)
+loader = Loader()
+data_results_path = loader.data_results_path
+figures_path = loader.figures_path
 
 print("Loading results...")
 
