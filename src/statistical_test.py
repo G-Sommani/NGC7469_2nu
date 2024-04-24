@@ -1,7 +1,6 @@
 import sys
 import os
 import requests
-import zipfile
 import pandas as pd
 import numpy as np
 import time
