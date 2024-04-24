@@ -1,5 +1,14 @@
-ALLOWED_CATALOGS = ["turin", "milliquas"]
-ALLOWED_RECONSTRUCTIONS = ["splinempe", "millipede"]
+# recos
+SPLINEMPE = "splinempe"
+MILLIPEDE = "millipede"
+
+# catalogs
+TURIN = "turin"
+MILLIQUAS = "milliquas"
+
+# statistical test
+ALLOWED_CATALOGS = [TURIN, MILLIQUAS]
+ALLOWED_RECONSTRUCTIONS = [SPLINEMPE, MILLIPEDE]
 TURIN_INDEX = 0
 MILLIQUAS_INDEX = 1
 SPLINEMPE_INDEX = 0
@@ -268,10 +277,6 @@ NOTICE_23_ERR = 0.513
 NOTICE_PLOT_FILENAME = "GCNNotices_ngc7469"
 
 # plot test statistic
-SPLINEMPE = "splinempe"
-MILLIPEDE = "millipede"
-TURIN = "turin"
-MILLIQUAS = "milliquas"
 REDSHIFT = "redshift"
 XRAY = "xray"
 TS_FILENAME = "test_statistic"
@@ -294,3 +299,25 @@ FONTSIZE_TS = "large"
 AXISSCALE_TS = "log"
 FIGNAME_TS = "TS_distr"
 BBOX_INCHES = "tight"
+
+# areas ratio
+SPLINEMPE_MISSING = "IC210510A"
+FIGSIZE_AREAS = (5, 4)
+RANGE_BINS_AREAS = (-0.5, 3)
+NBINS_AREAS = 10
+ALPHA_AREAS = 0.8
+HISTTYPE_AREAS = "stepfilled"
+LINEWIDTH_AREAS = 2
+EDGECOLOR_AREAS = "darkblue"
+LABEL_HIST_AREAS = r"$\dfrac{\mathrm{Millipede}}{\mathrm{SplineMPE}}$"
+AVERAGE_COLOR_AREAS = "black"
+AVERAGE_LINEWIDTH_AREAS = 3
+AVERAGE_LINESTYLE_AREAS = "--"
+LEGEND_FONTSIZE_AREAS = "x-large"
+TICKS_FONTSIZE_AREAS = "x-large"
+XLABEL_AREAS = "Ratio"
+YLABEL_AREAS = "Counts"
+AXIS_FONTSIZE_AREAS = "xx-large"
+TITLE_AREAS = "Uncertainty areas"
+TITLE_FONTSIZE_AREAS = "xx-large"
+PLOTNAME_AREAS = "areas_ratio"
