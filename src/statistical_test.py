@@ -7,7 +7,7 @@ import numpy as np
 import time
 import argparse
 import config as cfg
-from loading_functions import define_paths
+from loading_functions import define_paths, define_catalog
 
 
 def main():
@@ -52,15 +52,7 @@ def main():
         )
 
     data_path, data_results_path = define_paths(results=True)
-
-    filename = None
-    url = None
-    if catalog == cfg.ALLOWED_CATALOGS[cfg.TURIN_INDEX]:
-        filename = cfg.TURIN_FILENAME
-        url = cfg.TURIN_URL
-    elif catalog == cfg.ALLOWED_CATALOGS[cfg.MILLIQUAS_INDEX]:
-        filename = cfg.MILLIQUAS_FILENAME
-        url = cfg.MILLIQUAS_URL
+    filename, url = define_catalog(catalog)
 
     print(f"Checking if '{filename}' is in '{data_path}'...")
 

@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
-from typing import List
+from typing import List, Tuple
+import config as cfg
 
 
 def define_paths(
@@ -25,3 +26,17 @@ def define_paths(
         paths.append(figures_path)
 
     return paths
+
+
+def define_catalog(catalog: str) -> Tuple[str, str]:
+
+    filename = None
+    url = None
+    if catalog == cfg.ALLOWED_CATALOGS[cfg.TURIN_INDEX]:
+        filename = cfg.TURIN_FILENAME
+        url = cfg.TURIN_URL
+    elif catalog == cfg.ALLOWED_CATALOGS[cfg.MILLIQUAS_INDEX]:
+        filename = cfg.MILLIQUAS_FILENAME
+        url = cfg.MILLIQUAS_URL
+
+    return filename, url
