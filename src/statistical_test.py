@@ -1,5 +1,4 @@
 import sys
-from pathlib import Path
 import os
 import requests
 import zipfile
@@ -8,6 +7,7 @@ import numpy as np
 import time
 import argparse
 import config as cfg
+from loading_functions import define_paths
 
 
 def main():
@@ -50,13 +50,8 @@ def main():
         raise ValueError(
             f"Possible to use the x-ray fluxes as weighting only with the Turin catalog."
         )
-
-    print("Definition of paths...")
-
-    # Definition of paths
-    cwd = Path(os.getcwd())
-    data_path = cwd / "../data"
-    data_results_path = cwd / "../data_results"
+    
+    data_path, data_results_path = define_paths()
 
     filename = None
     url = None
