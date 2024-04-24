@@ -7,7 +7,7 @@ import numpy as np
 import time
 import argparse
 import config as cfg
-from loading_functions import Loader, define_catalog
+from loading_functions import Loader
 
 
 def main():
@@ -54,32 +54,7 @@ def main():
     loader = Loader()
     data_path = loader.data_path
     data_results_path = loader.data_results_path
-    filename, url = define_catalog(catalog)
-
-    print(f"Checking if '{filename}' is in '{data_path}'...")
-
-    if os.path.isfile(data_path / filename):
-        print(f"'{filename}' in '{data_path}', no need to download")
-
-    else:
-        print(f"{filename} not found, download {catalog} catalog...")
-
-        r = requests.get(url, allow_redirects=True)
-        if catalog == cfg.ALLOWED_CATALOGS[cfg.TURIN_INDEX]:
-            catalog_path = data_path / cfg.TURIN_FILENAME
-            open(catalog_path, "wb").write(r.content)
-        elif catalog == cfg.ALLOWED_CATALOGS[cfg.MILLIQUAS_INDEX]:
-            zip_path = data_path / cfg.MILLIQUAS_ZIP
-            open(zip_path, "wb").write(r.content)
-
-            print(f"Unzipping {catalog} catalog...")
-
-            with zipfile.ZipFile(zip_path, "r") as zip_ref:
-                zip_ref.extractall(data_path)
-
-            print(f"Removing {cfg.MILLIQUAS_ZIP}...")
-
-            os.remove(zip_path)
+    loader.download_catalog(catalog)
 
     names_path = None
     ras_catalog = np.array([])
