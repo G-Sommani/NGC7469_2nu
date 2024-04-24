@@ -4,38 +4,7 @@ from pathlib import Path
 import os
 from math import factorial
 import csv
-
-# Definition of constants
-MJD_04102023 = 60132
-MJD_GOLDBRONZE_START = 58635
-DAYS_IN_YEAR = 365
-E_NU_2022 = 1.8399e05  # GeV
-E_NU_2023 = 1.2729e05  # GeV
-SUPERIOR_ENERGY_BOUND = 2e7  # GeV
-GEV_TO_ERG = 1.60218e-3
-TEV_TO_ERG = 1e3 * GEV_TO_ERG
-SECONDS_IN_YEAR = DAYS_IN_YEAR * 24 * 60 * 60
-NUMBER_OF_NU = 2
-FLUX_NU_MIN_1068 = 2.9e-11 * 1.6  # erg*cm-2*s-1, at 1 TeV
-FLUX_NU_MAX_1068 = 7.1e-11 * 1.6  # erg*cm-2*s-1, at 1 TeV
-GAMMA_MIN_1068 = 3.0  # spectral index
-GAMMA_MAX_1068 = 3.4  # spectral index
-MIN_E_NU_1068 = 1.5e3  # GeV
-MAX_E_NU_1068 = 1.5e4  # GeV
-MAX_E_7YRS = 1e6  # TeV
-MIN_E_7YRS = 1e-1  # TeV
-LOG_WIDTH_7YRS_BINS = 0.5
-INTRINSIC_HARD_XRAY_FLUX_1068 = 206.00e-12  # erg*cm-2*s-1
-INTRINSIC_HARD_XRAY_FLUX_ERR_1068 = 22e-12
-INTRINSIC_GAMMA_1068 = 2.37
-INTRINSIC_GAMMA_ERR_1068 = 0.1
-INTRINSIC_HARD_XRAY_FLUX_7469 = 64.30e-12  # erg*cm-2*s-1
-INTRINSIC_HARD_XRAY_FLUX_ERR_7469 = 8e-12
-INTRINSIC_GAMMA_7469 = 2.09
-INTRINSIC_GAMMA_ERR_7469 = 0.12
-ENERGY1_INTRINSIC_FLUX = 30  # keV
-ENERGY2_INTRINSIC_FLUX = 70  # keV
-M2_TO_CM2 = 1e4
+import config as cfg
 
 print("Definition of paths...")
 
@@ -89,8 +58,8 @@ for x in f_1068_SED:
         flux_errs_1068 = np.append(flux_errs_1068, flux_err)
 
 # Define years of integration
-days_alerts = MJD_04102023 - MJD_GOLDBRONZE_START
-years_alerts = days_alerts / DAYS_IN_YEAR
+days_alerts = cfg.MJD_04102023 - cfg.MJD_GOLDBRONZE_START
+years_alerts = days_alerts / cfg.DAYS_IN_YEAR
 
 print("Calculating confidence intervals...")
 
@@ -225,46 +194,48 @@ for i, x in enumerate(f_effA):
         areas.append(Area)
         k += 1
         # Energy bins that concern the neutrino energies
-        if Energy > E_NU_2022 and not effA2022_found:
+        if Energy > cfg.E_NU_2022 and not effA2022_found:
             effA2022 = areas[k - 1]
             effA2022_found = True
-        if Energy > E_NU_2023 and not effA2023_found:
+        if Energy > cfg.E_NU_2023 and not effA2023_found:
             effA2023 = areas[k - 1]
             effA2023_found = True
 
 print("Converting rates to energy fluxes...")
 
 # Convert energy in erg
-E22_erg = E_NU_2022 * GEV_TO_ERG
-E23_erg = E_NU_2023 * GEV_TO_ERG
+E22_erg = cfg.E_NU_2022 * cfg.GEV_TO_ERG
+E23_erg = cfg.E_NU_2023 * cfg.GEV_TO_ERG
 
 # Convert effective areas in cm^2
 A22_cm = effA2022 * 1e4
 A23_cm = effA2023 * 1e4
 
 # Average energy over effective area for the two neutrinos
-Avg_en_effA = (E22_erg / A22_cm + E23_erg / A23_cm) / NUMBER_OF_NU
+Avg_en_effA = (E22_erg / A22_cm + E23_erg / A23_cm) / cfg.NUMBER_OF_NU
 
 # Convert rate in s^-1
-rate_sup_2nu = lim_sup_2_nu / SECONDS_IN_YEAR
-rate_inf_2nu = lim_inf_2_nu / SECONDS_IN_YEAR
+rate_sup_2nu = lim_sup_2_nu / cfg.SECONDS_IN_YEAR
+rate_inf_2nu = lim_inf_2_nu / cfg.SECONDS_IN_YEAR
 
 # Calculate superior limit over energy flux, for the average energy of the two neutrinos (THIS IS NOT PLOTTED)
 E_sup_Flux_2_nu = Avg_en_effA * rate_sup_2nu
 E_inf_Flux_2_nu = Avg_en_effA * rate_inf_2nu
 
 # Calculate averaged energy of the two neutrinos
-averaged_energy = (E_NU_2022 * effA2022 + E_NU_2023 * effA2023) / (effA2022 + effA2023)
+averaged_energy = (cfg.E_NU_2022 * effA2022 + cfg.E_NU_2023 * effA2023) / (
+    effA2022 + effA2023
+)
 
 # As lower bound in energy we take 100 TeV less than the average energy.
 # (Similar to TXS paper)
-min_energy = min(E_NU_2022, E_NU_2023)
-max_energy = max(E_NU_2022, E_NU_2023)
+min_energy = min(cfg.E_NU_2022, cfg.E_NU_2023)
+max_energy = max(cfg.E_NU_2022, cfg.E_NU_2023)
 lower_energy_bound = min_energy - 1e5
 
 # As superior bound in energy we take 20 PeV (circa the highest energy neutrinos that IceCube can hope to detect).
 energy_space_nu_flux_7469_general = np.logspace(
-    np.log10(lower_energy_bound), np.log10(SUPERIOR_ENERGY_BOUND), 500
+    np.log10(lower_energy_bound), np.log10(cfg.SUPERIOR_ENERGY_BOUND), 500
 )
 # We also define another energy space just between the two reported neutrino energies.
 energy_space_nu_flux_7469_between_nu = np.logspace(
@@ -273,10 +244,10 @@ energy_space_nu_flux_7469_between_nu = np.logspace(
 
 # interpolate the effective areas over the various energy spaces and convert them in cm.
 effas_interp_general = (
-    np.interp(energy_space_nu_flux_7469_general, energies, areas) * M2_TO_CM2
+    np.interp(energy_space_nu_flux_7469_general, energies, areas) * cfg.M2_TO_CM2
 )
 effas_interp_between_nu = (
-    np.interp(energy_space_nu_flux_7469_between_nu, energies, areas) * M2_TO_CM2
+    np.interp(energy_space_nu_flux_7469_between_nu, energies, areas) * cfg.M2_TO_CM2
 )
 
 # estimate superior and lower limits on energies (THESE ARE PLOTTED):
@@ -284,25 +255,25 @@ effas_interp_between_nu = (
 #     2) Between the two reported neutrino energies.
 E_sup_Flux_2_nu_general = (
     energy_space_nu_flux_7469_general
-    * GEV_TO_ERG
+    * cfg.GEV_TO_ERG
     * rate_sup_2nu
     / (effas_interp_general)
 )
 E_inf_Flux_2_nu_general = (
     energy_space_nu_flux_7469_general
-    * GEV_TO_ERG
+    * cfg.GEV_TO_ERG
     * rate_inf_2nu
     / (effas_interp_general)
 )
 E_sup_Flux_2_nu_between_nu = (
     energy_space_nu_flux_7469_between_nu
-    * GEV_TO_ERG
+    * cfg.GEV_TO_ERG
     * rate_sup_2nu
     / (effas_interp_between_nu)
 )
 E_inf_Flux_2_nu_between_nu = (
     energy_space_nu_flux_7469_between_nu
-    * GEV_TO_ERG
+    * cfg.GEV_TO_ERG
     * rate_inf_2nu
     / (effas_interp_between_nu)
 )
@@ -311,17 +282,19 @@ print(f"Inferior limit on energy flux: {E_inf_Flux_2_nu:.2} erg cm-2 s-1")
 print(f"Superior limit on energy flux: {E_sup_Flux_2_nu:.2} erg cm-2 s-1")
 print(f"\n\n**************************************************\n\n")
 print(
-    f"90% CL of neutrino flux at {averaged_energy/1e3:.0f} TeV: [{E_inf_Flux_2_nu/(TEV_TO_ERG*(averaged_energy*1e-3)**2):.3},{E_sup_Flux_2_nu/(TEV_TO_ERG*(averaged_energy*1e-3)**2):.3}] TeV-1*cm-2*s-1"
+    f"90% CL of neutrino flux at {averaged_energy/1e3:.0f} TeV: [{E_inf_Flux_2_nu/(cfg.TEV_TO_ERG*(averaged_energy*1e-3)**2):.3},{E_sup_Flux_2_nu/(cfg.TEV_TO_ERG*(averaged_energy*1e-3)**2):.3}] TeV-1*cm-2*s-1"
 )
 print(
-    f"Lower and superior bounds in energy: {lower_energy_bound/1e3:.0f} TeV, {SUPERIOR_ENERGY_BOUND/1e6:.0f} PeV"
+    f"Lower and superior bounds in energy: {lower_energy_bound/1e3:.0f} TeV, {cfg.SUPERIOR_ENERGY_BOUND/1e6:.0f} PeV"
 )
 print(f"\n\n**************************************************\n\n")
 
 print("Retrieving neutrino flux intervals for NGC1068...")
 
 # Neutrino flux for NGC1068
-energies_1068_nu = np.logspace(np.log10(MIN_E_NU_1068), np.log10(MAX_E_NU_1068), 100)
+energies_1068_nu = np.logspace(
+    np.log10(cfg.MIN_E_NU_1068), np.log10(cfg.MAX_E_NU_1068), 100
+)
 
 
 def nu_flux(x, flux, gamma):
@@ -332,8 +305,8 @@ def nu_flux(x, flux, gamma):
     return flux * (x / 1e3) ** (2 - gamma)
 
 
-nu_fluxes_min_1068 = nu_flux(energies_1068_nu, FLUX_NU_MIN_1068, GAMMA_MAX_1068)
-nu_fluxes_max_1068 = nu_flux(energies_1068_nu, FLUX_NU_MAX_1068, GAMMA_MIN_1068)
+nu_fluxes_min_1068 = nu_flux(energies_1068_nu, cfg.FLUX_NU_MIN_1068, cfg.GAMMA_MAX_1068)
+nu_fluxes_max_1068 = nu_flux(energies_1068_nu, cfg.FLUX_NU_MAX_1068, cfg.GAMMA_MIN_1068)
 
 print("Retrievieng IceCube 7 yrs sensitivities...")
 
@@ -349,13 +322,13 @@ with open(data_path / "pstracks_7yrs_diffsens.csv", "r") as file:
         flux_TeV = float((row[0] + "." + row[1]).split()[1])  # Unit is TeV*cm-2*s-1
         flux = flux_TeV * 1.60218  # Unit: erg*cm-2*s-1
         fluxes_sens = np.append(fluxes_sens, flux)
-max_E_7yrs = MAX_E_7YRS * 1e3  # GeV
-min_E_7yrs = MIN_E_7YRS * 1e3  # GeV
-first_bin = min_E_7yrs * 10 ** (LOG_WIDTH_7YRS_BINS / 2)
+max_E_7yrs = cfg.MAX_E_7YRS * 1e3  # GeV
+min_E_7yrs = cfg.MIN_E_7YRS * 1e3  # GeV
+first_bin = min_E_7yrs * 10 ** (cfg.LOG_WIDTH_7YRS_BINS / 2)
 fluxes_7yrs = [fluxes_sens[0]]
 bins_7yrs = [min_E_7yrs]
 for i in range(14):
-    new_bin = bins_7yrs[-1] * 10 ** (LOG_WIDTH_7YRS_BINS)
+    new_bin = bins_7yrs[-1] * 10 ** (cfg.LOG_WIDTH_7YRS_BINS)
     if i != 13:
         bins_7yrs.append(new_bin)
         bins_7yrs.append(new_bin)
@@ -416,16 +389,16 @@ def find_fluxes(
 
 
 intrinsic_data_1068 = find_fluxes(
-    INTRINSIC_GAMMA_1068,
-    INTRINSIC_HARD_XRAY_FLUX_1068,
-    INTRINSIC_GAMMA_ERR_1068,
-    INTRINSIC_HARD_XRAY_FLUX_ERR_1068,
+    cfg.INTRINSIC_GAMMA_1068,
+    cfg.INTRINSIC_HARD_XRAY_FLUX_1068,
+    cfg.INTRINSIC_GAMMA_ERR_1068,
+    cfg.INTRINSIC_HARD_XRAY_FLUX_ERR_1068,
 )
 intrinsic_data_7469 = find_fluxes(
-    INTRINSIC_GAMMA_7469,
-    INTRINSIC_HARD_XRAY_FLUX_7469,
-    INTRINSIC_GAMMA_ERR_7469,
-    INTRINSIC_HARD_XRAY_FLUX_ERR_7469,
+    cfg.INTRINSIC_GAMMA_7469,
+    cfg.INTRINSIC_HARD_XRAY_FLUX_7469,
+    cfg.INTRINSIC_GAMMA_ERR_7469,
+    cfg.INTRINSIC_HARD_XRAY_FLUX_ERR_7469,
 )
 intr_fluxes_sed_1068 = intrinsic_data_1068[:2]
 intr_fluxes_sed_errs_1068 = intrinsic_data_1068[2:]
@@ -492,7 +465,7 @@ plt.plot(
     linestyle="--",
 )
 plt.errorbar(
-    [ENERGY1_INTRINSIC_FLUX * 1e-6, ENERGY2_INTRINSIC_FLUX * 1e-6],
+    [cfg.ENERGY1_INTRINSIC_FLUX * 1e-6, cfg.ENERGY2_INTRINSIC_FLUX * 1e-6],
     intr_fluxes_sed_7469,
     intr_fluxes_sed_errs_7469,
     markersize=1,
@@ -500,7 +473,7 @@ plt.errorbar(
     label="NGC 7469, hard x-ray (14 - 195 keV) intrinsic flux",
 )
 plt.errorbar(
-    [ENERGY1_INTRINSIC_FLUX * 1e-6, ENERGY2_INTRINSIC_FLUX * 1e-6],
+    [cfg.ENERGY1_INTRINSIC_FLUX * 1e-6, cfg.ENERGY2_INTRINSIC_FLUX * 1e-6],
     intr_fluxes_sed_1068,
     intr_fluxes_sed_errs_1068,
     markersize=1,

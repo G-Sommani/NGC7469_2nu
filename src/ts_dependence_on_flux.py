@@ -67,7 +67,9 @@ def expected_nu_from_source(z, dec, nu_flux=cfg.FLUX_NU):
     elif dec <= 30 and dec > 0:
         area_energy_factor = area_energy_factors[cfg.EFFECTIVE_AREA_0_30_DEG_INDEX - 1]
     elif dec <= 0 and dec > -5:
-        area_energy_factor = area_energy_factors[cfg.EFFECTIVE_AREA_MIN5_0_DEG_INDEX - 1]
+        area_energy_factor = area_energy_factors[
+            cfg.EFFECTIVE_AREA_MIN5_0_DEG_INDEX - 1
+        ]
     elif dec <= -5 and dec > -30:
         area_energy_factor = area_energy_factors[
             cfg.EFFECTIVE_AREA_MIN30_MIN5_DEG_INDEX - 1
@@ -77,7 +79,9 @@ def expected_nu_from_source(z, dec, nu_flux=cfg.FLUX_NU):
             cfg.EFFECTIVE_AREA_MIN90_MIN30_DEG_INDEX - 1
         ]
     constant = (
-        (hubble_in_s ** 2) * seconds / (4 * np.pi * (z ** 2) * (cfg.SPEED_OF_LIGHT ** 2))
+        (hubble_in_s ** 2)
+        * seconds
+        / (4 * np.pi * (z ** 2) * (cfg.SPEED_OF_LIGHT ** 2))
     )  # m^-2 * s
     expected_nu = constant * nu_flux * (cfg.E0 ** 2) * area_energy_factor
     return expected_nu
