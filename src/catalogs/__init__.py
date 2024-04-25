@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 import importlib
-from typing import List
 import numpy as np
 from pathlib import Path
 
