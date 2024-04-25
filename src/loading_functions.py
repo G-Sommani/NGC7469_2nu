@@ -77,6 +77,9 @@ class Loader:
         self, filename: str | None, url: str | None, zipname: str | None = None
     ) -> None:
 
+        if filename == None:
+            return
+
         print(f"Checking if '{filename}' is in '{self.data_path}'...")
 
         if os.path.isfile(self.data_path / filename):
@@ -98,9 +101,5 @@ class Loader:
         ) = define_catalog(catalog, flux=flux)
 
         self.check_presence(filename_data, url_data, zipname=zipname_data)
-
-        if filename_names is not None:
-            self.check_presence(filename_names, url_names)
-
-        if filename_xray is not None:
-            self.check_presence(filename_xray, url_xray)
+        self.check_presence(filename_names, url_names)
+        self.check_presence(filename_xray, url_xray)
