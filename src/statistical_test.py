@@ -62,18 +62,7 @@ def main():
     energy_bins = test_stat.energy_bins
     effective_area_array = test_stat.effective_area_array
     area_energy_factors = test_stat.area_energy_factors
-    expected_nu_from_source = test_stat.expected_nu_from_source
-
-    def flux_contribute(z, dec):
-        """
-        Given the redshift and the declination of a source, determines the contribution
-        to the test statistic related to the neutrino flux of the source
-        """
-        mu = expected_nu_from_source(z, dec)
-        contribute = (
-            np.log(0.5) + 2 * np.log(mu) - mu
-        )  # Here we assume the limit of low fluxes as valid
-        return contribute
+    flux_contribute = test_stat.flux_contribute
 
     def select_effective_area(dec, energy):
         if 90 >= dec > 30:

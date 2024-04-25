@@ -83,3 +83,14 @@ class TestStatistic:
         )  # m^-2 * s
         expected_nu = constant * cfg.FLUX_NU * (cfg.E0 ** 2) * area_energy_factor
         return expected_nu
+
+    def flux_contribute(self, z: float, dec: float) -> float:
+        """
+        Given the redshift and the declination of a source, determines the contribution
+        to the test statistic related to the neutrino flux of the source
+        """
+        mu = self.expected_nu_from_source(z, dec)
+        contribute = (
+            np.log(0.5) + 2 * np.log(mu) - mu
+        )  # Here we assume the limit of low fluxes as valid
+        return contribute
