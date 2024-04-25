@@ -6,6 +6,7 @@ import argparse
 import config as cfg
 from loading_functions import Loader
 import catalogs
+from test_statistic import TestStatistic
 
 
 def main():
@@ -57,28 +58,10 @@ def main():
     names_catalog = catalog.names_catalog
     xray_catalog = catalog.xray_catalog
 
-    print("Defining the test statistic...")
-
-    effective_area = np.genfromtxt(data_path / cfg.EFFECTIVE_AREA_FILENAME)
-    energy_bins = effective_area[:, cfg.EFFECTIVE_AREA_ENERGY_BINS_INDEX]
-    effective_area_array = np.array(
-        [
-            effective_area[:, cfg.EFFECTIVE_AREA_30_90_DEG_INDEX],
-            effective_area[:, cfg.EFFECTIVE_AREA_0_30_DEG_INDEX],
-            effective_area[:, cfg.EFFECTIVE_AREA_MIN5_0_DEG_INDEX],
-            effective_area[:, cfg.EFFECTIVE_AREA_MIN30_MIN5_DEG_INDEX],
-            effective_area[:, cfg.EFFECTIVE_AREA_MIN90_MIN30_DEG_INDEX],
-        ]
-    )
-
-    def energy_factor(bin_index):
-        """
-        Estimate energy factor for expected number of detected neutrinos
-        """
-        e_max = energy_bins[bin_index + 1]
-        e_min = energy_bins[bin_index]
-        factor = (e_max - e_min) / (e_max * e_min)
-        return factor
+    test_stat = TestStatistic()
+    energy_bins = test_stat.energy_bins
+    effective_area_array = test_stat.effective_area_array
+    energy_factor = test_stat.energy_factor
 
     def area_energy_factor_calculator(a_index):
         """

@@ -3,6 +3,8 @@ from pathlib import Path
 import zipfile
 import requests
 import catalogs
+import numpy as np
+import config as cfg
 
 
 class Loader:
@@ -65,3 +67,6 @@ class Loader:
         print(f"Loading the {catalog.catalog_name} catalog...")
 
         catalog.load_catalog(self.data_path)
+
+    def load_effective_area(self) -> np.ndarray:
+        return np.genfromtxt(self.data_path / cfg.EFFECTIVE_AREA_FILENAME)
