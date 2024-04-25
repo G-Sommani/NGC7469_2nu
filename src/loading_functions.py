@@ -50,7 +50,7 @@ class Loader:
         self.data_results_path = self.cwd / "../data_results"
         self.figures_path = self.cwd / "../figures"
 
-    def download_catalog(self, catalog: str) -> None:
+    def download_catalog(self, catalog: str, flux: bool = False) -> None:
 
         (
             filename_data,
@@ -59,7 +59,7 @@ class Loader:
             url_names,
             filename_xray,
             url_xray,
-        ) = define_catalog(catalog)
+        ) = define_catalog(catalog, flux=flux)
 
         print(f"Checking if '{filename_data}' is in '{self.data_path}'...")
 
@@ -74,20 +74,6 @@ class Loader:
                 catalog_path = self.data_path / cfg.TURIN_FILENAME
                 open(catalog_path, "wb").write(r.content)
 
-                print(f"Checking if '{filename_names}' is in '{self.data_path}'...")
-
-                path_names = self.data_path / filename_names
-
-                if os.path.isfile(path_names):
-                    print(
-                        f"'{filename_names}' in '{self.data_path}', no need to download"
-                    )
-
-                else:
-                    print(f"{filename_names} not found, download from {url_names}...")
-                    r_names = requests.get(str(url_names), allow_redirects=True)
-                    open(path_names, "wb").write(r_names.content)
-
             elif catalog == cfg.ALLOWED_CATALOGS[cfg.MILLIQUAS_INDEX]:
                 zip_path = self.data_path / cfg.MILLIQUAS_ZIP
                 open(zip_path, "wb").write(r.content)
@@ -100,5 +86,31 @@ class Loader:
                 print(f"Removing {cfg.MILLIQUAS_ZIP}...")
 
                 os.remove(zip_path)
+
+        if filename_names is not None:
+
+            print(f"Checking if '{filename_names}' is in '{self.data_path}'...")
+
+            path_names = self.data_path / filename_names
+
+            if os.path.isfile(path_names):
+                print(f"'{filename_names}' in '{self.data_path}', no need to download")
+            else:
+                print(f"{filename_names} not found, download from {url_names}...")
+                r_names = requests.get(str(url_names), allow_redirects=True)
+                open(path_names, "wb").write(r_names.content)
+
+        if filename_xray is not None:
+
+            print(f"Checking if '{filename_xray}' is in '{self.data_path}'...")
+
+            xray_path = self.data_path / filename_xray
+
+            if os.path.isfile(xray_path):
+                print(f"'{filename_xray}' in '{self.data_path}', no need to download")
+            else:
+                print(f"{filename_xray} not found, download from {url_xray}...")
+                r_xray = requests.get(str(url_xray), allow_redirects=True)
+                open(xray_path, "wb").write(r_xray.content)
 
         return

@@ -53,27 +53,12 @@ def main():
     loader = Loader()
     data_path = loader.data_path
     data_results_path = loader.data_results_path
-    loader.download_catalog(catalog)
+    loader.download_catalog(catalog, flux=flux)
 
     ras_catalog = np.array([])
     decs_catalog = np.array([])
     redshifts_catalog = np.array([])
     names_catalog = np.array([])
-    if catalog == cfg.ALLOWED_CATALOGS[cfg.TURIN_INDEX]:
-
-        if flux:
-            xray_filename = cfg.BASS_XRAY_FILENAME
-            xray_path = data_path / xray_filename
-
-            print(f"Checking if '{xray_filename}' is in '{data_path}'...")
-
-            if os.path.isfile(xray_path):
-                print(f"'{xray_filename}' in '{data_path}', no need to download")
-            else:
-                url_xray = cfg.BASS_XRAY_URL
-                print(f"{xray_filename} not found, download from {url_xray}...")
-                r_xray = requests.get(url_xray, allow_redirects=True)
-                open(xray_path, "wb").write(r_xray.content)
 
     print(f"Loading the {catalog} catalog...")
 
