@@ -114,6 +114,8 @@ class Loader:
         names_catalog = np.array([])
         xray_catalog = np.array([])
 
+        self.download_catalog(catalog, flux=flux)
+
         print(f"Loading the {catalog} catalog...")
 
         if catalog == cfg.ALLOWED_CATALOGS[cfg.TURIN_INDEX]:

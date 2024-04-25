@@ -51,7 +51,6 @@ def main():
     loader = Loader()
     data_path = loader.data_path
     data_results_path = loader.data_results_path
-    loader.download_catalog(catalog, flux=flux)
     (
         ras_catalog,
         decs_catalog,
