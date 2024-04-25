@@ -50,6 +50,11 @@ class Loader:
         self.data_results_path = self.cwd / "../data_results"
         self.figures_path = self.cwd / "../figures"
 
+    def download_file(self, filename: str | None, url: str | None) -> None:
+        print(f"{filename} not found, download from {url}...")
+        r = requests.get(str(url), allow_redirects=True)
+        open(self.data_path / filename, "wb").write(r.content)
+
     def download_catalog(self, catalog: str, flux: bool = False) -> None:
 
         (
@@ -67,14 +72,13 @@ class Loader:
             print(f"'{filename_data}' in '{self.data_path}', no need to download")
 
         else:
-            print(f"{filename_data} not found, download {catalog} catalog...")
 
-            r = requests.get(str(url_data), allow_redirects=True)
             if catalog == cfg.ALLOWED_CATALOGS[cfg.TURIN_INDEX]:
-                catalog_path = self.data_path / cfg.TURIN_FILENAME
-                open(catalog_path, "wb").write(r.content)
+                self.download_file(filename_data, url_data)
 
             elif catalog == cfg.ALLOWED_CATALOGS[cfg.MILLIQUAS_INDEX]:
+                print(f"{filename_data} not found, download {catalog} catalog...")
+                r = requests.get(str(url_data), allow_redirects=True)
                 zip_path = self.data_path / cfg.MILLIQUAS_ZIP
                 open(zip_path, "wb").write(r.content)
 
@@ -96,9 +100,7 @@ class Loader:
             if os.path.isfile(path_names):
                 print(f"'{filename_names}' in '{self.data_path}', no need to download")
             else:
-                print(f"{filename_names} not found, download from {url_names}...")
-                r_names = requests.get(str(url_names), allow_redirects=True)
-                open(path_names, "wb").write(r_names.content)
+                self.download_file(filename_names, url_names)
 
         if filename_xray is not None:
 
@@ -109,8 +111,6 @@ class Loader:
             if os.path.isfile(xray_path):
                 print(f"'{filename_xray}' in '{self.data_path}', no need to download")
             else:
-                print(f"{filename_xray} not found, download from {url_xray}...")
-                r_xray = requests.get(str(url_xray), allow_redirects=True)
-                open(xray_path, "wb").write(r_xray.content)
+                self.download_file(filename_xray, url_xray)
 
         return
