@@ -10,6 +10,7 @@ def define_catalog(catalog: str, flux: bool = False) -> List[Optional[str]]:
 
     filename_data = None
     url_data = None
+    zipname_data = None
     filename_names = None
     url_names = None
     filename_xray = None
@@ -26,10 +27,12 @@ def define_catalog(catalog: str, flux: bool = False) -> List[Optional[str]]:
     elif catalog == cfg.ALLOWED_CATALOGS[cfg.MILLIQUAS_INDEX]:
         filename_data = cfg.MILLIQUAS_FILENAME
         url_data = cfg.MILLIQUAS_URL
+        zipname_data = cfg.MILLIQUAS_ZIP
 
     results = [
         filename_data,
         url_data,
+        zipname_data,
         filename_names,
         url_names,
         filename_xray,
@@ -50,67 +53,54 @@ class Loader:
         self.data_results_path = self.cwd / "../data_results"
         self.figures_path = self.cwd / "../figures"
 
-    def download_file(self, filename: str | None, url: str | None) -> None:
+    def download_file(
+        self, filename: str | None, url: str | None, zipname: str | None = None
+    ) -> None:
         print(f"{filename} not found, download from {url}...")
         r = requests.get(str(url), allow_redirects=True)
-        open(self.data_path / filename, "wb").write(r.content)
+        if zipname is not None:
+            zip_path = self.data_path / zipname
+            open(zip_path, "wb").write(r.content)
+
+            print(f"Unzipping {zipname} catalog...")
+
+            with zipfile.ZipFile(zip_path, "r") as zip_ref:
+                zip_ref.extractall(self.data_path)
+
+            print(f"Removing {zipname}...")
+
+            os.remove(zip_path)
+        else:
+            open(self.data_path / filename, "wb").write(r.content)
+
+    def check_presence(
+        self, filename: str | None, url: str | None, zipname: str | None = None
+    ) -> None:
+
+        print(f"Checking if '{filename}' is in '{self.data_path}'...")
+
+        if os.path.isfile(self.data_path / filename):
+            print(f"'{filename}' in '{self.data_path}', no need to download")
+
+        else:
+            self.download_file(filename, url, zipname=zipname)
 
     def download_catalog(self, catalog: str, flux: bool = False) -> None:
 
         (
             filename_data,
             url_data,
+            zipname_data,
             filename_names,
             url_names,
             filename_xray,
             url_xray,
         ) = define_catalog(catalog, flux=flux)
 
-        print(f"Checking if '{filename_data}' is in '{self.data_path}'...")
-
-        if os.path.isfile(self.data_path / filename_data):
-            print(f"'{filename_data}' in '{self.data_path}', no need to download")
-
-        else:
-
-            if catalog == cfg.ALLOWED_CATALOGS[cfg.TURIN_INDEX]:
-                self.download_file(filename_data, url_data)
-
-            elif catalog == cfg.ALLOWED_CATALOGS[cfg.MILLIQUAS_INDEX]:
-                print(f"{filename_data} not found, download {catalog} catalog...")
-                r = requests.get(str(url_data), allow_redirects=True)
-                zip_path = self.data_path / cfg.MILLIQUAS_ZIP
-                open(zip_path, "wb").write(r.content)
-
-                print(f"Unzipping {catalog} catalog...")
-
-                with zipfile.ZipFile(zip_path, "r") as zip_ref:
-                    zip_ref.extractall(self.data_path)
-
-                print(f"Removing {cfg.MILLIQUAS_ZIP}...")
-
-                os.remove(zip_path)
+        self.check_presence(filename_data, url_data, zipname=zipname_data)
 
         if filename_names is not None:
-
-            print(f"Checking if '{filename_names}' is in '{self.data_path}'...")
-
-            path_names = self.data_path / filename_names
-
-            if os.path.isfile(path_names):
-                print(f"'{filename_names}' in '{self.data_path}', no need to download")
-            else:
-                self.download_file(filename_names, url_names)
+            self.check_presence(filename_names, url_names)
 
         if filename_xray is not None:
-
-            print(f"Checking if '{filename_xray}' is in '{self.data_path}'...")
-
-            xray_path = self.data_path / filename_xray
-
-            if os.path.isfile(xray_path):
-                print(f"'{filename_xray}' in '{self.data_path}', no need to download")
-            else:
-                self.download_file(filename_xray, url_xray)
-
-        return
+            self.check_presence(filename_xray, url_xray)
