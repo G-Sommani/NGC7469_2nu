@@ -1,5 +1,8 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 import importlib
+from typing import List
+import numpy as np
+from pathlib import Path
 
 
 class Catalog(ABC):
@@ -11,11 +14,22 @@ class Catalog(ABC):
     url_names: str | None = None
     filename_xray: str | None = None
     url_xray: str | None = None
+
+    ras_catalog: np.ndarray = np.array([])
+    decs_catalog: np.ndarray = np.array([])
+    redshifts_catalog: np.ndarray = np.array([])
+    names_catalog: np.ndarray = np.array([])
+    xray_catalog: np.ndarray = np.array([])
+
     filename_data: str
     url_data: str
 
     def __init__(self, xray: bool = False) -> None:
         self.xray = xray
+        pass
+
+    @abstractmethod
+    def load_catalog(self, data_path: Path) -> None:
         pass
 
 

@@ -5,6 +5,7 @@ import time
 import argparse
 import config as cfg
 from loading_functions import Loader
+import catalogs
 
 
 def main():
@@ -37,7 +38,7 @@ def main():
     )
     args = parser.parse_args()
     reco = args.reco
-    catalog = args.catalog
+    catalog_name = args.catalog
     flux = args.flux
     if flux == cfg.FLUX_CHOICES[cfg.TRUE_INDEX]:
         flux = True
@@ -47,13 +48,14 @@ def main():
     loader = Loader()
     data_path = loader.data_path
     data_results_path = loader.data_results_path
-    (
-        ras_catalog,
-        decs_catalog,
-        redshifts_catalog,
-        names_catalog,
-        xray_catalog,
-    ) = loader.load_catalog(catalog, flux=flux)
+    catalog = catalogs.initiate_catalog(catalog_name, xray=flux)
+    loader.load_catalog(catalog)
+
+    ras_catalog = catalog.ras_catalog
+    decs_catalog = catalog.decs_catalog
+    redshifts_catalog = catalog.redshifts_catalog
+    names_catalog = catalog.names_catalog
+    xray_catalog = catalog.xray_catalog
 
     print("Defining the test statistic...")
 
@@ -413,18 +415,18 @@ def main():
     if reco == cfg.ALLOWED_RECONSTRUCTIONS[cfg.SPLINEMPE_INDEX]:
         ang_dist_fast_selection = cfg.SPLINEMPE_ANG_DIST_FAST_SELECTION
         search_radius = cfg.SPLINEMPE_SEARCH_RADIUS
-        if catalog == cfg.ALLOWED_CATALOGS[cfg.TURIN_INDEX]:
+        if catalog_name == cfg.ALLOWED_CATALOGS[cfg.TURIN_INDEX]:
             total_scramblings = cfg.TOTAL_SCRAMBLINGS_SPLINEMPE_TURIN
-        elif catalog == cfg.ALLOWED_CATALOGS[cfg.MILLIQUAS_INDEX]:
+        elif catalog_name == cfg.ALLOWED_CATALOGS[cfg.MILLIQUAS_INDEX]:
             total_scramblings = cfg.TOTAL_SCRAMBLINGS_SPLINEMPE_MILLIQUAS
     elif reco == cfg.ALLOWED_RECONSTRUCTIONS[cfg.MILLIPEDE_INDEX]:
         ang_dist_fast_selection = cfg.MILLIPEDE_ANG_DIST_FAST_SELECTION
         search_radius = cfg.MILLIPEDE_SEARCH_RADIUS
-        if catalog == cfg.ALLOWED_CATALOGS[cfg.TURIN_INDEX]:
+        if catalog_name == cfg.ALLOWED_CATALOGS[cfg.TURIN_INDEX]:
             total_scramblings = cfg.TOTAL_SCRAMBLINGS_MILLIPEDE_TURIN
             if flux:
                 total_scramblings = cfg.TOTAL_SCRAMBLINGS_MILLIPEDE_TURIN_XRAY
-        elif catalog == cfg.ALLOWED_CATALOGS[cfg.MILLIQUAS_INDEX]:
+        elif catalog_name == cfg.ALLOWED_CATALOGS[cfg.MILLIQUAS_INDEX]:
             total_scramblings = cfg.TOTAL_SCRAMBLINGS_MILLIPEDE_MILLIQUAS
     test_statistic_per_scramble = np.array([])
     names_alerts_per_scramble = np.array([])
@@ -553,14 +555,14 @@ def main():
 
     print("Saving the ts distribution under the background hypothesis...")
 
-    test_statistic_filename = f"{cfg.TEST_STATISTIC_FILENAME}_{reco}_{catalog}"
+    test_statistic_filename = f"{cfg.TEST_STATISTIC_FILENAME}_{reco}_{catalog_name}"
     if flux:
         test_statistic_filename = f"{test_statistic_filename}_xray"
     else:
         test_statistic_filename = f"{test_statistic_filename}_redshift"
     np.save(data_results_path / test_statistic_filename, test_statistic_per_scramble)
 
-    print(f"\nEstimate ts value for {reco} with {catalog}...")
+    print(f"\nEstimate ts value for {reco} with {catalog_name}...")
 
     test_statistic_per_doublet = np.array([])
     names_alerts_per_doublet = np.array([])
@@ -657,7 +659,7 @@ def main():
     best_alerts = names_alerts_per_doublet[best_test_statistic_index]
 
     print(
-        f"\nTest statistic for {reco} with {catalog}: {best_test_statistic}\nSource: {best_source}. Doublet: {best_alerts}"
+        f"\nTest statistic for {reco} with {catalog_name}: {best_test_statistic}\nSource: {best_source}. Doublet: {best_alerts}"
     )
 
     print("Saving test_statistic result...")
