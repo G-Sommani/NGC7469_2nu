@@ -61,50 +61,8 @@ def main():
     test_stat = TestStatistic()
     energy_bins = test_stat.energy_bins
     effective_area_array = test_stat.effective_area_array
-    area_energy_factor_calculator = test_stat.area_energy_factor_calculator
-
-    area_energy_factors = np.array([])
-    for i in range(len(effective_area_array)):
-        area_energy_factors = np.append(
-            area_energy_factors, area_energy_factor_calculator(i)
-        )
-    hubble_in_s = cfg.HUBBLE_CONSTANT / cfg.MPC_TO_KM
-    days = cfg.MJD_04102023 - cfg.MJD_GOLDBRONZE_START
-    seconds = (days / cfg.DAYS_IN_YEAR) * cfg.SECONDS_IN_YEAR
-
-    def expected_nu_from_source(z, dec):
-        """
-        Given the redshift and the declination of a source, determines the total
-        number of expected neutrinos from the source
-        """
-        area_energy_factor = None
-        if 90 >= dec > 30:
-            area_energy_factor = area_energy_factors[
-                cfg.EFFECTIVE_AREA_30_90_DEG_INDEX - 1
-            ]
-        elif dec <= 30 and dec > 0:
-            area_energy_factor = area_energy_factors[
-                cfg.EFFECTIVE_AREA_0_30_DEG_INDEX - 1
-            ]
-        elif dec <= 0 and dec > -5:
-            area_energy_factor = area_energy_factors[
-                cfg.EFFECTIVE_AREA_MIN5_0_DEG_INDEX - 1
-            ]
-        elif dec <= -5 and dec > -30:
-            area_energy_factor = area_energy_factors[
-                cfg.EFFECTIVE_AREA_MIN30_MIN5_DEG_INDEX - 1
-            ]
-        elif dec <= -30 and dec >= -90:
-            area_energy_factor = area_energy_factors[
-                cfg.EFFECTIVE_AREA_MIN90_MIN30_DEG_INDEX - 1
-            ]
-        constant = (
-            (hubble_in_s ** 2)
-            * seconds
-            / (4 * np.pi * (z ** 2) * (cfg.SPEED_OF_LIGHT ** 2))
-        )  # m^-2 * s
-        expected_nu = constant * cfg.FLUX_NU * (cfg.E0 ** 2) * area_energy_factor
-        return expected_nu
+    area_energy_factors = test_stat.area_energy_factors
+    expected_nu_from_source = test_stat.expected_nu_from_source
 
     def flux_contribute(z, dec):
         """
