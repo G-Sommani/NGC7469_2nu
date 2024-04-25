@@ -43,10 +43,6 @@ def main():
         flux = True
     elif flux == cfg.FLUX_CHOICES[cfg.FALSE_INDEX]:
         flux = False
-    if flux and catalog == cfg.ALLOWED_CATALOGS[cfg.MILLIQUAS_INDEX]:
-        raise ValueError(
-            f"Possible to use the x-ray fluxes as weighting only with the Turin catalog."
-        )
 
     loader = Loader()
     data_path = loader.data_path

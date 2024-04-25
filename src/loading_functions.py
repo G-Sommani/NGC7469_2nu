@@ -6,42 +6,7 @@ import zipfile
 import requests
 import numpy as np
 import pandas as pd  # type: ignore
-
-
-def define_catalog(catalog: str, flux: bool = False) -> List[Optional[str]]:
-
-    filename_data = None
-    url_data = None
-    zipname_data = None
-    filename_names = None
-    url_names = None
-    filename_xray = None
-    url_xray = None
-
-    if catalog == cfg.ALLOWED_CATALOGS[cfg.TURIN_INDEX]:
-        filename_data = cfg.TURIN_FILENAME
-        url_data = cfg.TURIN_URL
-        filename_names = cfg.TURIN_NAMES_FILENAME
-        url_names = cfg.TURIN_NAMES_URL
-        if flux:
-            filename_xray = cfg.BASS_XRAY_FILENAME
-            url_xray = cfg.BASS_XRAY_URL
-    elif catalog == cfg.ALLOWED_CATALOGS[cfg.MILLIQUAS_INDEX]:
-        filename_data = cfg.MILLIQUAS_FILENAME
-        url_data = cfg.MILLIQUAS_URL
-        zipname_data = cfg.MILLIQUAS_ZIP
-
-    results = [
-        filename_data,
-        url_data,
-        zipname_data,
-        filename_names,
-        url_names,
-        filename_xray,
-        url_xray,
-    ]
-
-    return results
+import catalogs
 
 
 class Loader:
@@ -90,21 +55,13 @@ class Loader:
         else:
             self.download_file(filename, url, zipname=zipname)
 
-    def download_catalog(self, catalog: str, flux: bool = False) -> None:
-
-        (
-            filename_data,
-            url_data,
-            zipname_data,
-            filename_names,
-            url_names,
-            filename_xray,
-            url_xray,
-        ) = define_catalog(catalog, flux=flux)
-
-        self.check_presence(filename_data, url_data, zipname=zipname_data)
-        self.check_presence(filename_names, url_names)
-        self.check_presence(filename_xray, url_xray)
+    def download_catalog(self, catalog_name: str, flux: bool = False) -> None:
+        catalog = catalogs.initiate_catalog(catalog_name, xray=flux)
+        self.check_presence(
+            catalog.filename_data, catalog.url_data, zipname=catalog.zipname_data
+        )
+        self.check_presence(catalog.filename_names, catalog.url_names)
+        self.check_presence(catalog.filename_xray, catalog.url_xray)
 
     def load_turin_catalog(self, flux: bool = False) -> List[np.ndarray]:
 
@@ -273,16 +230,16 @@ class Loader:
 
         return results
 
-    def load_catalog(self, catalog: str, flux: bool = False) -> List[np.ndarray]:
+    def load_catalog(self, catalog_name: str, flux: bool = False) -> List[np.ndarray]:
 
-        self.download_catalog(catalog, flux=flux)
+        self.download_catalog(catalog_name, flux=flux)
 
-        print(f"Loading the {catalog} catalog...")
+        print(f"Loading the {catalog_name} catalog...")
 
-        if catalog == cfg.ALLOWED_CATALOGS[cfg.TURIN_INDEX]:
+        if catalog_name == cfg.ALLOWED_CATALOGS[cfg.TURIN_INDEX]:
             results = self.load_turin_catalog(flux=flux)
 
-        elif catalog == cfg.ALLOWED_CATALOGS[cfg.MILLIQUAS_INDEX]:
+        elif catalog_name == cfg.ALLOWED_CATALOGS[cfg.MILLIQUAS_INDEX]:
             results = self.load_milliquas_catalog()
 
         return results
