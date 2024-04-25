@@ -55,24 +55,11 @@ def main():
     data_results_path = loader.data_results_path
     loader.download_catalog(catalog)
 
-    names_path = None
     ras_catalog = np.array([])
     decs_catalog = np.array([])
     redshifts_catalog = np.array([])
     names_catalog = np.array([])
     if catalog == cfg.ALLOWED_CATALOGS[cfg.TURIN_INDEX]:
-        names_filename = cfg.TURIN_NAMES_FILENAME
-        names_path = data_path / names_filename
-
-        print(f"Checking if '{names_filename}' is in '{data_path}'...")
-
-        if os.path.isfile(names_path):
-            print(f"'{names_filename}' in '{data_path}', no need to download")
-        else:
-            url_names = cfg.TURIN_NAMES_URL
-            print(f"{names_filename} not found, download from {url_names}...")
-            r_names = requests.get(url_names, allow_redirects=True)
-            open(names_path, "wb").write(r_names.content)
 
         if flux:
             xray_filename = cfg.BASS_XRAY_FILENAME
@@ -97,7 +84,7 @@ def main():
             names=cfg.TURIN_HEADER,
         )
         dataframe_names = pd.read_fwf(
-            names_path,
+            data_path / cfg.TURIN_NAMES_FILENAME,
             colspecs=cfg.TURIN_NAMES_COLSPECS,
             header=cfg.TURIN_HEADER_PRESENT,
             names=cfg.TURIN_NAMES_HEADER,
