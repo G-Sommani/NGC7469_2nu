@@ -1,3 +1,5 @@
+from typing import Literal
+
 # recos
 SPLINEMPE = "splinempe"
 MILLIPEDE = "millipede"
@@ -282,7 +284,7 @@ XRAY = "xray"
 TS_FILENAME = "test_statistic"
 FIGSIZE_TS = (5, 3.5)
 NBINS_TS = 50
-HISTTYPE_TS = "step"
+HISTTYPE_TS: Literal["bar", "barstacked", "step", "stepfilled"] = "step"
 LINEWIDTH_TS = 2
 TURIN_LABEL_TS = "Background distrubution,\nTurin catalog"
 MILLIQUAS_LABEL_TS = "Background distrubution,\nMilliquas catalog"
@@ -306,7 +308,7 @@ FIGSIZE_AREAS = (5, 4)
 RANGE_BINS_AREAS = (-0.5, 3)
 NBINS_AREAS = 10
 ALPHA_AREAS = 0.8
-HISTTYPE_AREAS = "stepfilled"
+HISTTYPE_AREAS: Literal["bar", "barstacked", "step", "stepfilled"] = "stepfilled"
 LINEWIDTH_AREAS = 2
 EDGECOLOR_AREAS = "darkblue"
 LABEL_HIST_AREAS = r"$\dfrac{\mathrm{Millipede}}{\mathrm{SplineMPE}}$"

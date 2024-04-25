@@ -66,7 +66,7 @@ ts_mil_tur_xray_result = np.load(
 print(f"Plotting {cfg.SPLINEMPE} with {cfg.REDSHIFT}...")
 
 plt.subplots(figsize=cfg.FIGSIZE_TS)
-logbins = np.logspace(0, np.log10(3e3), cfg.NBINS_TS)
+logbins = list(np.logspace(0, np.log10(3e3), cfg.NBINS_TS))
 plt.hist(
     -ts_spl_tur_z,
     histtype=cfg.HISTTYPE_TS,
@@ -106,7 +106,7 @@ plt.close()
 print(f"Plotting {cfg.SPLINEMPE} with {cfg.XRAY}...")
 
 plt.subplots(figsize=cfg.FIGSIZE_TS)
-logbins = np.logspace(0, np.log10(2e3), cfg.NBINS_TS)
+logbins = list(np.logspace(0, np.log10(2e3), cfg.NBINS_TS))
 plt.hist(
     -ts_spl_tur_xray - np.min(-ts_spl_tur_xray) + 1,
     histtype=cfg.HISTTYPE_TS,
@@ -139,7 +139,7 @@ plt.close()
 print(f"Plotting {cfg.MILLIPEDE} with {cfg.REDSHIFT}...")
 
 plt.subplots(figsize=cfg.FIGSIZE_TS)
-logbins = np.logspace(0, np.log10(60), cfg.NBINS_TS)
+logbins = list(np.logspace(0, np.log10(60), cfg.NBINS_TS))
 plt.hist(
     -ts_mil_tur_z,
     histtype=cfg.HISTTYPE_TS,
@@ -179,7 +179,7 @@ plt.close()
 print(f"Plotting {cfg.MILLIPEDE} with {cfg.XRAY}...")
 
 plt.subplots(figsize=cfg.FIGSIZE_TS)
-logbins = np.logspace(0, np.log10(2e3), cfg.NBINS_TS)
+logbins = list(np.logspace(0, np.log10(2e3), cfg.NBINS_TS))
 plt.hist(
     -ts_mil_tur_xray - np.min(-ts_mil_tur_xray) + 1,
     histtype=cfg.HISTTYPE_TS,

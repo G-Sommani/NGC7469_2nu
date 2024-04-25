@@ -1,7 +1,7 @@
 import sys
 import os
-import requests
-import pandas as pd
+import requests  # type: ignore
+import pandas as pd  # type: ignore
 import numpy as np
 import time
 import argparse

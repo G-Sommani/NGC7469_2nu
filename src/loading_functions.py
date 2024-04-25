@@ -1,28 +1,42 @@
 import os
 from pathlib import Path
-from typing import Tuple
+from typing import List, Optional
 import config as cfg
 import zipfile
 import requests
 
 
-def define_catalog(catalog: str) -> Tuple[str, str]:
+def define_catalog(catalog: str, flux: bool = False) -> List[Optional[str]]:
 
     filename_data = None
     url_data = None
     filename_names = None
     url_names = None
+    filename_xray = None
+    url_xray = None
 
     if catalog == cfg.ALLOWED_CATALOGS[cfg.TURIN_INDEX]:
         filename_data = cfg.TURIN_FILENAME
         url_data = cfg.TURIN_URL
         filename_names = cfg.TURIN_NAMES_FILENAME
         url_names = cfg.TURIN_NAMES_URL
+        if flux:
+            filename_xray = cfg.BASS_XRAY_FILENAME
+            url_xray = cfg.BASS_XRAY_URL
     elif catalog == cfg.ALLOWED_CATALOGS[cfg.MILLIQUAS_INDEX]:
         filename_data = cfg.MILLIQUAS_FILENAME
         url_data = cfg.MILLIQUAS_URL
 
-    return filename_data, url_data, filename_names, url_names
+    results = [
+        filename_data,
+        url_data,
+        filename_names,
+        url_names,
+        filename_xray,
+        url_xray,
+    ]
+
+    return results
 
 
 class Loader:
@@ -38,7 +52,14 @@ class Loader:
 
     def download_catalog(self, catalog: str) -> None:
 
-        filename_data, url_data, filename_names, url_names = define_catalog(catalog)
+        (
+            filename_data,
+            url_data,
+            filename_names,
+            url_names,
+            filename_xray,
+            url_xray,
+        ) = define_catalog(catalog)
 
         print(f"Checking if '{filename_data}' is in '{self.data_path}'...")
 
@@ -48,7 +69,7 @@ class Loader:
         else:
             print(f"{filename_data} not found, download {catalog} catalog...")
 
-            r = requests.get(url_data, allow_redirects=True)
+            r = requests.get(str(url_data), allow_redirects=True)
             if catalog == cfg.ALLOWED_CATALOGS[cfg.TURIN_INDEX]:
                 catalog_path = self.data_path / cfg.TURIN_FILENAME
                 open(catalog_path, "wb").write(r.content)
@@ -64,7 +85,7 @@ class Loader:
 
                 else:
                     print(f"{filename_names} not found, download from {url_names}...")
-                    r_names = requests.get(url_names, allow_redirects=True)
+                    r_names = requests.get(str(url_names), allow_redirects=True)
                     open(path_names, "wb").write(r_names.content)
 
             elif catalog == cfg.ALLOWED_CATALOGS[cfg.MILLIQUAS_INDEX]:

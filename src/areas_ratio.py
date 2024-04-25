@@ -1,5 +1,5 @@
 import numpy as np
-import pandas as pd
+import pandas as pd  # type: ignore
 import matplotlib.pyplot as plt
 import config as cfg
 from loading_functions import Loader
@@ -114,10 +114,12 @@ for i in range(len(alerts_df)):
 print("Plotting...")
 
 fig, ax = plt.subplots(figsize=cfg.FIGSIZE_AREAS)
-logbins = np.logspace(cfg.RANGE_BINS_AREAS[0], cfg.RANGE_BINS_AREAS[1], cfg.NBINS_AREAS)
+logbins = np.logspace(
+    cfg.RANGE_BINS_AREAS[0], cfg.RANGE_BINS_AREAS[1], cfg.NBINS_AREAS, dtype=float
+)
 plt.hist(
     ratios,
-    bins=logbins,
+    bins=list(logbins),
     alpha=cfg.ALPHA_AREAS,
     histtype=cfg.HISTTYPE_AREAS,
     linewidth=cfg.LINEWIDTH_AREAS,
