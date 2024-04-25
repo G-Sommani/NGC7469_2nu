@@ -58,58 +58,9 @@ def main():
     names_catalog = catalog.names_catalog
     xray_catalog = catalog.xray_catalog
 
-    test_stat = TestStatistic()
-    area_energy_factors = test_stat.area_energy_factors
+    test_stat = TestStatistic(flux=flux)
     flux_contribute = test_stat.flux_contribute
     select_effective_area = test_stat.select_effective_area
-
-    if flux:
-
-        def expected_nu_from_source_xray(xray, dec):
-            """
-            Given the xray flux and the declination of a source, determines the total
-            number of expected neutrinos from the source
-            """
-            area_energy_factor = None
-            if 90 >= dec > 30:
-                area_energy_factor = area_energy_factors[
-                    cfg.EFFECTIVE_AREA_30_90_DEG_INDEX - 1
-                ]
-            elif dec <= 30 and dec > 0:
-                area_energy_factor = area_energy_factors[
-                    cfg.EFFECTIVE_AREA_0_30_DEG_INDEX - 1
-                ]
-            elif dec <= 0 and dec > -5:
-                area_energy_factor = area_energy_factors[
-                    cfg.EFFECTIVE_AREA_MIN5_0_DEG_INDEX - 1
-                ]
-            elif dec <= -5 and dec > -30:
-                area_energy_factor = area_energy_factors[
-                    cfg.EFFECTIVE_AREA_MIN30_MIN5_DEG_INDEX - 1
-                ]
-            elif dec <= -30 and dec >= -90:
-                area_energy_factor = area_energy_factors[
-                    cfg.EFFECTIVE_AREA_MIN90_MIN30_DEG_INDEX - 1
-                ]
-            expected_nu = (
-                cfg.CONSTANT_XRAY
-                * xray
-                * cfg.ERG_TO_GEV
-                * (cfg.E0 ** 2)
-                * area_energy_factor
-            )
-            return expected_nu
-
-        def flux_contribute(xray, dec):
-            """
-            Given the xray flux and the declination of a source, determines the contribution
-            to the test statistic related to the neutrino flux of the source
-            """
-            mu = expected_nu_from_source_xray(xray, dec)
-            contribute = (
-                np.log(0.5) + 2 * np.log(mu) - mu
-            )  # Here we assume the limit of low fluxes as valid
-            return contribute
 
     def unc_contribute(sigma1, sigma2):
         """

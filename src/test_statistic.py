@@ -9,10 +9,11 @@ class TestStatistic:
     days = cfg.MJD_04102023 - cfg.MJD_GOLDBRONZE_START
     seconds = (days / cfg.DAYS_IN_YEAR) * cfg.SECONDS_IN_YEAR
 
-    def __init__(self) -> None:
+    def __init__(self, flux: bool = False) -> None:
 
         print("Defining the test statistic...")
 
+        self.flux = flux
         loader = Loader()
         effective_area = loader.load_effective_area()
         self.energy_bins = effective_area[:, cfg.EFFECTIVE_AREA_ENERGY_BINS_INDEX]
@@ -51,11 +52,8 @@ class TestStatistic:
             factor += element
         return factor  # units: m^2 GeV^-1
 
-    def expected_nu_from_source(self, z: float, dec: float) -> float:
-        """
-        Given the redshift and the declination of a source, determines the total
-        number of expected neutrinos from the source
-        """
+    def get_area_energy_factor(self, dec: float) -> float:
+
         if 90 >= dec > 30:
             area_energy_factor = self.area_energy_factors[
                 cfg.EFFECTIVE_AREA_30_90_DEG_INDEX - 1
@@ -76,23 +74,52 @@ class TestStatistic:
             area_energy_factor = self.area_energy_factors[
                 cfg.EFFECTIVE_AREA_MIN90_MIN30_DEG_INDEX - 1
             ]
-        constant = (
-            (type(self).hubble_in_s ** 2)
-            * type(self).seconds
-            / (4 * np.pi * (z ** 2) * (cfg.SPEED_OF_LIGHT ** 2))
-        )  # m^-2 * s
-        expected_nu = constant * cfg.FLUX_NU * (cfg.E0 ** 2) * area_energy_factor
+
+        return area_energy_factor
+
+    def expected_nu_from_source(self, z_or_xray: float, dec: float) -> float:
+        """
+        Given the redshift (or the xray flux) and the declination of a source, determines the total
+        number of expected neutrinos from the source
+        """
+        area_energy_factor = self.get_area_energy_factor(dec)
+        if self.flux:
+            expected_nu = (
+                cfg.CONSTANT_XRAY
+                * z_or_xray
+                * cfg.ERG_TO_GEV
+                * (cfg.E0 ** 2)
+                * area_energy_factor
+            )
+        else:
+            constant = (
+                (type(self).hubble_in_s ** 2)
+                * type(self).seconds
+                / (4 * np.pi * (z_or_xray ** 2) * (cfg.SPEED_OF_LIGHT ** 2))
+            )  # m^-2 * s
+            expected_nu = constant * cfg.FLUX_NU * (cfg.E0 ** 2) * area_energy_factor
         return expected_nu
 
-    def flux_contribute(self, z: float, dec: float) -> float:
-        """
-        Given the redshift and the declination of a source, determines the contribution
-        to the test statistic related to the neutrino flux of the source
-        """
-        mu = self.expected_nu_from_source(z, dec)
-        contribute = (
-            np.log(0.5) + 2 * np.log(mu) - mu
-        )  # Here we assume the limit of low fluxes as valid
+    def flux_contribute(self, z_or_xray: float, dec: float) -> float:
+        if self.flux:
+            """
+            Given the redshift (or the xray flux) and the declination of a source, determines the contribution
+            to the test statistic related to the neutrino flux of the source
+            """
+            mu = self.expected_nu_from_source(z_or_xray, dec)
+            contribute = (
+                np.log(0.5) + 2 * np.log(mu) - mu
+            )  # Here we assume the limit of low fluxes as valid
+
+        else:
+            """
+            Given the redshift and the declination of a source, determines the contribution
+            to the test statistic related to the neutrino flux of the source
+            """
+            mu = self.expected_nu_from_source(z_or_xray, dec)
+            contribute = (
+                np.log(0.5) + 2 * np.log(mu) - mu
+            )  # Here we assume the limit of low fluxes as valid
         return contribute
 
     def select_effective_area(self, dec: float, energy: float):
