@@ -61,18 +61,7 @@ def main():
     test_stat = TestStatistic()
     energy_bins = test_stat.energy_bins
     effective_area_array = test_stat.effective_area_array
-    energy_factor = test_stat.energy_factor
-
-    def area_energy_factor_calculator(a_index):
-        """
-        Estimate area and energy factor for expected number of detected neutrinos
-        """
-        eff_area = effective_area_array[a_index]
-        factor = 0
-        for k in range(len(energy_bins) - 1):
-            element = eff_area[k] * energy_factor(k)
-            factor += element
-        return factor  # units: m^2 GeV^-1
+    area_energy_factor_calculator = test_stat.area_energy_factor_calculator
 
     area_energy_factors = np.array([])
     for i in range(len(effective_area_array)):

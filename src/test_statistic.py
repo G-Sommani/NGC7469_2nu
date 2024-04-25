@@ -4,7 +4,7 @@ import numpy as np
 
 
 class TestStatistic:
-    def __init__(self):
+    def __init__(self) -> None:
 
         print("Defining the test statistic...")
 
@@ -21,7 +21,7 @@ class TestStatistic:
             ]
         )
 
-    def energy_factor(self, bin_index):
+    def energy_factor(self, bin_index: int) -> float:
         """
         Estimate energy factor for expected number of detected neutrinos
         """
@@ -29,3 +29,14 @@ class TestStatistic:
         e_min = self.energy_bins[bin_index]
         factor = (e_max - e_min) / (e_max * e_min)
         return factor
+
+    def area_energy_factor_calculator(self, a_index: int) -> float:
+        """
+        Estimate area and energy factor for expected number of detected neutrinos
+        """
+        eff_area = self.effective_area_array[a_index]
+        factor = 0
+        for k in range(len(self.energy_bins) - 1):
+            element = eff_area[k] * self.energy_factor(k)
+            factor += element
+        return factor  # units: m^2 GeV^-1
