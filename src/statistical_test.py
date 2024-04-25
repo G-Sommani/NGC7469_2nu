@@ -59,27 +59,9 @@ def main():
     xray_catalog = catalog.xray_catalog
 
     test_stat = TestStatistic()
-    energy_bins = test_stat.energy_bins
-    effective_area_array = test_stat.effective_area_array
     area_energy_factors = test_stat.area_energy_factors
     flux_contribute = test_stat.flux_contribute
-
-    def select_effective_area(dec, energy):
-        if 90 >= dec > 30:
-            effa = effective_area_array[cfg.EFFECTIVE_AREA_30_90_DEG_INDEX - 1]
-        elif dec <= 30 and dec > 0:
-            effa = effective_area_array[cfg.EFFECTIVE_AREA_0_30_DEG_INDEX - 1]
-        elif dec <= 0 and dec > -5:
-            effa = effective_area_array[cfg.EFFECTIVE_AREA_MIN5_0_DEG_INDEX - 1]
-        elif dec <= -5 and dec > -30:
-            effa = effective_area_array[cfg.EFFECTIVE_AREA_MIN30_MIN5_DEG_INDEX - 1]
-        elif dec <= -30 and dec >= -90:
-            effa = effective_area_array[cfg.EFFECTIVE_AREA_MIN90_MIN30_DEG_INDEX - 1]
-        for index in range(len(energy_bins)):
-            next_ebin = energy_bins[index + 1]
-            if next_ebin >= energy:
-                break
-        return effa[index]
+    select_effective_area = test_stat.select_effective_area
 
     if flux:
 

@@ -94,3 +94,24 @@ class TestStatistic:
             np.log(0.5) + 2 * np.log(mu) - mu
         )  # Here we assume the limit of low fluxes as valid
         return contribute
+
+    def select_effective_area(self, dec: float, energy: float):
+        if 90 >= dec > 30:
+            effa = self.effective_area_array[cfg.EFFECTIVE_AREA_30_90_DEG_INDEX - 1]
+        elif dec <= 30 and dec > 0:
+            effa = self.effective_area_array[cfg.EFFECTIVE_AREA_0_30_DEG_INDEX - 1]
+        elif dec <= 0 and dec > -5:
+            effa = self.effective_area_array[cfg.EFFECTIVE_AREA_MIN5_0_DEG_INDEX - 1]
+        elif dec <= -5 and dec > -30:
+            effa = self.effective_area_array[
+                cfg.EFFECTIVE_AREA_MIN30_MIN5_DEG_INDEX - 1
+            ]
+        elif dec <= -30 and dec >= -90:
+            effa = self.effective_area_array[
+                cfg.EFFECTIVE_AREA_MIN90_MIN30_DEG_INDEX - 1
+            ]
+        for index in range(len(self.energy_bins)):
+            next_ebin = self.energy_bins[index + 1]
+            if next_ebin >= energy:
+                break
+        return effa[index]
