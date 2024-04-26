@@ -60,18 +60,9 @@ def main():
 
     test_stat = TestStatistic(flux=flux)
     flux_contribute = test_stat.flux_contribute
-    select_effective_area = test_stat.select_effective_area
     unc_contribute = test_stat.unc_contribute
     dir_contribute = test_stat.dir_contribute
-
-    def noise_contribute(dec1, dec2, energy1, energy2):
-        """
-        Contribute to the test statistic related to
-        the null hypothesis
-        """
-        effa1 = select_effective_area(dec1, energy1)
-        effa2 = select_effective_area(dec2, energy2)
-        return -np.log(np.cos(dec1) * np.cos(dec2) * effa1 * effa2)
+    noise_contribute = test_stat.noise_contribute
 
     def test_statistic(
         ra1, dec1, sigma1, energy1, ra2, dec2, sigma2, energy2, raS, decS, z_or_xray

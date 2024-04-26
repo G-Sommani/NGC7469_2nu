@@ -221,3 +221,14 @@ class TestStatistic:
         phi2 = angular_dist_score(ra2, dec2 + np.pi / 2.0, raS, decS + np.pi / 2.0)
         cont = -0.5 * ((phi1 / sigma1) ** 2 + (phi2 / sigma2) ** 2)
         return cont
+
+    def noise_contribute(
+        self, dec1: float, dec2: float, energy1: float, energy2: float
+    ) -> float:
+        """
+        Contribute to the test statistic related to
+        the null hypothesis
+        """
+        effa1 = self.select_effective_area(dec1, energy1)
+        effa2 = self.select_effective_area(dec2, energy2)
+        return -np.log(np.cos(dec1) * np.cos(dec2) * effa1 * effa2)
