@@ -68,6 +68,10 @@ class Milliquas(Catalog):
         self.filename_data = cfg.MILLIQUAS_FILENAME
         self.url_data = cfg.MILLIQUAS_URL
         self.zipname_data = cfg.MILLIQUAS_ZIP
+        self.total_scrambling_possibilities = [
+            cfg.TOTAL_SCRAMBLINGS_SPLINEMPE_MILLIQUAS,
+            cfg.TOTAL_SCRAMBLINGS_MILLIPEDE_MILLIQUAS,
+        ]
 
     def load_catalog(self, data_path: Path) -> None:
 

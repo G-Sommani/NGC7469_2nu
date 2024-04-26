@@ -18,6 +18,15 @@ class Turin(Catalog):
         if self.xray:
             self.filename_xray = cfg.BASS_XRAY_FILENAME
             self.url_xray = cfg.BASS_XRAY_URL
+            self.total_scrambling_possibilities = [
+                cfg.TOTAL_SCRAMBLINGS_SPLINEMPE_TURIN_XRAY,
+                cfg.TOTAL_SCRAMBLINGS_MILLIPEDE_TURIN_XRAY,
+            ]
+        else:
+            self.total_scrambling_possibilities = [
+                cfg.TOTAL_SCRAMBLINGS_SPLINEMPE_TURIN,
+                cfg.TOTAL_SCRAMBLINGS_SPLINEMPE_TURIN,
+            ]
 
     def load_catalog(self, data_path: Path) -> None:
 

@@ -14,6 +14,10 @@ class Millipede(Reco):
         self.RAs_ERR_MINUS: np.ndarray = np.array([])
         self.DECs_ERR_PLUS: np.ndarray = np.array([])
         self.DECs_ERR_MINUS: np.ndarray = np.array([])
+        self.ang_dist_fast_selection = cfg.MILLIPEDE_ANG_DIST_FAST_SELECTION
+        self.search_radius = cfg.MILLIPEDE_SEARCH_RADIUS
+        self.total_scramblings_index = cfg.TOTAL_SCRAMBLINGS_MILLIPEDE_INDEX
+        self.reco_name = cfg.MILLIPEDE
 
     def millipede_area(self, index: int) -> float:
         """

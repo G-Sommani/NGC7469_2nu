@@ -9,6 +9,10 @@ from . import config_recos as cfg
 class SplineMPE(Reco):
     def __init__(self) -> None:
         super().__init__()
+        self.reco_name = cfg.SPLINEMPE
+        self.ang_dist_fast_selection = cfg.SPLINEMPE_ANG_DIST_FAST_SELECTION
+        self.search_radius = cfg.SPLINEMPE_SEARCH_RADIUS
+        self.total_scramblings_index = cfg.TOTAL_SCRAMBLINGS_SPLINEMPE_INDEX
 
     def load_reco_data(self, data_path: Path) -> None:
         rev0 = False

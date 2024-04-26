@@ -11,6 +11,10 @@ class Reco(ABC):
     sigmas: np.ndarray = np.array([])
     NAMEs: np.ndarray = np.array([])
     ENERGIES: np.ndarray = np.array([])
+    ang_dist_fast_selection: float
+    search_radius: float
+    total_scramblings_index: int
+    reco_name: str
 
     def __init__(self) -> None:
         pass

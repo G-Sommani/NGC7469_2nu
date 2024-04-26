@@ -7,25 +7,22 @@ from loading_functions import Loader
 import catalogs
 from test_statistic import TestStatistic
 import recos
+from typing import Tuple
 
 
-def perform_test(reco_name: str, catalog_name: str, flux: bool) -> None:
-
-    loader = Loader()
-    data_results_path = loader.data_results_path
-    catalog = catalogs.initiate_catalog(catalog_name, xray=flux)
-    loader.load_catalog(catalog)
+def estimate_background(
+    catalog: catalogs.Catalog,
+    reco: recos.Reco,
+    test_stat: TestStatistic,
+    loader: Loader,
+) -> Tuple[np.ndarray, str]:
 
     ras_catalog = catalog.ras_catalog
     decs_catalog = catalog.decs_catalog
     redshifts_catalog = catalog.redshifts_catalog
     names_catalog = catalog.names_catalog
     xray_catalog = catalog.xray_catalog
-
-    test_stat = TestStatistic(flux=flux)
-
-    reco = recos.initiate_reco(reco_name)
-    loader.load_reco_data(reco)
+    flux = catalog.xray
 
     RAs = reco.RAs
     DECs = reco.DECs
@@ -35,25 +32,12 @@ def perform_test(reco_name: str, catalog_name: str, flux: bool) -> None:
 
     print("Estimating background...")
 
-    total_scramblings = 0
-    ang_dist_fast_selection = 0
-    search_radius = 0
-    if reco_name == cfg.ALLOWED_RECONSTRUCTIONS[cfg.SPLINEMPE_INDEX]:
-        ang_dist_fast_selection = cfg.SPLINEMPE_ANG_DIST_FAST_SELECTION
-        search_radius = cfg.SPLINEMPE_SEARCH_RADIUS
-        if catalog_name == cfg.ALLOWED_CATALOGS[cfg.TURIN_INDEX]:
-            total_scramblings = cfg.TOTAL_SCRAMBLINGS_SPLINEMPE_TURIN
-        elif catalog_name == cfg.ALLOWED_CATALOGS[cfg.MILLIQUAS_INDEX]:
-            total_scramblings = cfg.TOTAL_SCRAMBLINGS_SPLINEMPE_MILLIQUAS
-    elif reco_name == cfg.ALLOWED_RECONSTRUCTIONS[cfg.MILLIPEDE_INDEX]:
-        ang_dist_fast_selection = cfg.MILLIPEDE_ANG_DIST_FAST_SELECTION
-        search_radius = cfg.MILLIPEDE_SEARCH_RADIUS
-        if catalog_name == cfg.ALLOWED_CATALOGS[cfg.TURIN_INDEX]:
-            total_scramblings = cfg.TOTAL_SCRAMBLINGS_MILLIPEDE_TURIN
-            if flux:
-                total_scramblings = cfg.TOTAL_SCRAMBLINGS_MILLIPEDE_TURIN_XRAY
-        elif catalog_name == cfg.ALLOWED_CATALOGS[cfg.MILLIQUAS_INDEX]:
-            total_scramblings = cfg.TOTAL_SCRAMBLINGS_MILLIPEDE_MILLIQUAS
+    total_scramblings = catalog.total_scrambling_possibilities[
+        reco.total_scramblings_index
+    ]
+    ang_dist_fast_selection = reco.ang_dist_fast_selection
+    search_radius = reco.search_radius
+
     test_statistic_per_scramble = np.array([])
     names_alerts_per_scramble = np.array([])
     names_source_per_scramble = np.array([])
@@ -182,13 +166,49 @@ def perform_test(reco_name: str, catalog_name: str, flux: bool) -> None:
     print("Saving the ts distribution under the background hypothesis...")
 
     test_statistic_filename = (
-        f"{cfg.TEST_STATISTIC_FILENAME}_{reco_name}_{catalog_name}"
+        f"{cfg.TEST_STATISTIC_FILENAME}_{reco.reco_name}_{catalog.catalog_name}"
     )
     if flux:
         test_statistic_filename = f"{test_statistic_filename}_xray"
     else:
         test_statistic_filename = f"{test_statistic_filename}_redshift"
-    np.save(data_results_path / test_statistic_filename, test_statistic_per_scramble)
+    np.save(
+        loader.data_results_path / test_statistic_filename, test_statistic_per_scramble
+    )
+
+    return test_statistic_per_scramble, test_statistic_filename
+
+
+def perform_test(reco_name: str, catalog_name: str, flux: bool) -> None:
+
+    loader = Loader()
+    data_results_path = loader.data_results_path
+    catalog = catalogs.initiate_catalog(catalog_name, xray=flux)
+    loader.load_catalog(catalog)
+
+    test_stat = TestStatistic(flux=flux)
+
+    reco = recos.initiate_reco(reco_name)
+    loader.load_reco_data(reco)
+
+    ras_catalog = catalog.ras_catalog
+    decs_catalog = catalog.decs_catalog
+    redshifts_catalog = catalog.redshifts_catalog
+    names_catalog = catalog.names_catalog
+    xray_catalog = catalog.xray_catalog
+    flux = catalog.xray
+
+    RAs = reco.RAs
+    DECs = reco.DECs
+    sigmas = reco.sigmas
+    NAMEs = reco.NAMEs
+    ENERGIES = reco.ENERGIES
+    ang_dist_fast_selection = reco.ang_dist_fast_selection
+    search_radius = reco.search_radius
+
+    test_statistic_per_scramble, test_statistic_filename = estimate_background(
+        catalog, reco, test_stat, loader
+    )
 
     print(f"\nEstimate ts value for {reco_name} with {catalog_name}...")
 

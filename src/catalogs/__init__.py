@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 import importlib
 import numpy as np
 from pathlib import Path
+from typing import List
 
 
 class Catalog(ABC):
@@ -22,6 +23,7 @@ class Catalog(ABC):
 
     filename_data: str
     url_data: str
+    total_scrambling_possibilities: List[int]
 
     def __init__(self, xray: bool = False) -> None:
         self.xray = xray
