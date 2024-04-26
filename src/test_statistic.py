@@ -232,3 +232,27 @@ class TestStatistic:
         effa1 = self.select_effective_area(dec1, energy1)
         effa2 = self.select_effective_area(dec2, energy2)
         return -np.log(np.cos(dec1) * np.cos(dec2) * effa1 * effa2)
+
+    def test_statistic(
+        self,
+        ra1: float,
+        dec1: float,
+        sigma1: float,
+        energy1: float,
+        ra2: float,
+        dec2: float,
+        sigma2: float,
+        energy2: float,
+        raS: float,
+        decS: float,
+        z_or_xray: float,
+    ) -> float:
+        """
+        Test statistic related to two alerts and a source
+        """
+        c1 = self.flux_contribute(z_or_xray, decS)
+        c2 = self.unc_contribute(sigma1, sigma2)
+        c3 = self.dir_contribute(ra1, dec1, ra2, dec2, raS, decS, sigma1, sigma2)
+        c4 = self.noise_contribute(dec1, dec2, energy1, energy2)
+        ts = c1 + c2 + c3 + c4
+        return ts

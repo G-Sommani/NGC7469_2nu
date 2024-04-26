@@ -6,7 +6,7 @@ import argparse
 import config as cfg
 from loading_functions import Loader
 import catalogs
-from test_statistic import TestStatistic, angular_dist_score
+from test_statistic import TestStatistic
 
 
 def main():
@@ -59,23 +59,6 @@ def main():
     xray_catalog = catalog.xray_catalog
 
     test_stat = TestStatistic(flux=flux)
-    flux_contribute = test_stat.flux_contribute
-    unc_contribute = test_stat.unc_contribute
-    dir_contribute = test_stat.dir_contribute
-    noise_contribute = test_stat.noise_contribute
-
-    def test_statistic(
-        ra1, dec1, sigma1, energy1, ra2, dec2, sigma2, energy2, raS, decS, z_or_xray
-    ):
-        """
-        Test statistic related to two alerts and a source
-        """
-        c1 = flux_contribute(z_or_xray, decS)
-        c2 = unc_contribute(sigma1, sigma2)
-        c3 = dir_contribute(ra1, dec1, ra2, dec2, raS, decS, sigma1, sigma2)
-        c4 = noise_contribute(dec1, dec2, energy1, energy2)
-        ts = c1 + c2 + c3 + c4
-        return ts
 
     print(f"Retrieving the alerts reconstructed with {reco}...")
 
@@ -281,7 +264,7 @@ def main():
                         redshift_or_flux = xray_sources_nearby[source_index]
                     else:
                         redshift_or_flux = redshifts_sources_nearby[source_index]
-                    test_statistic_source = test_statistic(
+                    test_statistic_source = test_stat.test_statistic(
                         ra1_rad,
                         dec1_rad,
                         sigma1,
@@ -400,7 +383,7 @@ def main():
                     redshift_or_flux = xray_sources_nearby[source_index]
                 else:
                     redshift_or_flux = redshifts_sources_nearby[source_index]
-                test_statistic_source = test_statistic(
+                test_statistic_source = test_stat.test_statistic(
                     ra1_rad,
                     dec1_rad,
                     sigma1,
