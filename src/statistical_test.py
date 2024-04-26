@@ -61,12 +61,7 @@ def main():
     test_stat = TestStatistic(flux=flux)
     flux_contribute = test_stat.flux_contribute
     select_effective_area = test_stat.select_effective_area
-
-    def unc_contribute(sigma1, sigma2):
-        """
-        Contribute to the test statistic related only to the uncertainties of the alerts
-        """
-        return -2 * np.log(sigma1 * sigma2)
+    unc_contribute = test_stat.unc_contribute
 
     def angular_dist_score(az_true, zen_true, az_pred, zen_pred):
         """

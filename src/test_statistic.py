@@ -142,3 +142,10 @@ class TestStatistic:
             if next_ebin >= energy:
                 break
         return effa[index]
+
+    @staticmethod
+    def unc_contribute(sigma1, sigma2):
+        """
+        Contribute to the test statistic related only to the uncertainties of the alerts
+        """
+        return -2 * np.log(sigma1 * sigma2)
