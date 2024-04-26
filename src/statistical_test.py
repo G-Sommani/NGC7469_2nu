@@ -7,6 +7,7 @@ import config as cfg
 from loading_functions import Loader
 import catalogs
 from test_statistic import TestStatistic
+import recos
 
 
 def main():
@@ -38,7 +39,7 @@ def main():
         choices=cfg.FLUX_CHOICES,
     )
     args = parser.parse_args()
-    reco = args.reco
+    reco_name = args.reco
     catalog_name = args.catalog
     flux = args.flux
     if flux == cfg.FLUX_CHOICES[cfg.TRUE_INDEX]:
@@ -60,14 +61,14 @@ def main():
 
     test_stat = TestStatistic(flux=flux)
 
-    print(f"Retrieving the alerts reconstructed with {reco}...")
+    reco = recos.initiate_reco(reco_name)
 
-    RAs = np.array([])
-    DECs = np.array([])
-    sigmas = np.array([])
-    NAMEs = np.array([])
-    ENERGIES = np.array([])
-    if reco == cfg.ALLOWED_RECONSTRUCTIONS[cfg.SPLINEMPE_INDEX]:
+    RAs = reco.RAs
+    DECs = reco.DECs
+    sigmas = reco.sigmas
+    NAMEs = reco.NAMEs
+    ENERGIES = reco.ENERGIES
+    if reco_name == cfg.ALLOWED_RECONSTRUCTIONS[cfg.SPLINEMPE_INDEX]:
         rev0 = False
         rev1 = False
         has_rev1 = False
@@ -136,7 +137,7 @@ def main():
                             float(line.split(">")[1].split("<")[0]) * cfg.TEV_TO_GEV
                         )
                         ENERGIES = np.append(ENERGIES, energy)
-    elif reco == cfg.ALLOWED_RECONSTRUCTIONS[cfg.MILLIPEDE_INDEX]:
+    elif reco_name == cfg.ALLOWED_RECONSTRUCTIONS[cfg.MILLIPEDE_INDEX]:
         alerts_df = pd.read_csv(data_path / cfg.MILLIPEDE_FILENAME)
         RAs = alerts_df[cfg.MILLIPEDE_RA].to_numpy()
         DECs = alerts_df[cfg.MILLIPEDE_DEC].to_numpy()
@@ -173,14 +174,14 @@ def main():
     total_scramblings = 0
     ang_dist_fast_selection = 0
     search_radius = 0
-    if reco == cfg.ALLOWED_RECONSTRUCTIONS[cfg.SPLINEMPE_INDEX]:
+    if reco_name == cfg.ALLOWED_RECONSTRUCTIONS[cfg.SPLINEMPE_INDEX]:
         ang_dist_fast_selection = cfg.SPLINEMPE_ANG_DIST_FAST_SELECTION
         search_radius = cfg.SPLINEMPE_SEARCH_RADIUS
         if catalog_name == cfg.ALLOWED_CATALOGS[cfg.TURIN_INDEX]:
             total_scramblings = cfg.TOTAL_SCRAMBLINGS_SPLINEMPE_TURIN
         elif catalog_name == cfg.ALLOWED_CATALOGS[cfg.MILLIQUAS_INDEX]:
             total_scramblings = cfg.TOTAL_SCRAMBLINGS_SPLINEMPE_MILLIQUAS
-    elif reco == cfg.ALLOWED_RECONSTRUCTIONS[cfg.MILLIPEDE_INDEX]:
+    elif reco_name == cfg.ALLOWED_RECONSTRUCTIONS[cfg.MILLIPEDE_INDEX]:
         ang_dist_fast_selection = cfg.MILLIPEDE_ANG_DIST_FAST_SELECTION
         search_radius = cfg.MILLIPEDE_SEARCH_RADIUS
         if catalog_name == cfg.ALLOWED_CATALOGS[cfg.TURIN_INDEX]:
@@ -316,14 +317,16 @@ def main():
 
     print("Saving the ts distribution under the background hypothesis...")
 
-    test_statistic_filename = f"{cfg.TEST_STATISTIC_FILENAME}_{reco}_{catalog_name}"
+    test_statistic_filename = (
+        f"{cfg.TEST_STATISTIC_FILENAME}_{reco_name}_{catalog_name}"
+    )
     if flux:
         test_statistic_filename = f"{test_statistic_filename}_xray"
     else:
         test_statistic_filename = f"{test_statistic_filename}_redshift"
     np.save(data_results_path / test_statistic_filename, test_statistic_per_scramble)
 
-    print(f"\nEstimate ts value for {reco} with {catalog_name}...")
+    print(f"\nEstimate ts value for {reco_name} with {catalog_name}...")
 
     test_statistic_per_doublet = np.array([])
     names_alerts_per_doublet = np.array([])
@@ -420,7 +423,7 @@ def main():
     best_alerts = names_alerts_per_doublet[best_test_statistic_index]
 
     print(
-        f"\nTest statistic for {reco} with {catalog_name}: {best_test_statistic}\nSource: {best_source}. Doublet: {best_alerts}"
+        f"\nTest statistic for {reco_name} with {catalog_name}: {best_test_statistic}\nSource: {best_source}. Doublet: {best_alerts}"
     )
 
     print("Saving test_statistic result...")
