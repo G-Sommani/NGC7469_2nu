@@ -14,8 +14,7 @@ def estimate_background(
     catalog: catalogs.Catalog,
     reco: recos.Reco,
     test_stat: TestStatistic,
-    loader: Loader,
-) -> Tuple[np.ndarray, str]:
+) -> np.ndarray:
 
     ras_catalog = catalog.ras_catalog
     decs_catalog = catalog.decs_catalog
@@ -163,20 +162,7 @@ def estimate_background(
             names_source_per_scramble, name_source_scramble
         )
 
-    print("Saving the ts distribution under the background hypothesis...")
-
-    test_statistic_filename = (
-        f"{cfg.TEST_STATISTIC_FILENAME}_{reco.reco_name}_{catalog.catalog_name}"
-    )
-    if flux:
-        test_statistic_filename = f"{test_statistic_filename}_xray"
-    else:
-        test_statistic_filename = f"{test_statistic_filename}_redshift"
-    np.save(
-        loader.data_results_path / test_statistic_filename, test_statistic_per_scramble
-    )
-
-    return test_statistic_per_scramble, test_statistic_filename
+        return test_statistic_per_scramble
 
 
 def perform_test(reco_name: str, catalog_name: str, flux: bool) -> None:
@@ -206,8 +192,21 @@ def perform_test(reco_name: str, catalog_name: str, flux: bool) -> None:
     ang_dist_fast_selection = reco.ang_dist_fast_selection
     search_radius = reco.search_radius
 
-    test_statistic_per_scramble, test_statistic_filename = estimate_background(
-        catalog, reco, test_stat, loader
+    test_statistic_per_scramble = estimate_background(
+        catalog, reco, test_stat
+    )
+
+    print("Saving the ts distribution under the background hypothesis...")
+
+    test_statistic_filename = (
+        f"{cfg.TEST_STATISTIC_FILENAME}_{reco.reco_name}_{catalog.catalog_name}"
+    )
+    if flux:
+        test_statistic_filename = f"{test_statistic_filename}_xray"
+    else:
+        test_statistic_filename = f"{test_statistic_filename}_redshift"
+    np.save(
+        loader.data_results_path / test_statistic_filename, test_statistic_per_scramble
     )
 
     print(f"\nEstimate ts value for {reco_name} with {catalog_name}...")
