@@ -9,42 +9,7 @@ from test_statistic import TestStatistic
 import recos
 
 
-def main():
-    parser = argparse.ArgumentParser(
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter
-    )
-    parser.add_argument(
-        "--reco",
-        "-r",
-        type=str,
-        default=cfg.ALLOWED_RECONSTRUCTIONS[cfg.SPLINEMPE_INDEX],
-        help="reconstruction to use for the neutrino events",
-        choices=cfg.ALLOWED_RECONSTRUCTIONS,
-    )
-    parser.add_argument(
-        "--catalog",
-        "-c",
-        type=str,
-        default=cfg.ALLOWED_CATALOGS[cfg.TURIN_INDEX],
-        help="catalog of sources for the statistical test",
-        choices=cfg.ALLOWED_CATALOGS,
-    )
-    parser.add_argument(
-        "--flux",
-        "-f",
-        type=str,
-        default=cfg.FLUX_CHOICES[cfg.FALSE_INDEX],
-        help="weight the sources with x-ray flux, instead of using the redshift. Possible only with Turin catalog.",
-        choices=cfg.FLUX_CHOICES,
-    )
-    args = parser.parse_args()
-    reco_name = args.reco
-    catalog_name = args.catalog
-    flux = args.flux
-    if flux == cfg.FLUX_CHOICES[cfg.TRUE_INDEX]:
-        flux = True
-    elif flux == cfg.FLUX_CHOICES[cfg.FALSE_INDEX]:
-        flux = False
+def perform_test(reco_name: str, catalog_name: str, flux: bool) -> None:
 
     loader = Loader()
     data_results_path = loader.data_results_path
@@ -197,8 +162,8 @@ def main():
                 )
         if len(test_statistic_per_doublet) == 0:
             test_statistic_scramble = cfg.TEST_STATISTIC_EMPTY_SCRAMBLE
-            names_alerts_scramble = None
-            name_source_scramble = None
+            names_alerts_scramble = ""
+            name_source_scramble = ""
         else:
             index_best_doublet = np.argmax(test_statistic_per_doublet)
             test_statistic_scramble = test_statistic_per_doublet[index_best_doublet]
@@ -339,6 +304,46 @@ def main():
         f"p-value: {p_value} = {p_value*100}%"
         f"\n\n*********************\n\n"
     )
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
+    parser.add_argument(
+        "--reco",
+        "-r",
+        type=str,
+        default=cfg.ALLOWED_RECONSTRUCTIONS[cfg.SPLINEMPE_INDEX],
+        help="reconstruction to use for the neutrino events",
+        choices=cfg.ALLOWED_RECONSTRUCTIONS,
+    )
+    parser.add_argument(
+        "--catalog",
+        "-c",
+        type=str,
+        default=cfg.ALLOWED_CATALOGS[cfg.TURIN_INDEX],
+        help="catalog of sources for the statistical test",
+        choices=cfg.ALLOWED_CATALOGS,
+    )
+    parser.add_argument(
+        "--flux",
+        "-f",
+        type=str,
+        default=cfg.FLUX_CHOICES[cfg.FALSE_INDEX],
+        help="weight the sources with x-ray flux, instead of using the redshift. Possible only with Turin catalog.",
+        choices=cfg.FLUX_CHOICES,
+    )
+    args = parser.parse_args()
+    reco_name = args.reco
+    catalog_name = args.catalog
+    flux = args.flux
+    if flux == cfg.FLUX_CHOICES[cfg.TRUE_INDEX]:
+        flux = True
+    elif flux == cfg.FLUX_CHOICES[cfg.FALSE_INDEX]:
+        flux = False
+
+    perform_test(reco_name, catalog_name, flux)
 
 
 if __name__ == "__main__":
