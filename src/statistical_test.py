@@ -62,17 +62,7 @@ def main():
     flux_contribute = test_stat.flux_contribute
     select_effective_area = test_stat.select_effective_area
     unc_contribute = test_stat.unc_contribute
-
-    def dir_contribute(ra1, dec1, ra2, dec2, raS, decS, sigma1, sigma2):  # in radiants
-        """
-        Contribute to the test statistic related to
-        how near are the alerts to the source. All
-        directions must be given in radiants
-        """
-        phi1 = angular_dist_score(ra1, dec1 + np.pi / 2.0, raS, decS + np.pi / 2.0)
-        phi2 = angular_dist_score(ra2, dec2 + np.pi / 2.0, raS, decS + np.pi / 2.0)
-        cont = -0.5 * ((phi1 / sigma1) ** 2 + (phi2 / sigma2) ** 2)
-        return cont
+    dir_contribute = test_stat.dir_contribute
 
     def noise_contribute(dec1, dec2, energy1, energy2):
         """

@@ -173,7 +173,7 @@ class TestStatistic:
             )  # Here we assume the limit of low fluxes as valid
         return contribute
 
-    def select_effective_area(self, dec: float, energy: float):
+    def select_effective_area(self, dec: float, energy: float) -> float:
         if 90 >= dec > 30:
             effa = self.effective_area_array[cfg.EFFECTIVE_AREA_30_90_DEG_INDEX - 1]
         elif dec <= 30 and dec > 0:
@@ -195,8 +195,29 @@ class TestStatistic:
         return effa[index]
 
     @staticmethod
-    def unc_contribute(sigma1, sigma2):
+    def unc_contribute(sigma1: float, sigma2: float) -> float:
         """
         Contribute to the test statistic related only to the uncertainties of the alerts
         """
         return -2 * np.log(sigma1 * sigma2)
+
+    @staticmethod
+    def dir_contribute(
+        ra1: float,
+        dec1: float,
+        ra2: float,
+        dec2: float,
+        raS: float,
+        decS: float,
+        sigma1: float,
+        sigma2: float,
+    ) -> float:  # in radiants
+        """
+        Contribute to the test statistic related to
+        how near are the alerts to the source. All
+        directions must be given in radiants
+        """
+        phi1 = angular_dist_score(ra1, dec1 + np.pi / 2.0, raS, decS + np.pi / 2.0)
+        phi2 = angular_dist_score(ra2, dec2 + np.pi / 2.0, raS, decS + np.pi / 2.0)
+        cont = -0.5 * ((phi1 / sigma1) ** 2 + (phi2 / sigma2) ** 2)
+        return cont
