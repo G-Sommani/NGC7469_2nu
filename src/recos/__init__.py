@@ -1,6 +1,7 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 import importlib
 import numpy as np
+from pathlib import Path
 
 
 class Reco(ABC):
@@ -12,6 +13,10 @@ class Reco(ABC):
     ENERGIES: np.ndarray = np.array([])
 
     def __init__(self) -> None:
+        pass
+
+    @abstractmethod
+    def load_reco_data(self, data_path: Path) -> None:
         pass
 
 

@@ -1,5 +1,4 @@
 import sys
-import pandas as pd  # type: ignore
 import numpy as np
 import time
 import argparse
@@ -48,7 +47,6 @@ def main():
         flux = False
 
     loader = Loader()
-    data_path = loader.data_path
     data_results_path = loader.data_results_path
     catalog = catalogs.initiate_catalog(catalog_name, xray=flux)
     loader.load_catalog(catalog)
@@ -62,112 +60,13 @@ def main():
     test_stat = TestStatistic(flux=flux)
 
     reco = recos.initiate_reco(reco_name)
+    loader.load_reco_data(reco)
 
     RAs = reco.RAs
     DECs = reco.DECs
     sigmas = reco.sigmas
     NAMEs = reco.NAMEs
     ENERGIES = reco.ENERGIES
-    if reco_name == cfg.ALLOWED_RECONSTRUCTIONS[cfg.SPLINEMPE_INDEX]:
-        rev0 = False
-        rev1 = False
-        has_rev1 = False
-        is_data = False
-        rev1_names = np.array([])
-        splinempe_f = open(data_path / cfg.SPLINEMPE_FILENAME)
-        notice_line_index = 0
-        for index, line in enumerate(splinempe_f):
-            if line == cfg.SPLINEMPE_GCN_START and index > cfg.SPLINEMPE_INDEX_START:
-                notice_line_index = 0
-                if index < 100:
-                    is_data = True
-            if line == cfg.SPLINEMPE_COMMENT_START:
-                is_data = False
-            if is_data:
-                if notice_line_index == 2:
-                    rev_number = line.split(">")[1].split("<")[0]
-                    if rev_number == "1" or rev_number == "2":
-                        rev0 = False
-                        rev1 = True
-                    if rev_number == "0":
-                        rev0 = True
-                        rev1 = False
-                notice_line_index += 1
-                if notice_line_index == 4:
-                    date = line.split(">")[1].split("<")[0]
-                    year = date.split("/")[0]
-                    month = date.split("/")[1]
-                    day = date.split("/")[2]
-                    name = f"IC{year}{month}{day}A"
-                    if rev1:
-                        if len(rev1_names) > 0:
-                            if name in rev1_names:
-                                if name == f"IC{year}{month}{day}B":
-                                    continue
-                                rev1_names[
-                                    np.where(rev1_names == name)
-                                ] = f"IC{year}{month}{day}B"
-                        rev1_names = np.append(rev1_names, name)
-                    elif rev0:
-                        if len(NAMEs) > 0:
-                            if name in NAMEs:
-                                NAMEs[
-                                    np.where(NAMEs == name)
-                                ] = f"IC{year}{month}{day}B"
-                        if (
-                            name in rev1_names or name in cfg.SPLINEMPE_EXCEPTIONS
-                        ) and not name in cfg.SPLINEMPE_BACKGROUND:
-                            NAMEs = np.append(NAMEs, name)
-                            has_rev1 = True
-                        else:
-                            has_rev1 = False
-                if rev0 and is_data and has_rev1:
-                    if notice_line_index == 7:
-                        ra = float(line.split(">")[1].split("<")[0])
-                        RAs = np.append(RAs, ra)
-                    if notice_line_index == 8:
-                        de = float(line.split(">")[1].split("<")[0])
-                        DECs = np.append(DECs, de)
-                    if notice_line_index == 10:
-                        err_50 = float(line.split(">")[1].split("<")[0]) / 60
-                        sigma = np.deg2rad(err_50) / cfg.RATIO_50_TO_SIGMA
-                        sigmas = np.append(sigmas, sigma)
-                    if notice_line_index == 11:
-                        energy = (
-                            float(line.split(">")[1].split("<")[0]) * cfg.TEV_TO_GEV
-                        )
-                        ENERGIES = np.append(ENERGIES, energy)
-    elif reco_name == cfg.ALLOWED_RECONSTRUCTIONS[cfg.MILLIPEDE_INDEX]:
-        alerts_df = pd.read_csv(data_path / cfg.MILLIPEDE_FILENAME)
-        RAs = alerts_df[cfg.MILLIPEDE_RA].to_numpy()
-        DECs = alerts_df[cfg.MILLIPEDE_DEC].to_numpy()
-        RAs_ERR_PLUS = alerts_df[cfg.MILLIPEDE_RA_PLUS].to_numpy()
-        DECs_ERR_PLUS = alerts_df[cfg.MILLIPEDE_DEC_PLUS].to_numpy()
-        RAs_ERR_MINUS = alerts_df[cfg.MILLIPEDE_RA_MINUS].to_numpy()
-        DECs_ERR_MINUS = alerts_df[cfg.MILLIPEDE_DEC_MINUS].to_numpy()
-        NAMEs = alerts_df[cfg.MILLIPEDE_IC_NAME].to_numpy()
-        ENERGIES = alerts_df[cfg.MILLIPEDE_ENERGY].to_numpy()
-
-        def millipede_area(index):
-            """
-            Given the index of the alert, returns the angular area
-            """
-            phi1_deg = RAs[index] - RAs_ERR_MINUS[index]
-            phi2_deg = RAs[index] + RAs_ERR_PLUS[index]
-            delta1_deg = DECs[index] - DECs_ERR_MINUS[index]
-            delta2_deg = DECs[index] + DECs_ERR_PLUS[index]
-            phi1_rad = np.deg2rad(phi1_deg)
-            phi2_rad = np.deg2rad(phi2_deg)
-            delta1_rad = np.deg2rad(delta1_deg)
-            delta2_rad = np.deg2rad(delta2_deg)
-            A = (phi2_rad - phi1_rad) * (np.sin(delta2_rad) - np.sin(delta1_rad))
-            return A
-
-        sigmas = np.array([])
-        for i in range(len(alerts_df)):
-            area = millipede_area(i)
-            sigma = np.sqrt(area / np.pi) / cfg.RATIO_90_TO_SIGMA
-            sigmas = np.append(sigmas, sigma)
 
     print("Estimating background...")
 

@@ -5,6 +5,7 @@ import requests
 import catalogs
 import numpy as np
 import config as cfg
+import recos
 
 
 class Loader:
@@ -70,3 +71,6 @@ class Loader:
 
     def load_effective_area(self) -> np.ndarray:
         return np.genfromtxt(self.data_path / cfg.EFFECTIVE_AREA_FILENAME)
+
+    def load_reco_data(self, reco: recos.Reco) -> None:
+        reco.load_reco_data(self.data_path)
