@@ -204,15 +204,35 @@ def estimate_background(
                 + " seconds remaining."
             )
 
-        if hypo:
-            N_nus_sources = np.array([])
-            for s_i in range(len(catalog.redshifts_catalog)):
-                N_nu = test_stat.gen_nu_from_source(
-                    catalog.redshifts_catalog[s_i], catalog.decs_catalog[s_i]
-                )
-                N_nus_sources = np.append(N_nus_sources, N_nu)
         rng = np.random.default_rng(seed=scrambling_number)
         random_ras = rng.uniform(0.0, cfg.ROUND_ANGLE, size=len(RAs))
+        if hypo:
+            N_nus_sources = np.array([])
+            indexes_emitting_sources = np.array([])
+            for s_i in range(len(catalog.redshifts_catalog)):
+                N_nu = test_stat.gen_nu_from_source(
+                    catalog.redshifts_catalog[s_i], catalog.decs_catalog[s_i], rng
+                )
+                N_nus_sources = np.append(N_nus_sources, N_nu)
+                if N_nu != 0:
+                    for k in range(N_nu):
+                        indexes_emitting_sources = np.append(indexes_emitting_sources, int(s_i))
+            number_source_nus = int(sum(N_nus_sources))
+            if number_source_nus != 0:
+                remove_neutrinos_indexes = rng.integers(low=0, high=len(reco.NAMEs), size = number_source_nus)
+                for i, index in enumerate(remove_neutrinos_indexes):
+                    print(i, index, indexes_emitting_sources, indexes_emitting_sources[i])
+                    nu_ra_rad, nu_dec_rad = test_stat.gen_rand_dist(
+                        np.deg2rad(catalog.ras_catalog[int(indexes_emitting_sources[i])]),
+                        np.deg2rad(catalog.decs_catalog[int(indexes_emitting_sources[i])]),
+                        reco.sigmas[index],
+                        random_state=rng
+                    )
+                    print(
+                        catalog.ras_catalog[int(indexes_emitting_sources[i])], 
+                        catalog.decs_catalog[int(indexes_emitting_sources[i])], 
+                        np.rad2deg(nu_ra_rad), np.rad2deg(nu_dec_rad)
+                    )
 
         (
             test_statistic_per_doublet,
