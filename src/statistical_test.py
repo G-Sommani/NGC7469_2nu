@@ -12,7 +12,7 @@ from typing import Tuple
 
 def select_sources_nearby(
     search_index: int, ras: np.ndarray, reco: recos.Reco, catalog: catalogs.Catalog
-):
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
 
     mask_ra = np.logical_and(
         catalog.ras_catalog < ras[search_index] + reco.search_radius,
@@ -137,7 +137,7 @@ def evaluate_dataset(
                 names_sources_nearby,
             ) = select_sources_nearby(search_index, ras, reco, catalog)
 
-            (test_statistic_doublet, name_best_source) = evaluate_doublet(
+            test_statistic_doublet, name_best_source = evaluate_doublet(
                 ra1_rad,
                 ra2_rad,
                 dec1_rad,
@@ -306,7 +306,7 @@ def main():
         "--reco",
         "-r",
         type=str,
-        default=cfg.ALLOWED_RECONSTRUCTIONS[cfg.SPLINEMPE_INDEX],
+        default=cfg.DEFAULT_RECO,
         help="reconstruction to use for the neutrino events",
         choices=cfg.ALLOWED_RECONSTRUCTIONS,
     )
@@ -314,7 +314,7 @@ def main():
         "--catalog",
         "-c",
         type=str,
-        default=cfg.ALLOWED_CATALOGS[cfg.TURIN_INDEX],
+        default=cfg.DEFAULT_CATALOG,
         help="catalog of sources for the statistical test",
         choices=cfg.ALLOWED_CATALOGS,
     )
