@@ -10,32 +10,122 @@ import recos
 from typing import Tuple
 
 
+def evaluate_dataset(
+    ras: np.ndarray,
+    reco: recos.Reco,
+    catalog: catalogs.Catalog,
+    test_stat: TestStatistic,
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    test_statistic_per_doublet = np.array([])
+    names_alerts_per_doublet = np.array([])
+    names_source_per_doublet = np.array([])
+    for first_alert_index in range(len(ras)):
+        for second_alert_index in range(first_alert_index, len(ras)):
+            if first_alert_index == second_alert_index:
+                continue
+            ra1 = ras[first_alert_index]
+            ra2 = ras[second_alert_index]
+            dec1 = reco.DECs[first_alert_index]
+            dec2 = reco.DECs[second_alert_index]
+            higher_ra = max(ra1, ra2)
+            smaller_ra = min(ra1, ra2)
+            # First fast selection
+            ra_distance = min(higher_ra - smaller_ra, smaller_ra - higher_ra + 360)
+            dec_distance = np.abs(dec1 - dec2)
+            if (
+                ra_distance > reco.ang_dist_fast_selection
+                or dec_distance > reco.ang_dist_fast_selection
+            ):
+                continue
+            ra1_rad = np.deg2rad(ra1)
+            ra2_rad = np.deg2rad(ra2)
+            dec1_rad = np.deg2rad(dec1)
+            dec2_rad = np.deg2rad(dec2)
+            sigma1 = reco.sigmas[first_alert_index]
+            sigma2 = reco.sigmas[second_alert_index]
+            energy1 = reco.ENERGIES[first_alert_index]
+            energy2 = reco.ENERGIES[second_alert_index]
+            # Consider the sources nearest to the alert with best angular resolution
+            if sigma1 <= sigma2:
+                search_index = first_alert_index
+            else:
+                search_index = second_alert_index
+            mask_ra = np.logical_and(
+                catalog.ras_catalog < ras[search_index] + reco.search_radius,
+                catalog.ras_catalog > ras[search_index] - reco.search_radius,
+            )
+            mask_dec = np.logical_and(
+                catalog.decs_catalog < reco.DECs[search_index] + reco.search_radius,
+                catalog.decs_catalog > reco.DECs[search_index] - reco.search_radius,
+            )
+            mask_sources = np.logical_and(mask_ra, mask_dec)
+            test_statistic_per_source = np.array([])
+            RAs_sources_nearby = catalog.ras_catalog[mask_sources]
+            DECs_sources_nearby = catalog.decs_catalog[mask_sources]
+            if catalog.xray:
+                xray_sources_nearby = catalog.xray_catalog[mask_sources]
+            else:
+                redshifts_sources_nearby = catalog.redshifts_catalog[mask_sources]
+            names_sources_nearby = catalog.names_catalog[mask_sources]
+            for source_index in range(len(names_sources_nearby)):
+                ra_rad_source = np.deg2rad(RAs_sources_nearby[source_index])
+                de_rad_source = np.deg2rad(DECs_sources_nearby[source_index])
+                if catalog.xray:
+                    redshift_or_flux = xray_sources_nearby[source_index]
+                else:
+                    redshift_or_flux = redshifts_sources_nearby[source_index]
+                test_statistic_source = test_stat.test_statistic(
+                    ra1_rad,
+                    dec1_rad,
+                    sigma1,
+                    energy1,
+                    ra2_rad,
+                    dec2_rad,
+                    sigma2,
+                    energy2,
+                    ra_rad_source,
+                    de_rad_source,
+                    redshift_or_flux,
+                )
+                test_statistic_per_source = np.append(
+                    test_statistic_per_source, test_statistic_source
+                )
+            if len(test_statistic_per_source) == 0:
+                continue
+            index_best_ts = np.argmax(test_statistic_per_source)
+            test_statistic_doublet = test_statistic_per_source[index_best_ts]
+            name_best_source = names_sources_nearby[index_best_ts]
+            test_statistic_per_doublet = np.append(
+                test_statistic_per_doublet, test_statistic_doublet
+            )
+            names_alerts_per_doublet = np.append(
+                names_alerts_per_doublet,
+                f"{reco.NAMEs[first_alert_index]}, {reco.NAMEs[second_alert_index]}",
+            )
+            names_source_per_doublet = np.append(
+                names_source_per_doublet, name_best_source
+            )
+
+    return (
+        test_statistic_per_doublet,
+        names_alerts_per_doublet,
+        names_source_per_doublet,
+    )
+
+
 def estimate_background(
     catalog: catalogs.Catalog,
     reco: recos.Reco,
     test_stat: TestStatistic,
 ) -> np.ndarray:
 
-    ras_catalog = catalog.ras_catalog
-    decs_catalog = catalog.decs_catalog
-    redshifts_catalog = catalog.redshifts_catalog
-    names_catalog = catalog.names_catalog
-    xray_catalog = catalog.xray_catalog
-    flux = catalog.xray
-
     RAs = reco.RAs
-    DECs = reco.DECs
-    sigmas = reco.sigmas
-    NAMEs = reco.NAMEs
-    ENERGIES = reco.ENERGIES
 
     print("Estimating background...")
 
     total_scramblings = catalog.total_scrambling_possibilities[
         reco.total_scramblings_index
     ]
-    ang_dist_fast_selection = reco.ang_dist_fast_selection
-    search_radius = reco.search_radius
 
     test_statistic_per_scramble = np.array([])
     names_alerts_per_scramble = np.array([])
@@ -54,95 +144,13 @@ def estimate_background(
             )
         rng = np.random.default_rng(seed=scrambling_number)
         random_ras = rng.uniform(0.0, cfg.ROUND_ANGLE, size=len(RAs))
-        test_statistic_per_doublet = np.array([])
-        names_alerts_per_doublet = np.array([])
-        names_source_per_doublet = np.array([])
-        for first_alert_index in range(len(RAs)):
-            for second_alert_index in range(first_alert_index, len(RAs)):
-                if first_alert_index == second_alert_index:
-                    continue
-                ra1 = random_ras[first_alert_index]
-                ra2 = random_ras[second_alert_index]
-                dec1 = DECs[first_alert_index]
-                dec2 = DECs[second_alert_index]
-                higher_ra = max(ra1, ra2)
-                smaller_ra = min(ra1, ra2)
-                # First fast selection
-                ra_distance = min(higher_ra - smaller_ra, smaller_ra - higher_ra + 360)
-                dec_distance = np.abs(dec1 - dec2)
-                if (
-                    ra_distance > ang_dist_fast_selection
-                    or dec_distance > ang_dist_fast_selection
-                ):
-                    continue
-                ra1_rad = np.deg2rad(ra1)
-                ra2_rad = np.deg2rad(ra2)
-                dec1_rad = np.deg2rad(dec1)
-                dec2_rad = np.deg2rad(dec2)
-                sigma1 = sigmas[first_alert_index]
-                sigma2 = sigmas[second_alert_index]
-                energy1 = ENERGIES[first_alert_index]
-                energy2 = ENERGIES[second_alert_index]
-                # Consider the sources nearest to the alert with best angular resolution
-                if sigma1 <= sigma2:
-                    search_index = first_alert_index
-                else:
-                    search_index = second_alert_index
-                mask_ra = np.logical_and(
-                    ras_catalog < random_ras[search_index] + search_radius,
-                    ras_catalog > random_ras[search_index] - search_radius,
-                )
-                mask_dec = np.logical_and(
-                    decs_catalog < DECs[search_index] + search_radius,
-                    decs_catalog > DECs[search_index] - search_radius,
-                )
-                mask_sources = np.logical_and(mask_ra, mask_dec)
-                test_statistic_per_source = np.array([])
-                RAs_sources_nearby = ras_catalog[mask_sources]
-                DECs_sources_nearby = decs_catalog[mask_sources]
-                if flux:
-                    xray_sources_nearby = xray_catalog[mask_sources]
-                else:
-                    redshifts_sources_nearby = redshifts_catalog[mask_sources]
-                names_sources_nearby = names_catalog[mask_sources]
-                for source_index in range(len(names_sources_nearby)):
-                    ra_rad_source = np.deg2rad(RAs_sources_nearby[source_index])
-                    de_rad_source = np.deg2rad(DECs_sources_nearby[source_index])
-                    if flux:
-                        redshift_or_flux = xray_sources_nearby[source_index]
-                    else:
-                        redshift_or_flux = redshifts_sources_nearby[source_index]
-                    test_statistic_source = test_stat.test_statistic(
-                        ra1_rad,
-                        dec1_rad,
-                        sigma1,
-                        energy1,
-                        ra2_rad,
-                        dec2_rad,
-                        sigma2,
-                        energy2,
-                        ra_rad_source,
-                        de_rad_source,
-                        redshift_or_flux,
-                    )
-                    test_statistic_per_source = np.append(
-                        test_statistic_per_source, test_statistic_source
-                    )
-                if len(test_statistic_per_source) == 0:
-                    continue
-                index_best_ts = np.argmax(test_statistic_per_source)
-                test_statistic_doublet = test_statistic_per_source[index_best_ts]
-                name_best_source = names_sources_nearby[index_best_ts]
-                test_statistic_per_doublet = np.append(
-                    test_statistic_per_doublet, test_statistic_doublet
-                )
-                names_alerts_per_doublet = np.append(
-                    names_alerts_per_doublet,
-                    f"{NAMEs[first_alert_index]}, {NAMEs[second_alert_index]}",
-                )
-                names_source_per_doublet = np.append(
-                    names_source_per_doublet, name_best_source
-                )
+
+        (
+            test_statistic_per_doublet,
+            names_alerts_per_doublet,
+            names_source_per_doublet,
+        ) = evaluate_dataset(random_ras, reco, catalog, test_stat)
+
         if len(test_statistic_per_doublet) == 0:
             test_statistic_scramble = cfg.TEST_STATISTIC_EMPTY_SCRAMBLE
             names_alerts_scramble = ""
@@ -177,20 +185,9 @@ def perform_test(reco_name: str, catalog_name: str, flux: bool) -> None:
     reco = recos.initiate_reco(reco_name)
     loader.load_reco_data(reco)
 
-    ras_catalog = catalog.ras_catalog
-    decs_catalog = catalog.decs_catalog
-    redshifts_catalog = catalog.redshifts_catalog
-    names_catalog = catalog.names_catalog
-    xray_catalog = catalog.xray_catalog
     flux = catalog.xray
 
     RAs = reco.RAs
-    DECs = reco.DECs
-    sigmas = reco.sigmas
-    NAMEs = reco.NAMEs
-    ENERGIES = reco.ENERGIES
-    ang_dist_fast_selection = reco.ang_dist_fast_selection
-    search_radius = reco.search_radius
 
     test_statistic_per_scramble = estimate_background(catalog, reco, test_stat)
 
@@ -209,95 +206,12 @@ def perform_test(reco_name: str, catalog_name: str, flux: bool) -> None:
 
     print(f"\nEstimate ts value for {reco_name} with {catalog_name}...")
 
-    test_statistic_per_doublet = np.array([])
-    names_alerts_per_doublet = np.array([])
-    names_source_per_doublet = np.array([])
-    for first_alert_index in range(len(RAs)):
-        for second_alert_index in range(first_alert_index, len(RAs)):
-            if first_alert_index == second_alert_index:
-                continue
-            ra1 = RAs[first_alert_index]
-            ra2 = RAs[second_alert_index]
-            dec1 = DECs[first_alert_index]
-            dec2 = DECs[second_alert_index]
-            higher_ra = max(ra1, ra2)
-            smaller_ra = min(ra1, ra2)
-            # First fast selection
-            ra_distance = min(higher_ra - smaller_ra, smaller_ra - higher_ra + 360)
-            dec_distance = np.abs(dec1 - dec2)
-            if (
-                ra_distance > ang_dist_fast_selection
-                or dec_distance > ang_dist_fast_selection
-            ):
-                continue
-            ra1_rad = np.deg2rad(ra1)
-            ra2_rad = np.deg2rad(ra2)
-            dec1_rad = np.deg2rad(dec1)
-            dec2_rad = np.deg2rad(dec2)
-            sigma1 = sigmas[first_alert_index]
-            sigma2 = sigmas[second_alert_index]
-            energy1 = ENERGIES[first_alert_index]
-            energy2 = ENERGIES[second_alert_index]
-            # Consider the sources nearest to the alert with best angular resolution
-            if sigma1 <= sigma2:
-                search_index = first_alert_index
-            else:
-                search_index = second_alert_index
-            mask_ra = np.logical_and(
-                ras_catalog < RAs[search_index] + search_radius,
-                ras_catalog > RAs[search_index] - search_radius,
-            )
-            mask_dec = np.logical_and(
-                decs_catalog < DECs[search_index] + search_radius,
-                decs_catalog > DECs[search_index] - search_radius,
-            )
-            mask_sources = np.logical_and(mask_ra, mask_dec)
-            test_statistic_per_source = np.array([])
-            RAs_sources_nearby = ras_catalog[mask_sources]
-            DECs_sources_nearby = decs_catalog[mask_sources]
-            if flux:
-                xray_sources_nearby = xray_catalog[mask_sources]
-            else:
-                redshifts_sources_nearby = redshifts_catalog[mask_sources]
-            names_sources_nearby = names_catalog[mask_sources]
-            for source_index in range(len(names_sources_nearby)):
-                ra_rad_source = np.deg2rad(RAs_sources_nearby[source_index])
-                de_rad_source = np.deg2rad(DECs_sources_nearby[source_index])
-                if flux:
-                    redshift_or_flux = xray_sources_nearby[source_index]
-                else:
-                    redshift_or_flux = redshifts_sources_nearby[source_index]
-                test_statistic_source = test_stat.test_statistic(
-                    ra1_rad,
-                    dec1_rad,
-                    sigma1,
-                    energy1,
-                    ra2_rad,
-                    dec2_rad,
-                    sigma2,
-                    energy2,
-                    ra_rad_source,
-                    de_rad_source,
-                    redshift_or_flux,
-                )
-                test_statistic_per_source = np.append(
-                    test_statistic_per_source, test_statistic_source
-                )
-            if len(test_statistic_per_source) == 0:
-                continue
-            index_best_ts = np.argmax(test_statistic_per_source)
-            test_statistic_doublet = test_statistic_per_source[index_best_ts]
-            name_best_source = names_sources_nearby[index_best_ts]
-            test_statistic_per_doublet = np.append(
-                test_statistic_per_doublet, test_statistic_doublet
-            )
-            names_alerts_per_doublet = np.append(
-                names_alerts_per_doublet,
-                f"{NAMEs[first_alert_index]}, {NAMEs[second_alert_index]}",
-            )
-            names_source_per_doublet = np.append(
-                names_source_per_doublet, name_best_source
-            )
+    (
+        test_statistic_per_doublet,
+        names_alerts_per_doublet,
+        names_source_per_doublet,
+    ) = evaluate_dataset(RAs, reco, catalog, test_stat)
+
     best_test_statistic_index = np.argmax(test_statistic_per_doublet)
     best_test_statistic = test_statistic_per_doublet[best_test_statistic_index]
     best_source = names_source_per_doublet[best_test_statistic_index]
