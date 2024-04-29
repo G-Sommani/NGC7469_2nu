@@ -178,6 +178,7 @@ def estimate_background(
     catalog: catalogs.Catalog,
     reco: recos.Reco,
     test_stat: TestStatistic,
+    hypo: bool,
 ) -> np.ndarray:
 
     RAs = reco.RAs
@@ -187,7 +188,6 @@ def estimate_background(
     total_scramblings = catalog.total_scrambling_possibilities[
         reco.total_scramblings_index
     ]
-
     test_statistic_per_scramble = np.array([])
     names_alerts_per_scramble = np.array([])
     names_source_per_scramble = np.array([])
@@ -203,6 +203,14 @@ def estimate_background(
                 + f" seconds so far. Still {round((total_scramblings - (scrambling_number + 1)) * (time.time() - t0) / (scrambling_number + 1), 1):6}"
                 + " seconds remaining."
             )
+
+        if hypo:
+            N_nus_sources = np.array([])
+            for s_i in range(len(catalog.redshifts_catalog)):
+                N_nu = test_stat.gen_nu_from_source(
+                    catalog.redshifts_catalog[s_i], catalog.decs_catalog[s_i]
+                )
+                N_nus_sources = np.append(N_nus_sources, N_nu)
         rng = np.random.default_rng(seed=scrambling_number)
         random_ras = rng.uniform(0.0, cfg.ROUND_ANGLE, size=len(RAs))
 
@@ -234,7 +242,7 @@ def estimate_background(
     return test_statistic_per_scramble
 
 
-def perform_test(reco_name: str, catalog_name: str, flux: bool) -> None:
+def perform_test(reco_name: str, catalog_name: str, flux: bool, hypo: bool) -> None:
 
     loader = Loader()
     data_results_path = loader.data_results_path
@@ -250,9 +258,12 @@ def perform_test(reco_name: str, catalog_name: str, flux: bool) -> None:
 
     RAs = reco.RAs
 
-    test_statistic_per_scramble = estimate_background(catalog, reco, test_stat)
+    test_statistic_per_scramble = estimate_background(catalog, reco, test_stat, hypo)
 
-    print("Saving the ts distribution under the background hypothesis...")
+    if hypo:
+        print("Saving the ts distribution under the alternative hypothesis...")
+    else:
+        print("Saving the ts distribution under the background hypothesis...")
 
     test_statistic_filename = (
         f"{cfg.TEST_STATISTIC_FILENAME}_{reco.reco_name}_{catalog.catalog_name}"
@@ -261,6 +272,10 @@ def perform_test(reco_name: str, catalog_name: str, flux: bool) -> None:
         test_statistic_filename = f"{test_statistic_filename}_xray"
     else:
         test_statistic_filename = f"{test_statistic_filename}_redshift"
+    if hypo:
+        test_statistic_filename = f"{test_statistic_filename}_alternative_hypothesis"
+    else:
+        test_statistic_filename = f"{test_statistic_filename}_background_hypothesis"
     np.save(
         loader.data_results_path / test_statistic_filename, test_statistic_per_scramble
     )
@@ -326,6 +341,14 @@ def main():
         help="weight the sources with x-ray flux, instead of using the redshift. Possible only with Turin catalog.",
         choices=cfg.FLUX_CHOICES,
     )
+    parser.add_argument(
+        "--alternative_hypothesis",
+        "-a",
+        type=str,
+        default=cfg.HYPO_CHOICES[cfg.FALSE_INDEX],
+        help="Generate the test statistic distribution using the alternative hypothesis.",
+        choices=cfg.HYPO_CHOICES,
+    )
     args = parser.parse_args()
     reco_name = args.reco
     catalog_name = args.catalog
@@ -334,8 +357,13 @@ def main():
         flux = True
     elif flux == cfg.FLUX_CHOICES[cfg.FALSE_INDEX]:
         flux = False
+    hypo = args.alternative_hypothesis
+    if hypo == cfg.HYPO_CHOICES[cfg.TRUE_INDEX]:
+        hypo = True
+    elif hypo == cfg.HYPO_CHOICES[cfg.FALSE_INDEX]:
+        hypo = False
 
-    perform_test(reco_name, catalog_name, flux)
+    perform_test(reco_name, catalog_name, flux, hypo)
 
 
 if __name__ == "__main__":
