@@ -162,7 +162,7 @@ def estimate_background(
             names_source_per_scramble, name_source_scramble
         )
 
-        return test_statistic_per_scramble
+    return test_statistic_per_scramble
 
 
 def perform_test(reco_name: str, catalog_name: str, flux: bool) -> None:
@@ -192,9 +192,7 @@ def perform_test(reco_name: str, catalog_name: str, flux: bool) -> None:
     ang_dist_fast_selection = reco.ang_dist_fast_selection
     search_radius = reco.search_radius
 
-    test_statistic_per_scramble = estimate_background(
-        catalog, reco, test_stat
-    )
+    test_statistic_per_scramble = estimate_background(catalog, reco, test_stat)
 
     print("Saving the ts distribution under the background hypothesis...")
 

@@ -90,30 +90,30 @@ class Turin(Catalog):
                     self.xray_catalog, intr_xray_flux * cfg.FLUX_FACTOR
                 )
 
-            def hms_to_deg(h, m, s):
-                return 15.0 * (h + (m + s / 60.0) / 60.0)
+        def hms_to_deg(h, m, s):
+            return 15.0 * (h + (m + s / 60.0) / 60.0)
 
-            def dms_to_deg(d, m, s):
-                return d + (m + s / 60.0) / 60.0
+        def dms_to_deg(d, m, s):
+            return d + (m + s / 60.0) / 60.0
 
-            self.ras_catalog = hms_to_deg(
-                dataframe[cfg.TURIN_RAh],
-                dataframe[cfg.TURIN_RAm],
-                dataframe[cfg.TURIN_RAs],
-            ).to_numpy()
-            self.decs_catalog = dms_to_deg(
-                dataframe[cfg.TURIN_DEd],
-                dataframe[cfg.TURIN_DEm],
-                dataframe[cfg.TURIN_DEs],
-            ).to_numpy()
-            self.redshifts_catalog = dataframe[cfg.TURIN_z].to_numpy()
-            self.names_catalog = dataframe_names[cfg.TURIN_NAME_SOURCE].to_numpy()
-            self.names_catalog[pd.isna(self.names_catalog)] = dataframe_names[
-                cfg.TURIN_SWIFT
-            ][pd.isna(self.names_catalog)]
-            self.names_catalog[pd.isna(self.names_catalog)] = dataframe_names[
-                cfg.TURIN_WISE
-            ][pd.isna(self.names_catalog)]
+        self.ras_catalog = hms_to_deg(
+            dataframe[cfg.TURIN_RAh],
+            dataframe[cfg.TURIN_RAm],
+            dataframe[cfg.TURIN_RAs],
+        ).to_numpy()
+        self.decs_catalog = dms_to_deg(
+            dataframe[cfg.TURIN_DEd],
+            dataframe[cfg.TURIN_DEm],
+            dataframe[cfg.TURIN_DEs],
+        ).to_numpy()
+        self.redshifts_catalog = dataframe[cfg.TURIN_z].to_numpy()
+        self.names_catalog = dataframe_names[cfg.TURIN_NAME_SOURCE].to_numpy()
+        self.names_catalog[pd.isna(self.names_catalog)] = dataframe_names[
+            cfg.TURIN_SWIFT
+        ][pd.isna(self.names_catalog)]
+        self.names_catalog[pd.isna(self.names_catalog)] = dataframe_names[
+            cfg.TURIN_WISE
+        ][pd.isna(self.names_catalog)]
 
 
 CATALOG_CLASS: Final[type[Catalog]] = Turin
