@@ -1,6 +1,7 @@
 from loading_functions import Loader
 import config as cfg
 import numpy as np
+from scipy.stats import Poisson  # type: ignore
 
 
 def angular_dist_score(az_true, zen_true, az_pred, zen_pred):
@@ -150,6 +151,10 @@ class TestStatistic:
             )  # m^-2 * s
             expected_nu = constant * cfg.FLUX_NU * (cfg.E0 ** 2) * area_energy_factor
         return expected_nu
+
+    def gen_nu_from_source(self, z_or_xray: float, dec: float) -> int:
+        mu = self.expected_nu_from_source(z_or_xray, dec)
+        return Poisson.rvs(mu=mu)
 
     def flux_contribute(self, z_or_xray: float, dec: float) -> float:
         if self.flux:
