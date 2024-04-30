@@ -1,7 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import os
-from pathlib import Path
 import config as cfg
 from loading_functions import Loader
 
