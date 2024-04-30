@@ -1,7 +1,7 @@
 from loading_functions import Loader
 import config as cfg
 import numpy as np
-from scipy.stats import poisson, norm # type: ignore
+from scipy.stats import poisson, norm  # type: ignore
 from typing import Tuple
 
 
@@ -153,7 +153,9 @@ class TestStatistic:
             expected_nu = constant * cfg.FLUX_NU * (cfg.E0 ** 2) * area_energy_factor
         return expected_nu
 
-    def gen_nu_from_source(self, z_or_xray: float, dec: float, random_state: np.random.RandomState) -> int:
+    def gen_nu_from_source(
+        self, z_or_xray: float, dec: float, random_state: np.random.Generator
+    ) -> int:
         mu = self.expected_nu_from_source(z_or_xray, dec)
         return poisson.rvs(mu=mu, random_state=random_state)
 
@@ -230,8 +232,8 @@ class TestStatistic:
 
     @staticmethod
     def gen_rand_dist(
-            raS: float, decS: float, sigma: float, random_state: np.random.RandomState
-        ) -> Tuple[float, float]:
+        raS: float, decS: float, sigma: float, random_state: np.random.Generator
+    ) -> Tuple[float, float]:
         nu_ra = norm.rvs(loc=raS, scale=sigma, random_state=random_state)
         nu_dec = norm.rvs(loc=decS, scale=sigma, random_state=random_state)
         return nu_ra, nu_dec
