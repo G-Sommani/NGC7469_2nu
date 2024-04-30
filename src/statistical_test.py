@@ -8,10 +8,15 @@ import catalogs
 from test_statistic import TestStatistic
 import recos
 from typing import Tuple
+import copy
 
 
 def select_sources_nearby(
-    search_index: int, ras: np.ndarray, reco: recos.Reco, catalog: catalogs.Catalog
+    search_index: int,
+    ras: np.ndarray,
+    decs: np.ndarray,
+    reco: recos.Reco,
+    catalog: catalogs.Catalog,
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
 
     mask_ra = np.logical_and(
@@ -19,8 +24,8 @@ def select_sources_nearby(
         catalog.ras_catalog > ras[search_index] - reco.search_radius,
     )
     mask_dec = np.logical_and(
-        catalog.decs_catalog < reco.DECs[search_index] + reco.search_radius,
-        catalog.decs_catalog > reco.DECs[search_index] - reco.search_radius,
+        catalog.decs_catalog < decs[search_index] + reco.search_radius,
+        catalog.decs_catalog > decs[search_index] - reco.search_radius,
     )
     mask_sources = np.logical_and(mask_ra, mask_dec)
     RAs_sources_nearby = catalog.ras_catalog[mask_sources]
@@ -88,6 +93,7 @@ def evaluate_doublet(
 
 def evaluate_dataset(
     ras: np.ndarray,
+    decs: np.ndarray,
     reco: recos.Reco,
     catalog: catalogs.Catalog,
     test_stat: TestStatistic,
@@ -103,8 +109,8 @@ def evaluate_dataset(
                 continue
             ra1 = ras[first_alert_index]
             ra2 = ras[second_alert_index]
-            dec1 = reco.DECs[first_alert_index]
-            dec2 = reco.DECs[second_alert_index]
+            dec1 = decs[first_alert_index]
+            dec2 = decs[second_alert_index]
             higher_ra = max(ra1, ra2)
             smaller_ra = min(ra1, ra2)
             # First fast selection
@@ -135,7 +141,7 @@ def evaluate_dataset(
                 DECs_sources_nearby,
                 xray_or_redshifts_sources_nearby,
                 names_sources_nearby,
-            ) = select_sources_nearby(search_index, ras, reco, catalog)
+            ) = select_sources_nearby(search_index, ras, decs, reco, catalog)
 
             test_statistic_doublet, name_best_source = evaluate_doublet(
                 ra1_rad,
@@ -206,6 +212,7 @@ def estimate_background(
 
         rng = np.random.default_rng(seed=scrambling_number)
         random_ras = rng.uniform(0.0, cfg.ROUND_ANGLE, size=len(RAs))
+        modified_decs = copy.copy(reco.DECs)
         if hypo:
             N_nus_sources = np.array([])
             indexes_emitting_sources = np.array([])
@@ -224,32 +231,22 @@ def estimate_background(
                 remove_neutrinos_indexes = rng.integers(
                     low=0, high=len(reco.NAMEs), size=number_source_nus
                 )
-                for i, index in enumerate(remove_neutrinos_indexes):
-                    print(
-                        i, index, indexes_emitting_sources, indexes_emitting_sources[i]
-                    )
+                for i, nu_index in enumerate(remove_neutrinos_indexes):
+                    source_index = int(indexes_emitting_sources[i])
                     nu_ra_rad, nu_dec_rad = test_stat.gen_rand_dist(
-                        np.deg2rad(
-                            catalog.ras_catalog[int(indexes_emitting_sources[i])]
-                        ),
-                        np.deg2rad(
-                            catalog.decs_catalog[int(indexes_emitting_sources[i])]
-                        ),
-                        reco.sigmas[index],
+                        np.deg2rad(catalog.ras_catalog[source_index]),
+                        np.deg2rad(catalog.decs_catalog[source_index]),
+                        reco.sigmas[nu_index],
                         random_state=rng,
                     )
-                    print(
-                        catalog.ras_catalog[int(indexes_emitting_sources[i])],
-                        catalog.decs_catalog[int(indexes_emitting_sources[i])],
-                        np.rad2deg(nu_ra_rad),
-                        np.rad2deg(nu_dec_rad),
-                    )
+                    random_ras[nu_index] = np.rad2deg(nu_ra_rad)
+                    modified_decs[nu_index] = np.rad2deg(nu_dec_rad)
 
         (
             test_statistic_per_doublet,
             names_alerts_per_doublet,
             names_source_per_doublet,
-        ) = evaluate_dataset(random_ras, reco, catalog, test_stat)
+        ) = evaluate_dataset(random_ras, modified_decs, reco, catalog, test_stat)
 
         if len(test_statistic_per_doublet) == 0:
             test_statistic_scramble = cfg.TEST_STATISTIC_EMPTY_SCRAMBLE
@@ -288,6 +285,7 @@ def perform_test(reco_name: str, catalog_name: str, flux: bool, hypo: bool) -> N
     flux = catalog.xray
 
     RAs = reco.RAs
+    DECs = reco.DECs
 
     test_statistic_per_scramble = estimate_background(catalog, reco, test_stat, hypo)
 
@@ -317,7 +315,7 @@ def perform_test(reco_name: str, catalog_name: str, flux: bool, hypo: bool) -> N
         test_statistic_per_doublet,
         names_alerts_per_doublet,
         names_source_per_doublet,
-    ) = evaluate_dataset(RAs, reco, catalog, test_stat)
+    ) = evaluate_dataset(RAs, DECs, reco, catalog, test_stat)
 
     best_test_statistic_index = np.argmax(test_statistic_per_doublet)
     best_test_statistic = test_statistic_per_doublet[best_test_statistic_index]
