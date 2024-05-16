@@ -182,6 +182,7 @@ def estimate_background(
     reco: recos.Reco,
     test_stat: TestStatistic,
     hypo: bool,
+    loader: Loader,
 ) -> np.ndarray:
 
     RAs = reco.RAs
@@ -299,12 +300,25 @@ def estimate_background(
         background_probs = np.asarray(background_probs)  # type: ignore
         test_statistic_per_scramble = np.asarray(test_statistic_per_scramble)  # type: ignore
         if test_stat.flux:
-            np.save("xray_sources", redshifts_or_xray_sources)
+            weight_name = "xray"
         else:
-            np.save("redshifts_sources", redshifts_or_xray_sources)
-        np.save("decs_sources", decs_sources)
-        np.save("background_probs_sgnl", background_probs)
-        np.save("alternative_probs_sgnl", alternative_probs)
+            weight_name = "redshift"
+        np.save(
+            loader.data_results_path / f"{weight_name}_sources_{catalog.catalog_name}_{hypo}_hypothesis", 
+            redshifts_or_xray_sources
+        )
+        np.save(
+            loader.data_results_path / f"decs_sources_{weight_name}_{catalog.catalog_name}_{hypo}_hypothesis", 
+            decs_sources
+        )
+        np.save(
+            loader.data_results_path / f"background_probs_{reco.reco_name}_{catalog.catalog_name}_{weight_name}_{hypo}_hypothesis", 
+            background_probs
+        )
+        np.save(
+            loader.data_results_path / f"alternative_probs_{reco.reco_name}_{catalog.catalog_name}_{weight_name}_{hypo}_hypothesis", 
+            alternative_probs
+        )
         return test_statistic_per_scramble  # type: ignore
 
     for scrambling_number in range(total_scramblings):
@@ -401,8 +415,18 @@ def estimate_background(
     names_alerts_per_scramble = np.asarray(names_alerts_per_scramble)  # type: ignore
     background_probs = np.asarray(background_probs)  # type: ignore
     alternative_probs = np.asarray(alternative_probs)  # type: ignore
-    np.save("background_probs_bkg", background_probs)
-    np.save("alternative_probs_bkg", alternative_probs)
+    if test_stat.flux:
+        weight_name = "xray"
+    else:
+        weight_name = "redshift"
+    np.save(
+        loader.data_results_path / f"background_probs_{reco.reco_name}_{catalog.catalog_name}_{weight_name}_{hypo}_hypothesis", 
+        background_probs
+    )
+    np.save(
+        loader.data_results_path / f"alternative_probs_{reco.reco_name}_{catalog.catalog_name}_{weight_name}_{hypo}_hypothesis", 
+        alternative_probs
+    )
 
     return test_statistic_per_scramble  # type: ignore
 
@@ -426,7 +450,7 @@ def perform_test(reco_name: str, catalog_name: str, flux: bool, hypo: bool) -> N
     RAs = reco.RAs
     DECs = reco.DECs
 
-    test_statistic_per_scramble = estimate_background(catalog, reco, test_stat, hypo)
+    test_statistic_per_scramble = estimate_background(catalog, reco, test_stat, hypo, loader)
 
     if hypo:
         print("Saving the ts distribution under the alternative hypothesis...")
