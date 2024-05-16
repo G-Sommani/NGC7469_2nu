@@ -60,7 +60,7 @@ def evaluate_doublet(
     test_stat: TestStatistic,
 ) -> Tuple[float | bool, str]:
 
-    test_statistic_per_source = np.array([])
+    test_statistic_per_source = list()
     for source_index in range(len(names_sources_nearby)):
         ra_rad_source = np.deg2rad(RAs_sources_nearby[source_index])
         de_rad_source = np.deg2rad(DECs_sources_nearby[source_index])
@@ -78,9 +78,8 @@ def evaluate_doublet(
             de_rad_source,
             redshift_or_flux,
         )
-        test_statistic_per_source = np.append(
-            test_statistic_per_source, test_statistic_source
-        )
+        test_statistic_per_source.append(test_statistic_source)
+    test_statistic_per_source = np.asarray(test_statistic_per_source)  # type: ignore
     if len(test_statistic_per_source) == 0:
         return False, ""
 
@@ -99,9 +98,9 @@ def evaluate_dataset(
     test_stat: TestStatistic,
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
 
-    test_statistic_per_doublet = np.array([])
-    names_alerts_per_doublet = np.array([])
-    names_source_per_doublet = np.array([])
+    test_statistic_per_doublet = list()
+    names_alerts_per_doublet = list()
+    names_source_per_doublet = list()
 
     for first_alert_index in range(len(ras)):
         for second_alert_index in range(first_alert_index, len(ras)):
@@ -162,18 +161,16 @@ def evaluate_dataset(
             if not test_statistic_doublet:
                 continue
 
-            test_statistic_per_doublet = np.append(
-                test_statistic_per_doublet, test_statistic_doublet
-            )
-            names_alerts_per_doublet = np.append(
-                names_alerts_per_doublet,
+            test_statistic_per_doublet.append(test_statistic_doublet)
+            names_alerts_per_doublet.append(
                 f"{reco.NAMEs[first_alert_index]}, {reco.NAMEs[second_alert_index]}",
             )
-            names_source_per_doublet = np.append(
-                names_source_per_doublet, name_best_source
-            )
+            names_source_per_doublet.append(name_best_source)
+    test_statistic_per_doublet = np.asarray(test_statistic_per_doublet)  # type: ignore
+    names_alerts_per_doublet = np.asarray(names_alerts_per_doublet)  # type: ignore
+    names_source_per_doublet = np.asarray(names_source_per_doublet)  # type: ignore
 
-    return (
+    return (  # type: ignore
         test_statistic_per_doublet,
         names_alerts_per_doublet,
         names_source_per_doublet,
@@ -194,11 +191,124 @@ def estimate_background(
     total_scramblings = catalog.total_scrambling_possibilities[
         reco.total_scramblings_index
     ]
-    test_statistic_per_scramble = np.array([])
-    names_alerts_per_scramble = np.array([])
-    names_source_per_scramble = np.array([])
+    test_statistic_per_scramble = list()
+    names_alerts_per_scramble = list()
+    names_source_per_scramble = list()
+    alternative_probs = list()
+    background_probs = list()
     t0 = time.time()
+    if hypo == cfg.HYPO_CHOICES[cfg.DOUBLET_INDEX]:
+        rng = np.random.default_rng(seed=total_scramblings)
+        first_alert_indexes = rng.integers(
+            low=0, high=len(reco.NAMEs), size=total_scramblings
+        )
+        second_alert_indexes = rng.integers(
+            low=0, high=len(reco.NAMEs), size=total_scramblings
+        )
+        inj_source_indexes = test_stat.select_sources_randomly(
+            random_generator=rng, size=total_scramblings
+        )
+
+        ras_sources = catalog.ras_catalog[inj_source_indexes]
+        decs_sources = catalog.decs_catalog[inj_source_indexes]
+        if test_stat.flux:
+            redshifts_or_xray_sources = catalog.xray_catalog[inj_source_indexes]
+        else:
+            redshifts_or_xray_sources = catalog.redshifts_catalog[inj_source_indexes]
+        sigmas_first = reco.sigmas[first_alert_indexes]
+        sigmas_second = reco.sigmas[second_alert_indexes]
+        energies_first = reco.ENERGIES[first_alert_indexes]
+        energies_second = reco.ENERGIES[second_alert_indexes]
+        names_first = reco.NAMEs[first_alert_indexes]
+        names_second = reco.NAMEs[second_alert_indexes]
+        names_sources = catalog.names_catalog[inj_source_indexes]
+
+        nu1_ras_rad, nu1_decs_rad = test_stat.gen_rand_dist(
+            np.deg2rad(ras_sources),
+            np.deg2rad(decs_sources),
+            sigmas_first,
+            random_state=rng,
+        )
+        nu2_ras_rad, nu2_decs_rad = test_stat.gen_rand_dist(
+            np.deg2rad(ras_sources),
+            np.deg2rad(decs_sources),
+            sigmas_second,
+            random_state=rng,
+        )
+        for i in range(total_scramblings):
+
+            if (i + 1) % 1000 == 0:
+                sys.stdout.write(
+                    "\r"
+                    + f"Scrumble nr {i + 1:6}"
+                    + " of "
+                    + str(total_scramblings)
+                    + f". Taken {round(time.time() - t0, 1):6}"
+                    + f" seconds so far. Still {round((total_scramblings - (i + 1)) * (time.time() - t0) / (i + 1), 1):6}"
+                    + " seconds remaining."
+                )
+
+            ra = ras_sources[i]
+            de = decs_sources[i]
+            redshift = redshifts_or_xray_sources[i]
+            sigma_first = sigmas_first[i]
+            sigma_second = sigmas_second[i]
+            energy_first = energies_first[i]
+            energy_second = energies_second[i]
+            nu1_ra_rad = nu1_ras_rad[i]  # type: ignore
+            nu1_dec_rad = nu1_decs_rad[i]  # type: ignore
+            nu2_ra_rad = nu2_ras_rad[i]  # type: ignore
+            nu2_dec_rad = nu2_decs_rad[i]  # type: ignore
+            name_first = names_first[i]
+            name_second = names_second[i]
+            name_source = names_sources[i]
+
+            doublet_ts = test_stat.test_statistic(
+                nu1_ra_rad,
+                nu1_dec_rad,
+                sigma_first,
+                energy_first,
+                nu2_ra_rad,
+                nu2_dec_rad,
+                sigma_second,
+                energy_second,
+                np.deg2rad(ra),
+                np.deg2rad(de),
+                redshift,
+            )
+            alternative_prob = test_stat.prob_doublet_signal(
+                nu1_ra_rad,
+                nu1_dec_rad,
+                sigma_first,
+                nu2_ra_rad,
+                nu2_dec_rad,
+                sigma_second,
+                redshift,
+                np.deg2rad(ra),
+                np.deg2rad(de),
+            )
+            background_prob = test_stat.prob_doublet_background(
+                nu1_dec_rad, energy_first, nu2_dec_rad, energy_second
+            )
+            alternative_probs.append(alternative_prob)
+            background_probs.append(background_prob)
+            test_statistic_per_scramble.append(doublet_ts)
+            names_alerts_per_scramble.append(f"{name_first}, {name_second}")
+            names_source_per_scramble.append(name_source)
+        alternative_probs = np.asarray(alternative_probs)  # type: ignore
+        background_probs = np.asarray(background_probs)  # type: ignore
+        test_statistic_per_scramble = np.asarray(test_statistic_per_scramble)  # type: ignore
+        if test_stat.flux:
+            np.save("xray_sources", redshifts_or_xray_sources)
+        else:
+            np.save("redshifts_sources", redshifts_or_xray_sources)
+        np.save("decs_sources", decs_sources)
+        np.save("background_probs_sgnl", background_probs)
+        np.save("alternative_probs_sgnl", alternative_probs)
+        return test_statistic_per_scramble  # type: ignore
+
     for scrambling_number in range(total_scramblings):
+
         if (scrambling_number + 1) % 100 == 0:
             sys.stdout.write(
                 "\r"
@@ -211,9 +321,11 @@ def estimate_background(
             )
 
         rng = np.random.default_rng(seed=scrambling_number)
+
         random_ras = rng.uniform(0.0, cfg.ROUND_ANGLE, size=len(RAs))
         modified_decs = copy.copy(reco.DECs)
-        if hypo:
+
+        if hypo == cfg.HYPO_CHOICES[cfg.POPULATION_INDEX]:
             N_nus_sources = np.array([])
             indexes_emitting_sources = np.array([])
             for s_i in range(len(catalog.redshifts_catalog)):
@@ -257,17 +369,42 @@ def estimate_background(
             test_statistic_scramble = test_statistic_per_doublet[index_best_doublet]
             names_alerts_scramble = names_alerts_per_doublet[index_best_doublet]
             name_source_scramble = names_source_per_doublet[index_best_doublet]
-        test_statistic_per_scramble = np.append(
-            test_statistic_per_scramble, test_statistic_scramble
-        )
-        names_alerts_per_scramble = np.append(
-            names_alerts_per_scramble, names_alerts_scramble
-        )
-        names_source_per_scramble = np.append(
-            names_source_per_scramble, name_source_scramble
-        )
+            name_first, name_second = names_alerts_scramble.split(", ")
+            i_1 = np.where(reco.NAMEs == name_first)[0][0]
+            i_2 = np.where(reco.NAMEs == name_second)[0][0]
+            i_S = np.where(catalog.names_catalog == name_source_scramble)[0][0]
+            p_S = test_stat.prob_doublet_signal(
+                np.deg2rad(random_ras[i_1]),
+                np.deg2rad(reco.DECs[i_1]),
+                reco.sigmas[i_1],
+                np.deg2rad(random_ras[i_2]),
+                np.deg2rad(reco.DECs[i_2]),
+                reco.sigmas[i_2],
+                catalog.redshifts_catalog[i_S],
+                np.deg2rad(catalog.ras_catalog[i_S]),
+                np.deg2rad(catalog.decs_catalog[i_S]),
+            )
+            p_B = test_stat.prob_doublet_background(
+                np.deg2rad(reco.DECs[i_1]),
+                reco.ENERGIES[i_1],
+                np.deg2rad(reco.DECs[i_2]),
+                reco.ENERGIES[i_2],
+            )
+            background_probs.append(p_B)
+            alternative_probs.append(p_S)
+        test_statistic_per_scramble.append(test_statistic_scramble)
+        names_alerts_per_scramble.append(names_alerts_scramble)
+        names_source_per_scramble.append(name_source_scramble)
 
-    return test_statistic_per_scramble
+    test_statistic_per_scramble = np.asarray(test_statistic_per_scramble)  # type: ignore
+    names_source_per_scramble = np.asarray(names_source_per_scramble)  # type: ignore
+    names_alerts_per_scramble = np.asarray(names_alerts_per_scramble)  # type: ignore
+    background_probs = np.asarray(background_probs)  # type: ignore
+    alternative_probs = np.asarray(alternative_probs)  # type: ignore
+    np.save("background_probs_bkg", background_probs)
+    np.save("alternative_probs_bkg", alternative_probs)
+
+    return test_statistic_per_scramble  # type: ignore
 
 
 def perform_test(reco_name: str, catalog_name: str, flux: bool, hypo: bool) -> None:
@@ -278,6 +415,8 @@ def perform_test(reco_name: str, catalog_name: str, flux: bool, hypo: bool) -> N
     loader.load_catalog(catalog)
 
     test_stat = TestStatistic(flux=flux)
+    if hypo is not cfg.HYPO_CHOICES[cfg.BACKGROUND_INDEX]:
+        test_stat.set_weights_catalog(catalog)
 
     reco = recos.initiate_reco(reco_name)
     loader.load_reco_data(reco)
@@ -301,10 +440,8 @@ def perform_test(reco_name: str, catalog_name: str, flux: bool, hypo: bool) -> N
         test_statistic_filename = f"{test_statistic_filename}_xray"
     else:
         test_statistic_filename = f"{test_statistic_filename}_redshift"
-    if hypo:
-        test_statistic_filename = f"{test_statistic_filename}_alternative_hypothesis"
-    else:
-        test_statistic_filename = f"{test_statistic_filename}_background_hypothesis"
+
+    test_statistic_filename = f"{test_statistic_filename}_{hypo}_hypothesis"
     np.save(
         loader.data_results_path / test_statistic_filename, test_statistic_per_scramble
     )
@@ -374,7 +511,7 @@ def main():
         "--alternative_hypothesis",
         "-a",
         type=str,
-        default=cfg.HYPO_CHOICES[cfg.FALSE_INDEX],
+        default=cfg.HYPO_CHOICES[cfg.BACKGROUND_INDEX],
         help="Generate the test statistic distribution using the alternative hypothesis.",
         choices=cfg.HYPO_CHOICES,
     )
@@ -387,10 +524,14 @@ def main():
     elif flux == cfg.FLUX_CHOICES[cfg.FALSE_INDEX]:
         flux = False
     hypo = args.alternative_hypothesis
-    if hypo == cfg.HYPO_CHOICES[cfg.TRUE_INDEX]:
-        hypo = True
-    elif hypo == cfg.HYPO_CHOICES[cfg.FALSE_INDEX]:
-        hypo = False
+
+    print(
+        f"\n\nPerform test with the {catalog_name} catalog,\nthe {reco_name} reconstruction,\nunder the {hypo} hypothesis."
+    )
+    if flux:
+        print("Use xray flux as weight\n\n")
+    else:
+        print("Use redshift as weight\n\n")
 
     perform_test(reco_name, catalog_name, flux, hypo)
 

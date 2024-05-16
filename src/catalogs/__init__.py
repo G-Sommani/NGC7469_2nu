@@ -3,6 +3,7 @@ import importlib
 import numpy as np
 from pathlib import Path
 from typing import List
+from scipy.stats import multinomial # type: ignore
 
 
 class Catalog(ABC):

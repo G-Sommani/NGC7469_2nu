@@ -20,11 +20,11 @@ ts_spl_tur_z_result = np.load(
 
 ts_spl_tur_z_alt = np.load(
     data_results_path
-    / f"{cfg.TS_FILENAME}_{cfg.SPLINEMPE}_{cfg.TURIN}_{cfg.REDSHIFT}_alternative_hypothesis.npy"
+    / f"{cfg.TS_FILENAME}_{cfg.SPLINEMPE}_{cfg.TURIN}_{cfg.REDSHIFT}_alternative_hypothesis_doublet.npy"
 )
 ts_spl_tur_z_alt_result = np.load(
     data_results_path
-    / f"{cfg.TS_FILENAME}_{cfg.SPLINEMPE}_{cfg.TURIN}_{cfg.REDSHIFT}_alternative_hypothesis_result.npy"
+    / f"{cfg.TS_FILENAME}_{cfg.SPLINEMPE}_{cfg.TURIN}_{cfg.REDSHIFT}_alternative_hypothesis_doublet_result.npy"
 )
 
 ts_spl_mil_z = np.load(
@@ -221,23 +221,32 @@ print(
 )
 
 plt.subplots(figsize=cfg.FIGSIZE_TS)
-logbins = list(np.logspace(0, np.log10(3e3), cfg.NBINS_TS))
+logbins = list(np.logspace(0, np.log10(2e3), cfg.NBINS_TS))
+histtype = "stepfilled"
+alpha = 0.7
 plt.hist(
-    -ts_spl_tur_z,
-    histtype=cfg.HISTTYPE_TS,
+    -ts_spl_tur_z_alt - np.min(-ts_spl_tur_z_alt) + 1,
+    histtype=histtype,
     bins=logbins,
+    alpha=alpha,
+    edgecolor="blue",
     linewidth=cfg.LINEWIDTH_TS,
-    label=f"{cfg.TURIN_LABEL_TS} background",
+    label=f"Alternative hypothesis distribution\nTurin catalog",
 )
 plt.hist(
-    -ts_spl_tur_z_alt,
-    histtype=cfg.HISTTYPE_TS,
+    -ts_spl_tur_z
+    - np.min(-ts_spl_tur_z_alt)
+    - (ts_spl_tur_z_alt_result - ts_spl_tur_z_result)
+    + 1,
+    histtype=histtype,
     bins=logbins,
+    alpha=alpha,
+    edgecolor="red",
     linewidth=cfg.LINEWIDTH_TS,
-    label=f"{cfg.TURIN_LABEL_TS} alternative hypothesis",
+    label=f"{cfg.TURIN_LABEL_TS}",
 )
 plt.axvline(
-    -ts_spl_tur_z_result,
+    -ts_spl_tur_z_alt_result - np.min(-ts_spl_tur_z_alt) + 1,
     color=cfg.AXVCOLOR_TS,
     linestyle=cfg.AXVLINESTYLE_TS,
     label=cfg.AXVLABEL_TS,
@@ -245,14 +254,14 @@ plt.axvline(
 plt.gca().invert_xaxis()
 plt.xlabel(cfg.XLABEL_TS, fontsize=cfg.FONTSIZE_TS)
 plt.ylabel(cfg.YLABEL_TS, fontsize=cfg.FONTSIZE_TS)
-plt.title(cfg.TITLE_TS, fontsize=cfg.FONTSIZE_TS)
+plt.title(f"{cfg.TITLE_TS}", fontsize=cfg.FONTSIZE_TS)
 plt.xscale(cfg.AXISSCALE_TS)
 plt.yscale(cfg.AXISSCALE_TS)
 plt.legend()
 
 print("Saving plot...")
 
-figname = f"{cfg.FIGNAME_TS}_{cfg.SPLINEMPE}_{cfg.TURIN}_{cfg.REDSHIFT}_background_vs_alternative_hypothesis"
+figname = f"{cfg.FIGNAME_TS}_{cfg.SPLINEMPE}_{cfg.TURIN}_{cfg.REDSHIFT}_background_vs_alternative_hypothesis_doublet"
 plt.savefig(figures_path / figname, bbox_inches=cfg.BBOX_INCHES)
 figname_pdf = f"{figname}.pdf"
 plt.savefig(figures_path / figname_pdf, bbox_inches=cfg.BBOX_INCHES)

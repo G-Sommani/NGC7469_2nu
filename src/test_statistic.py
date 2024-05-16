@@ -1,8 +1,10 @@
 from loading_functions import Loader
 import config as cfg
 import numpy as np
-from scipy.stats import poisson, norm  # type: ignore
+from scipy.stats import poisson, norm, multinomial  # type: ignore
+from scipy.integrate import trapezoid  # type: ignore
 from typing import Tuple
+import catalogs
 
 
 def angular_dist_score(az_true, zen_true, az_pred, zen_pred):
@@ -84,6 +86,21 @@ class TestStatistic:
             self.area_energy_factors = np.append(
                 self.area_energy_factors, self.area_energy_factor_calculator(i)
             )
+        self.weights_per_source = np.array([])
+        self.effa_integral = self.calculate_effa_integral()
+
+    def calculate_effa_integral(self) -> float:
+        energy_effa_integrals = list()
+        for effa in self.effective_area_array:
+            energy_effa_integrals.append(trapezoid(effa, x=self.energy_bins))
+        theta_mins = [30, 0, -5, -30, -90]
+        theta_maxs = [90, 30, 0, -5, -30]
+        factors = list()
+        for A, thetam, thetaM in zip(energy_effa_integrals, theta_mins, theta_maxs):
+            factors.append(
+                A * (np.sin(np.deg2rad(thetaM)) - np.sin(np.deg2rad(thetam)))
+            )
+        return sum(factors)
 
     def energy_factor(self, bin_index: int) -> float:
         """
@@ -152,6 +169,77 @@ class TestStatistic:
             )  # m^-2 * s
             expected_nu = constant * cfg.FLUX_NU * (cfg.E0 ** 2) * area_energy_factor
         return expected_nu
+
+    def prob_doublet_from_source(self, z_or_xray: float, dec: float) -> float:
+        mu = self.expected_nu_from_source(z_or_xray, dec)
+        prob = 1 - (1 + mu) * np.exp(-mu)
+        return prob
+
+    def prob_dist_from_source(
+        self,
+        ra1: float,
+        de1: float,
+        sigma1: float,
+        ra2: float,
+        de2: float,
+        sigma2: float,
+        raS: float,
+        deS: float,
+    ) -> float:
+        const = 1 / (4 * (np.pi ** 2) * (sigma1 ** 2) * (sigma2 ** 2))
+        exponent = self.dir_contribute(ra1, de1, ra2, de2, raS, deS, sigma1, sigma2)
+        return const * np.exp(exponent)
+
+    def prob_doublet_signal(
+        self,
+        ra1: float,
+        de1: float,
+        sigma1: float,
+        ra2: float,
+        de2: float,
+        sigma2: float,
+        z_or_xray: float,
+        raS: float,
+        deS: float,
+    ) -> float:
+        prob_source = self.prob_doublet_from_source(z_or_xray, deS)
+        prob_dist = self.prob_dist_from_source(
+            ra1, de1, sigma1, ra2, de2, sigma2, raS, deS
+        )
+        return prob_source * prob_dist
+
+    def prob_doublet_background(
+        self, de1: float, energy1: float, de2: float, energy2: float
+    ) -> float:
+        effa1 = self.select_effective_area(de1, energy1) / self.effa_integral
+        effa2 = self.select_effective_area(de2, energy2) / self.effa_integral
+        return np.cos(de1) * np.cos(de2) * effa1 * effa2 / (4 * np.pi ** 2)
+
+    def set_weights_catalog(self, catalog: catalogs.Catalog) -> None:
+        for index in range(len(catalog.names_catalog)):
+            if self.flux:
+                prob = self.prob_doublet_from_source(
+                    catalog.xray_catalog[index], catalog.decs_catalog[index]
+                )
+            else:
+                prob = self.prob_doublet_from_source(
+                    catalog.redshifts_catalog[index], catalog.decs_catalog[index]
+                )
+            self.weights_per_source = np.append(self.weights_per_source, prob)
+        self.weights_per_source = self.weights_per_source / np.sum(
+            self.weights_per_source
+        )
+
+    def select_sources_randomly(
+        self, random_generator: np.random.Generator, size: int
+    ) -> np.ndarray:
+        source_indexes = np.where(
+            multinomial.rvs(
+                1, self.weights_per_source, random_state=random_generator, size=size
+            )
+            == 1
+        )[1]
+        return source_indexes
 
     def gen_nu_from_source(
         self, z_or_xray: float, dec: float, random_state: np.random.Generator
@@ -232,8 +320,11 @@ class TestStatistic:
 
     @staticmethod
     def gen_rand_dist(
-        raS: float, decS: float, sigma: float, random_state: np.random.Generator
-    ) -> Tuple[float, float]:
+        raS: float | np.ndarray,
+        decS: float | np.ndarray,
+        sigma: float | np.ndarray,
+        random_state: np.random.Generator,
+    ) -> Tuple[float | np.ndarray, float | np.ndarray]:
         nu_ra = norm.rvs(loc=raS, scale=sigma, random_state=random_state)
         nu_dec = norm.rvs(loc=decS, scale=sigma, random_state=random_state)
         return nu_ra, nu_dec
