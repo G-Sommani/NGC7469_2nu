@@ -233,7 +233,7 @@ class TestStatistic:
     def select_sources_randomly(
         self, random_generator: np.random.Generator, size: int
     ) -> np.ndarray:
-        source_indexes=list()
+        source_indexes = list()
         for i in range(size):
             source_index = np.where(
                 multinomial.rvs(
@@ -242,8 +242,8 @@ class TestStatistic:
                 == 1
             )[1][0]
             source_indexes.append(source_index)
-        source_indexes = np.asarray(source_indexes)
-        return source_indexes
+        source_indexes = np.asarray(source_indexes)  # type: ignore
+        return source_indexes  # type: ignore
 
     def gen_nu_from_source(
         self, z_or_xray: float, dec: float, random_state: np.random.Generator

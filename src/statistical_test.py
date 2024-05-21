@@ -304,20 +304,24 @@ def estimate_background(
         else:
             weight_name = "redshift"
         np.save(
-            loader.data_results_path / f"{weight_name}_sources_{catalog.catalog_name}_{hypo}_hypothesis", 
-            redshifts_or_xray_sources
+            loader.data_results_path
+            / f"{weight_name}_sources_{catalog.catalog_name}_{hypo}_hypothesis",
+            redshifts_or_xray_sources,
         )
         np.save(
-            loader.data_results_path / f"decs_sources_{weight_name}_{catalog.catalog_name}_{hypo}_hypothesis", 
-            decs_sources
+            loader.data_results_path
+            / f"decs_sources_{weight_name}_{catalog.catalog_name}_{hypo}_hypothesis",
+            decs_sources,
         )
         np.save(
-            loader.data_results_path / f"background_probs_{reco.reco_name}_{catalog.catalog_name}_{weight_name}_{hypo}_hypothesis", 
-            background_probs
+            loader.data_results_path
+            / f"background_probs_{reco.reco_name}_{catalog.catalog_name}_{weight_name}_{hypo}_hypothesis",
+            background_probs,
         )
         np.save(
-            loader.data_results_path / f"alternative_probs_{reco.reco_name}_{catalog.catalog_name}_{weight_name}_{hypo}_hypothesis", 
-            alternative_probs
+            loader.data_results_path
+            / f"alternative_probs_{reco.reco_name}_{catalog.catalog_name}_{weight_name}_{hypo}_hypothesis",
+            alternative_probs,
         )
         return test_statistic_per_scramble  # type: ignore
 
@@ -420,12 +424,14 @@ def estimate_background(
     else:
         weight_name = "redshift"
     np.save(
-        loader.data_results_path / f"background_probs_{reco.reco_name}_{catalog.catalog_name}_{weight_name}_{hypo}_hypothesis", 
-        background_probs
+        loader.data_results_path
+        / f"background_probs_{reco.reco_name}_{catalog.catalog_name}_{weight_name}_{hypo}_hypothesis",
+        background_probs,
     )
     np.save(
-        loader.data_results_path / f"alternative_probs_{reco.reco_name}_{catalog.catalog_name}_{weight_name}_{hypo}_hypothesis", 
-        alternative_probs
+        loader.data_results_path
+        / f"alternative_probs_{reco.reco_name}_{catalog.catalog_name}_{weight_name}_{hypo}_hypothesis",
+        alternative_probs,
     )
 
     return test_statistic_per_scramble  # type: ignore
@@ -450,7 +456,9 @@ def perform_test(reco_name: str, catalog_name: str, flux: bool, hypo: bool) -> N
     RAs = reco.RAs
     DECs = reco.DECs
 
-    test_statistic_per_scramble = estimate_background(catalog, reco, test_stat, hypo, loader)
+    test_statistic_per_scramble = estimate_background(
+        catalog, reco, test_stat, hypo, loader
+    )
 
     if hypo:
         print("Saving the ts distribution under the alternative hypothesis...")
