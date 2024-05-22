@@ -50,8 +50,10 @@ for x in f_1068_SED:
         flux_errs_1068 = np.append(flux_errs_1068, flux_err)
 
 # Define years of integration
-days_alerts = cfg.MJD_04102023 - cfg.MJD_GOLDBRONZE_START
-years_alerts = days_alerts / cfg.DAYS_IN_YEAR
+days_alerts_gb = cfg.MJD_04102023 - cfg.MJD_GOLDBRONZE_START
+days_alerts_icecat = cfg.MJD_04102023 - cfg.MJD_ICECAT_START
+years_alerts_gb = days_alerts_gb / cfg.DAYS_IN_YEAR
+years_alerts_icecat = days_alerts_icecat / cfg.DAYS_IN_YEAR
 
 print("Calculating confidence intervals...")
 
@@ -67,7 +69,7 @@ def lr(N, lam, T):
     return (y ** N) * np.exp(N - lam * T)
 
 
-def lr_evaluator(lam, T=years_alerts, until=100):
+def lr_evaluator(lam, T=years_alerts_gb, until=100):
     """
     Given an event rate 'lam' and a period of time 'T',
     evaluate all the poissonian likelihood ratios for all
@@ -85,7 +87,7 @@ def lr_evaluator(lam, T=years_alerts, until=100):
     return counts_space_final, outcomes
 
 
-def pois(x, lam, T=years_alerts):
+def pois(x, lam, T=years_alerts_gb):
     """
     poissonian probability
     """
@@ -93,7 +95,7 @@ def pois(x, lam, T=years_alerts):
     return (((lam * T) ** x) / factorial(x)) * np.exp(-lam * T)
 
 
-def find_coverage_interval(lam, CL=0.9, T=years_alerts, until=100):
+def find_coverage_interval(lam, CL=0.9, T=years_alerts_gb, until=100):
     """
     Given a confidence level 'CL', it finds, for a specific rate 'lam'
     and time interval 'T', the interval in counts that ensures a
@@ -132,34 +134,59 @@ def find_coverage_interval(lam, CL=0.9, T=years_alerts, until=100):
 
 
 # Generate the confidence belt
-inf_count_limits = np.array([])
-sup_count_limits = np.array([])
+inf_count_limits_gb = np.array([])
+sup_count_limits_gb = np.array([])
+inf_count_limits_icecat = np.array([])
+sup_count_limits_icecat = np.array([])
 rates = np.linspace(0, 200, 201)
 rates = rates / 100
 for rate in rates:
-    inf_count_limit, sup_count_limit = find_coverage_interval(rate, T=years_alerts)
-    inf_count_limits = np.append(inf_count_limits, inf_count_limit)
-    sup_count_limits = np.append(sup_count_limits, sup_count_limit)
+    inf_count_limit_gb, sup_count_limit_gb = find_coverage_interval(rate, T=years_alerts_gb)
+    inf_count_limits_gb = np.append(inf_count_limits_gb, inf_count_limit_gb)
+    sup_count_limits_gb = np.append(sup_count_limits_gb, sup_count_limit_gb)
+    inf_count_limit_icecat, sup_count_limit_icecat = find_coverage_interval(rate, T=years_alerts_icecat)
+    inf_count_limits_icecat = np.append(inf_count_limits_icecat, inf_count_limit_icecat)
+    sup_count_limits_icecat = np.append(sup_count_limits_icecat, sup_count_limit_icecat)
 
 print("Plotting confidence belt...")
 
 # Plot confidence belt
-plt.fill_between(rates, inf_count_limits, sup_count_limits, color="blue", alpha=0.2)
-plt.plot(rates, inf_count_limits, color="blue")
-plt.plot(rates, sup_count_limits, color="blue")
+plt.fill_between(
+    rates, 
+    inf_count_limits_gb, 
+    sup_count_limits_gb, 
+    color="blue", 
+    alpha=0.2,
+    label="4 yrs",
+)
+plt.plot(rates, inf_count_limits_gb, color="blue")
+plt.plot(rates, sup_count_limits_gb, color="blue")
+plt.fill_between(
+    rates, 
+    inf_count_limits_icecat, 
+    sup_count_limits_icecat, 
+    color="red", 
+    alpha=0.2,
+    label = "12 yrs",
+)
+plt.plot(rates, inf_count_limits_icecat, color="red")
+plt.plot(rates, sup_count_limits_icecat, color="red")
 plt.xlabel(r"Rate of neutrinos [year$^{-1}$]")
 plt.ylabel("Number of detected neutrinos")
 plt.title("Confidence belt")
+plt.legend()
 plt.savefig(figures_path / "confidence_belt")
 plt.close()
 
 print(f"Confidence belt plot saved in {figures_path / 'confidence_belt.png'}")
 
 # Given 2 detected neutrinos, the superior limit on the rate
-lim_sup_2_nu = max(rates[inf_count_limits == 2.0])
+lim_sup_2_nu_gb = max(rates[inf_count_limits_gb == 2.0])
+lim_sup_2_nu_icecat = max(rates[inf_count_limits_icecat == 2.0])
 
 # Given 2 detected neutrinos, the inferior limit on the rate
-lim_inf_2_nu = min(rates[sup_count_limits == 2.0])
+lim_inf_2_nu_gb = min(rates[sup_count_limits_gb == 2.0])
+lim_inf_2_nu_icecat = min(rates[sup_count_limits_icecat == 2.0])
 
 print("Loading effective areas...")
 
@@ -207,12 +234,16 @@ A23_cm = effA2023 * 1e4
 Avg_en_effA = (E22_erg / A22_cm + E23_erg / A23_cm) / cfg.NUMBER_OF_NU
 
 # Convert rate in s^-1
-rate_sup_2nu = lim_sup_2_nu / cfg.SECONDS_IN_YEAR
-rate_inf_2nu = lim_inf_2_nu / cfg.SECONDS_IN_YEAR
+rate_sup_2nu_gb = lim_sup_2_nu_gb / cfg.SECONDS_IN_YEAR
+rate_inf_2nu_gb = lim_inf_2_nu_gb / cfg.SECONDS_IN_YEAR
+rate_sup_2nu_icecat = lim_sup_2_nu_icecat / cfg.SECONDS_IN_YEAR
+rate_inf_2nu_icecat = lim_inf_2_nu_icecat / cfg.SECONDS_IN_YEAR
 
 # Calculate superior limit over energy flux, for the average energy of the two neutrinos (THIS IS NOT PLOTTED)
-E_sup_Flux_2_nu = Avg_en_effA * rate_sup_2nu
-E_inf_Flux_2_nu = Avg_en_effA * rate_inf_2nu
+E_sup_Flux_2_nu_gb = Avg_en_effA * rate_sup_2nu_gb
+E_inf_Flux_2_nu_gb = Avg_en_effA * rate_inf_2nu_gb
+E_sup_Flux_2_nu_icecat = Avg_en_effA * rate_sup_2nu_icecat
+E_inf_Flux_2_nu_icecat = Avg_en_effA * rate_inf_2nu_icecat
 
 # Calculate averaged energy of the two neutrinos
 averaged_energy = (cfg.E_NU_2022 * effA2022 + cfg.E_NU_2023 * effA2023) / (
@@ -245,36 +276,72 @@ effas_interp_between_nu = (
 # estimate superior and lower limits on energies (THESE ARE PLOTTED):
 #     1) Over the whole energy uncertainty;
 #     2) Between the two reported neutrino energies.
-E_sup_Flux_2_nu_general = (
+E_sup_Flux_2_nu_gb_general = (
     energy_space_nu_flux_7469_general
     * cfg.GEV_TO_ERG
-    * rate_sup_2nu
+    * rate_sup_2nu_gb
     / (effas_interp_general)
 )
-E_inf_Flux_2_nu_general = (
+E_inf_Flux_2_nu_gb_general = (
     energy_space_nu_flux_7469_general
     * cfg.GEV_TO_ERG
-    * rate_inf_2nu
+    * rate_inf_2nu_gb
     / (effas_interp_general)
 )
-E_sup_Flux_2_nu_between_nu = (
+E_sup_Flux_2_nu_gb_between_nu = (
     energy_space_nu_flux_7469_between_nu
     * cfg.GEV_TO_ERG
-    * rate_sup_2nu
+    * rate_sup_2nu_gb
     / (effas_interp_between_nu)
 )
-E_inf_Flux_2_nu_between_nu = (
+E_inf_Flux_2_nu_gb_between_nu = (
     energy_space_nu_flux_7469_between_nu
     * cfg.GEV_TO_ERG
-    * rate_inf_2nu
+    * rate_inf_2nu_gb
     / (effas_interp_between_nu)
 )
 
-print(f"Inferior limit on energy flux: {E_inf_Flux_2_nu:.2} erg cm-2 s-1")
-print(f"Superior limit on energy flux: {E_sup_Flux_2_nu:.2} erg cm-2 s-1")
+E_sup_Flux_2_nu_icecat_general = (
+    energy_space_nu_flux_7469_general
+    * cfg.GEV_TO_ERG
+    * rate_sup_2nu_icecat
+    / (effas_interp_general)
+)
+E_inf_Flux_2_nu_icecat_general = (
+    energy_space_nu_flux_7469_general
+    * cfg.GEV_TO_ERG
+    * rate_inf_2nu_icecat
+    / (effas_interp_general)
+)
+E_sup_Flux_2_nu_icecat_between_nu = (
+    energy_space_nu_flux_7469_between_nu
+    * cfg.GEV_TO_ERG
+    * rate_sup_2nu_icecat
+    / (effas_interp_between_nu)
+)
+E_inf_Flux_2_nu_icecat_between_nu = (
+    energy_space_nu_flux_7469_between_nu
+    * cfg.GEV_TO_ERG
+    * rate_inf_2nu_icecat
+    / (effas_interp_between_nu)
+)
+
+print(f"Inferior limit on energy flux 4yrs: {E_inf_Flux_2_nu_gb:.2} erg cm-2 s-1")
+print(f"Superior limit on energy flux 4yrs: {E_sup_Flux_2_nu_gb:.2} erg cm-2 s-1")
 print(f"\n\n**************************************************\n\n")
 print(
-    f"90% CL of neutrino flux at {averaged_energy/1e3:.0f} TeV: [{E_inf_Flux_2_nu/(cfg.TEV_TO_ERG*(averaged_energy*1e-3)**2):.3},{E_sup_Flux_2_nu/(cfg.TEV_TO_ERG*(averaged_energy*1e-3)**2):.3}] TeV-1*cm-2*s-1"
+    f"90% CL of neutrino flux at {averaged_energy/1e3:.0f} TeV: [{E_inf_Flux_2_nu_gb/(cfg.TEV_TO_ERG*(averaged_energy*1e-3)**2):.3},{E_sup_Flux_2_nu_gb/(cfg.TEV_TO_ERG*(averaged_energy*1e-3)**2):.3}] TeV-1*cm-2*s-1"
+)
+print(
+    f"Lower and superior bounds in energy: {lower_energy_bound/1e3:.0f} TeV, {cfg.SUPERIOR_ENERGY_BOUND/1e6:.0f} PeV"
+)
+print(f"\n\n**************************************************\n\n")
+
+print(f"Inferior limit on energy flux 12yrs: {E_inf_Flux_2_nu_icecat:.2} erg cm-2 s-1")
+print(f"Superior limit on energy flux 12yrs: {E_sup_Flux_2_nu_icecat:.2} erg cm-2 s-1")
+print(f"\n\n**************************************************\n\n")
+print(
+    f"90% CL of neutrino flux at {averaged_energy/1e3:.0f} TeV: [{E_inf_Flux_2_nu_icecat/(cfg.TEV_TO_ERG*(averaged_energy*1e-3)**2):.3},{E_sup_Flux_2_nu_icecat/(cfg.TEV_TO_ERG*(averaged_energy*1e-3)**2):.3}] TeV-1*cm-2*s-1"
 )
 print(
     f"Lower and superior bounds in energy: {lower_energy_bound/1e3:.0f} TeV, {cfg.SUPERIOR_ENERGY_BOUND/1e6:.0f} PeV"
@@ -425,8 +492,8 @@ plt.errorbar(
 )
 plt.fill_between(
     energy_space_nu_flux_7469_general,
-    E_sup_Flux_2_nu_general,
-    E_inf_Flux_2_nu_general,
+    E_sup_Flux_2_nu_gb_general,
+    E_inf_Flux_2_nu_gb_general,
     alpha=0.3,
     color="white",
     hatch="////",
@@ -435,8 +502,8 @@ plt.fill_between(
 )
 plt.fill_between(
     energy_space_nu_flux_7469_between_nu,
-    E_sup_Flux_2_nu_between_nu,
-    E_inf_Flux_2_nu_between_nu,
+    E_sup_Flux_2_nu_gb_between_nu,
+    E_inf_Flux_2_nu_gb_between_nu,
     alpha=1,
     color="darkblue",
     label=r"NGC 7469 $\nu_\mu+\bar{\nu}_\mu$, 90% CL, this work, between neutrino energies",
@@ -483,3 +550,53 @@ plt.savefig(figures_path / "SED_nu_flux.pdf", bbox_inches="tight", dpi=200)
 plt.close()
 
 print(f"SED saved in {figures_path / 'SED_nu_flux.png'}.")
+
+print(f"Plotting the estimated flux for 12 yrs...")
+
+plt.subplots(figsize=cfg.FIGSIZE_TS)
+plt.fill_between(
+    energy_space_nu_flux_7469_general,
+    E_sup_Flux_2_nu_gb_general,
+    E_inf_Flux_2_nu_gb_general,
+    alpha=0.3,
+    color="white",
+    hatch="////",
+    edgecolor="tab:blue",
+    label=r"4 yrs, energy uncertainty",
+)
+plt.fill_between(
+    energy_space_nu_flux_7469_between_nu,
+    E_sup_Flux_2_nu_gb_between_nu,
+    E_inf_Flux_2_nu_gb_between_nu,
+    alpha=0.9,
+    color="darkblue",
+    label=r"4 yrs, between neutrino energies",
+)
+plt.fill_between(
+    energy_space_nu_flux_7469_general,
+    E_sup_Flux_2_nu_icecat_general,
+    E_inf_Flux_2_nu_icecat_general,
+    alpha=0.3,
+    color="white",
+    hatch="\\\\\\\\",
+    edgecolor="tab:red",
+    label=r"12 yrs, energy uncertainty",
+)
+plt.fill_between(
+    energy_space_nu_flux_7469_between_nu,
+    E_sup_Flux_2_nu_icecat_between_nu,
+    E_inf_Flux_2_nu_icecat_between_nu,
+    alpha=0.9,
+    color="darkred",
+    label=r"12 yrs, between neutrino energies",
+)
+
+plt.yscale("log")
+plt.xscale("log")
+plt.legend()
+plt.xlabel("Energy [GeV]")
+plt.ylabel(r"$E^2\Phi$ [erg cm$^{-2}$ s$^{-1}$]")
+plt.title(r"NGC 7469 $\nu_\mu+\bar{\nu}_\mu$, 90% CL")
+plt.savefig(figures_path / "nu_flux_12yrs", bbox_inches="tight", dpi=200)
+plt.savefig(figures_path / "nu_flux_12yrs.pdf", bbox_inches="tight", dpi=200)
+plt.close()
