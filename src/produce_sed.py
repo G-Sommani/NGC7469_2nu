@@ -141,10 +141,14 @@ sup_count_limits_icecat = np.array([])
 rates = np.linspace(0, 200, 201)
 rates = rates / 100
 for rate in rates:
-    inf_count_limit_gb, sup_count_limit_gb = find_coverage_interval(rate, T=years_alerts_gb)
+    inf_count_limit_gb, sup_count_limit_gb = find_coverage_interval(
+        rate, T=years_alerts_gb
+    )
     inf_count_limits_gb = np.append(inf_count_limits_gb, inf_count_limit_gb)
     sup_count_limits_gb = np.append(sup_count_limits_gb, sup_count_limit_gb)
-    inf_count_limit_icecat, sup_count_limit_icecat = find_coverage_interval(rate, T=years_alerts_icecat)
+    inf_count_limit_icecat, sup_count_limit_icecat = find_coverage_interval(
+        rate, T=years_alerts_icecat
+    )
     inf_count_limits_icecat = np.append(inf_count_limits_icecat, inf_count_limit_icecat)
     sup_count_limits_icecat = np.append(sup_count_limits_icecat, sup_count_limit_icecat)
 
@@ -152,22 +156,22 @@ print("Plotting confidence belt...")
 
 # Plot confidence belt
 plt.fill_between(
-    rates, 
-    inf_count_limits_gb, 
-    sup_count_limits_gb, 
-    color="blue", 
+    rates,
+    inf_count_limits_gb,
+    sup_count_limits_gb,
+    color="blue",
     alpha=0.2,
     label="4 yrs",
 )
 plt.plot(rates, inf_count_limits_gb, color="blue")
 plt.plot(rates, sup_count_limits_gb, color="blue")
 plt.fill_between(
-    rates, 
-    inf_count_limits_icecat, 
-    sup_count_limits_icecat, 
-    color="red", 
+    rates,
+    inf_count_limits_icecat,
+    sup_count_limits_icecat,
+    color="red",
     alpha=0.2,
-    label = "12 yrs",
+    label="12 yrs",
 )
 plt.plot(rates, inf_count_limits_icecat, color="red")
 plt.plot(rates, sup_count_limits_icecat, color="red")
@@ -266,11 +270,24 @@ energy_space_nu_flux_7469_between_nu = np.logspace(
 )
 
 # interpolate the effective areas over the various energy spaces and convert them in cm.
+log_energy_space_nu_flux_7469_general = np.log10(energy_space_nu_flux_7469_general)
+log_energy_space_nu_flux_7469_between_nu = np.log10(
+    energy_space_nu_flux_7469_between_nu
+)
+log_energies = np.log10(energies)
+log_areas = np.log10(areas)
 effas_interp_general = (
-    np.interp(energy_space_nu_flux_7469_general, energies, areas) * cfg.M2_TO_CM2
+    np.power(
+        10.0, np.interp(log_energy_space_nu_flux_7469_general, log_energies, log_areas)
+    )
+    * cfg.M2_TO_CM2
 )
 effas_interp_between_nu = (
-    np.interp(energy_space_nu_flux_7469_between_nu, energies, areas) * cfg.M2_TO_CM2
+    np.power(
+        10.0,
+        np.interp(log_energy_space_nu_flux_7469_between_nu, log_energies, log_areas),
+    )
+    * cfg.M2_TO_CM2
 )
 
 # estimate superior and lower limits on energies (THESE ARE PLOTTED):
