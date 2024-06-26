@@ -3,7 +3,7 @@ import config as cfg
 import numpy as np
 from scipy.stats import poisson, norm, multinomial  # type: ignore
 from scipy.integrate import trapezoid  # type: ignore
-from typing import Tuple
+from typing import Tuple, List, Union
 import catalogs
 
 
@@ -86,6 +86,7 @@ class TestStatistic:
             self.area_energy_factors = np.append(
                 self.area_energy_factors, self.area_energy_factor_calculator(i)
             )
+        self.expected_nus_per_source = np.array([])
         self.weights_per_source = np.array([])
         self.effa_integral = self.calculate_effa_integral()
 
@@ -229,6 +230,18 @@ class TestStatistic:
         self.weights_per_source = self.weights_per_source / np.sum(
             self.weights_per_source
         )
+    
+    def set_expected_nus_catalog(self, catalog: catalogs.Catalog) -> None:
+        for index in range(len(catalog.names_catalog)):
+            if self.flux:
+                n_nu = self.expected_nu_from_source(
+                    catalog.xray_catalog[index], catalog.decs_catalog[index]
+                )
+            else:
+                n_nu = self.expected_nu_from_source(
+                    catalog.redshifts_catalog[index], catalog.decs_catalog[index]
+                )
+            self.expected_nus_per_source = np.append(self.expected_nus_per_source, n_nu)
 
     def select_sources_randomly(
         self, random_generator: np.random.Generator, size: int
@@ -245,11 +258,10 @@ class TestStatistic:
         source_indexes = np.asarray(source_indexes)  # type: ignore
         return source_indexes  # type: ignore
 
-    def gen_nu_from_source(
-        self, z_or_xray: float, dec: float, random_state: np.random.Generator
-    ) -> int:
-        mu = self.expected_nu_from_source(z_or_xray, dec)
-        return poisson.rvs(mu=mu, random_state=random_state)
+    def gen_nu_for_sources(
+        self, random_state: np.random.Generator
+    ) -> Union[List[int], int]:
+        return poisson.rvs(mu=self.expected_nus_per_source, random_state=random_state)
 
     def flux_contribute(self, z_or_xray: float, dec: float) -> float:
         if self.flux:

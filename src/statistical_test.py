@@ -7,7 +7,7 @@ from loading_functions import Loader
 import catalogs
 from test_statistic import TestStatistic
 import recos
-from typing import Tuple
+from typing import Tuple, Union
 import copy
 
 
@@ -183,6 +183,7 @@ def estimate_background(
     test_stat: TestStatistic,
     hypo: bool,
     loader: Loader,
+    dec_jitter: bool,
 ) -> np.ndarray:
 
     RAs = reco.RAs
@@ -325,6 +326,7 @@ def estimate_background(
         )
         return test_statistic_per_scramble  # type: ignore
 
+    rng = np.random.default_rng(seed=total_scramblings)
     for scrambling_number in range(total_scramblings):
 
         if (scrambling_number + 1) % 100 == 0:
@@ -341,36 +343,75 @@ def estimate_background(
         rng = np.random.default_rng(seed=scrambling_number)
 
         random_ras = rng.uniform(0.0, cfg.ROUND_ANGLE, size=len(RAs))
-        modified_decs = copy.copy(reco.DECs)
+        dec_jitters = np.zeros(len(reco.DECs))
+        if dec_jitter:
+            dec_jitters = rng.uniform(-2.0, 2.0, size=len(reco.DECs))
+        modified_decs = copy.copy(reco.DECs) + dec_jitters
 
         if hypo == cfg.HYPO_CHOICES[cfg.POPULATION_INDEX]:
-            N_nus_sources = np.array([])
-            indexes_emitting_sources = np.array([])
-            for s_i in range(len(catalog.redshifts_catalog)):
-                N_nu = test_stat.gen_nu_from_source(
-                    catalog.redshifts_catalog[s_i], catalog.decs_catalog[s_i], rng
-                )
-                N_nus_sources = np.append(N_nus_sources, N_nu)
-                if N_nu != 0:
-                    for k in range(N_nu):
-                        indexes_emitting_sources = np.append(
-                            indexes_emitting_sources, int(s_i)
-                        )
+            N_nus_sources: Union[list[int], int, np.ndarray] = list()
+            indexes_emitting_sources: Union[list[int], int, np.ndarray] = list()
+            N_nus_sources = test_stat.gen_nu_for_sources(rng)
+            N_nus_sources = np.asarray(N_nus_sources)
+            indexes_emitting_sources = np.where(N_nus_sources != 0)[0]
             number_source_nus = int(sum(N_nus_sources))
             if number_source_nus != 0:
                 remove_neutrinos_indexes = rng.integers(
                     low=0, high=len(reco.NAMEs), size=number_source_nus
                 )
-                for i, nu_index in enumerate(remove_neutrinos_indexes):
-                    source_index = int(indexes_emitting_sources[i])
-                    nu_ra_rad, nu_dec_rad = test_stat.gen_rand_dist(
-                        np.deg2rad(catalog.ras_catalog[source_index]),
-                        np.deg2rad(catalog.decs_catalog[source_index]),
-                        reco.sigmas[nu_index],
-                        random_state=rng,
-                    )
-                    random_ras[nu_index] = np.rad2deg(nu_ra_rad)
-                    modified_decs[nu_index] = np.rad2deg(nu_dec_rad)
+                remove_index = 0
+                for i, source_index in enumerate(indexes_emitting_sources):
+                    source_index = int(source_index)
+                    for n_nu in range(N_nus_sources[source_index]):
+                        nu_index = remove_neutrinos_indexes[remove_index]
+                        nu_ra_rad, nu_dec_rad = test_stat.gen_rand_dist(
+                            np.deg2rad(catalog.ras_catalog[source_index]),
+                            np.deg2rad(catalog.decs_catalog[source_index]),
+                            reco.sigmas[nu_index],
+                            random_state=rng,
+                        )
+                        random_ras[nu_index] = np.rad2deg(nu_ra_rad)
+                        modified_decs[nu_index] = np.rad2deg(nu_dec_rad)
+                        remove_index += 1
+
+        if hypo == cfg.HYPO_CHOICES[cfg.DOUBLET_INJ_INDEX]:
+            first_alert_index = rng.integers(low=0, high=len(reco.NAMEs), size=1)
+            second_alert_index = rng.integers(low=0, high=len(reco.NAMEs), size=1)
+            while first_alert_index == second_alert_index:
+                second_alert_index = rng.integers(low=0, high=len(reco.NAMEs), size=1)
+            inj_source_index = test_stat.select_sources_randomly(
+                random_generator=rng, size=1
+            )
+            ra_source = catalog.ras_catalog[inj_source_index]
+            dec_source = catalog.decs_catalog[inj_source_index]
+            sigma_first = reco.sigmas[first_alert_index]
+            sigma_second = reco.sigmas[second_alert_index]
+            nu1_ra_rad, nu1_dec_rad = test_stat.gen_rand_dist(
+                np.deg2rad(ra_source),
+                np.deg2rad(dec_source),
+                sigma_first,
+                random_state=rng,
+            )
+            nu2_ra_rad, nu2_dec_rad = test_stat.gen_rand_dist(
+                np.deg2rad(ra_source),
+                np.deg2rad(dec_source),
+                sigma_second,
+                random_state=rng,
+            )
+            random_ras[first_alert_index] = np.rad2deg(nu1_ra_rad)
+            random_ras[second_alert_index] = np.rad2deg(nu2_ra_rad)
+            modified_decs[first_alert_index] = np.rad2deg(nu1_dec_rad)
+            modified_decs[second_alert_index] = np.rad2deg(nu2_dec_rad)
+            if (
+                np.abs(random_ras[first_alert_index] - random_ras[second_alert_index])
+                > 4.0
+            ):
+                print(
+                    random_ras[first_alert_index],
+                    random_ras[second_alert_index],
+                    modified_decs[first_alert_index],
+                    modified_decs[second_alert_index],
+                )
 
         (
             test_statistic_per_doublet,
@@ -423,21 +464,27 @@ def estimate_background(
         weight_name = "xray"
     else:
         weight_name = "redshift"
+    if dec_jitter:
+        jitter_name = "_dec_jitter"
+    else:
+        jitter_name = ""
     np.save(
         loader.data_results_path
-        / f"background_probs_{reco.reco_name}_{catalog.catalog_name}_{weight_name}_{hypo}_hypothesis",
+        / f"background_probs_{reco.reco_name}_{catalog.catalog_name}_{weight_name}_{jitter_name}_{hypo}_hypothesis",
         background_probs,
     )
     np.save(
         loader.data_results_path
-        / f"alternative_probs_{reco.reco_name}_{catalog.catalog_name}_{weight_name}_{hypo}_hypothesis",
+        / f"alternative_probs_{reco.reco_name}_{catalog.catalog_name}_{weight_name}{jitter_name}_{hypo}_hypothesis",
         alternative_probs,
     )
 
     return test_statistic_per_scramble  # type: ignore
 
 
-def perform_test(reco_name: str, catalog_name: str, flux: bool, hypo: bool) -> None:
+def perform_test(
+    reco_name: str, catalog_name: str, flux: bool, hypo: bool, dec_jitter: bool
+) -> None:
 
     loader = Loader()
     data_results_path = loader.data_results_path
@@ -446,6 +493,7 @@ def perform_test(reco_name: str, catalog_name: str, flux: bool, hypo: bool) -> N
 
     test_stat = TestStatistic(flux=flux)
     if hypo is not cfg.HYPO_CHOICES[cfg.BACKGROUND_INDEX]:
+        test_stat.set_expected_nus_catalog(catalog)
         test_stat.set_weights_catalog(catalog)
 
     reco = recos.initiate_reco(reco_name)
@@ -457,7 +505,7 @@ def perform_test(reco_name: str, catalog_name: str, flux: bool, hypo: bool) -> N
     DECs = reco.DECs
 
     test_statistic_per_scramble = estimate_background(
-        catalog, reco, test_stat, hypo, loader
+        catalog, reco, test_stat, hypo, loader, dec_jitter
     )
 
     if hypo:
@@ -472,6 +520,8 @@ def perform_test(reco_name: str, catalog_name: str, flux: bool, hypo: bool) -> N
         test_statistic_filename = f"{test_statistic_filename}_xray"
     else:
         test_statistic_filename = f"{test_statistic_filename}_redshift"
+    if dec_jitter:
+        test_statistic_filename = f"{test_statistic_filename}_dec_jitter"
 
     test_statistic_filename = f"{test_statistic_filename}_{hypo}_hypothesis"
     np.save(
@@ -547,6 +597,14 @@ def main():
         help="Generate the test statistic distribution using the alternative hypothesis.",
         choices=cfg.HYPO_CHOICES,
     )
+    parser.add_argument(
+        "--declination-jitter",
+        "-d",
+        type=str,
+        default=cfg.DEC_JITTER_CHOICES[cfg.FALSE_INDEX],
+        help="Apply a declination jitter of 1 degree to the neutrino dataset.",
+        choices=cfg.DEC_JITTER_CHOICES,
+    )
     args = parser.parse_args()
     reco_name = args.reco
     catalog_name = args.catalog
@@ -555,6 +613,11 @@ def main():
         flux = True
     elif flux == cfg.FLUX_CHOICES[cfg.FALSE_INDEX]:
         flux = False
+    dec_jitter = args.declination_jitter
+    if dec_jitter == cfg.DEC_JITTER_CHOICES[cfg.TRUE_INDEX]:
+        dec_jitter = True
+    elif dec_jitter == cfg.DEC_JITTER_CHOICES[cfg.FALSE_INDEX]:
+        dec_jitter = False
     hypo = args.alternative_hypothesis
 
     print(
@@ -564,8 +627,12 @@ def main():
         print("Use xray flux as weight\n\n")
     else:
         print("Use redshift as weight\n\n")
+    if dec_jitter:
+        print("Apply a jitter to the declination\n\n")
+    else:
+        print("No jitter to the declination\n\n")
 
-    perform_test(reco_name, catalog_name, flux, hypo)
+    perform_test(reco_name, catalog_name, flux, hypo, dec_jitter)
 
 
 if __name__ == "__main__":

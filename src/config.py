@@ -76,10 +76,12 @@ FLUX_CHOICES = ["False", "True"]
 TRUE_INDEX = 1
 FALSE_INDEX = 0
 
-HYPO_CHOICES = ["Background", "Doublet", "Population"]
+HYPO_CHOICES = ["Background", "Doublet", "Population", "Doublet-inj"]
+DEC_JITTER_CHOICES = ["False", "True"]
 BACKGROUND_INDEX = 0
 DOUBLET_INDEX = 1
 POPULATION_INDEX = 2
+DOUBLET_INJ_INDEX = 3
 
 # Flux plot
 LINEWIDTH_FLUXPLOT = 3
