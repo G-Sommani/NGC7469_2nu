@@ -345,7 +345,7 @@ def estimate_background(
         random_ras = rng.uniform(0.0, cfg.ROUND_ANGLE, size=len(RAs))
         dec_jitters = np.zeros(len(reco.DECs))
         if dec_jitter:
-            dec_jitters = rng.uniform(-2.0, 2.0, size=len(reco.DECs))
+            dec_jitters = rng.uniform(-3.0, 3.0, size=len(reco.DECs))
         modified_decs = copy.copy(reco.DECs) + dec_jitters
 
         if hypo == cfg.HYPO_CHOICES[cfg.POPULATION_INDEX]:
@@ -402,16 +402,6 @@ def estimate_background(
             random_ras[second_alert_index] = np.rad2deg(nu2_ra_rad)
             modified_decs[first_alert_index] = np.rad2deg(nu1_dec_rad)
             modified_decs[second_alert_index] = np.rad2deg(nu2_dec_rad)
-            if (
-                np.abs(random_ras[first_alert_index] - random_ras[second_alert_index])
-                > 4.0
-            ):
-                print(
-                    random_ras[first_alert_index],
-                    random_ras[second_alert_index],
-                    modified_decs[first_alert_index],
-                    modified_decs[second_alert_index],
-                )
 
         (
             test_statistic_per_doublet,

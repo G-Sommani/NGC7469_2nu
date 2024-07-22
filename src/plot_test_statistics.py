@@ -45,6 +45,9 @@ ts_spl_tur_z_alt_inj_result = np.load(
     data_results_path
     / f"{cfg.TS_FILENAME}_{cfg.SPLINEMPE}_{cfg.TURIN}_{cfg.REDSHIFT}_Doublet-inj_hypothesis_result.npy"
 )
+zs_tur = np.load(
+    data_results_path / f"{cfg.REDSHIFT}_sources_{cfg.TURIN}_Doublet_hypothesis.npy"
+)
 
 ts_spl_mil_z = np.load(
     data_results_path
@@ -419,6 +422,31 @@ figname_pdf = f"{figname}.pdf"
 plt.savefig(figures_path / figname_pdf, bbox_inches=cfg.BBOX_INCHES)
 plt.close()
 
+print(f"Plotting {cfg.REDSHIFT} of selected sources under {cfg.TURIN} catalog...")
+
+plt.figure(figsize=cfg.FIGSIZE_TS)
+logbins = list(np.logspace(np.log10(min(zs_tur)), np.log10(max(zs_tur)), 17))
+plt.hist(
+    zs_tur,
+    bins=logbins,
+    linewidth=2,
+    edgecolor="blue",
+    alpha=0.7,
+    histtype="stepfilled",
+    label="Selected redshifts",
+)
+plt.axvline(0.016, color="red", linestyle="--", linewidth=2, label="NGC 7469")
+plt.xscale("log")
+plt.yscale("log")
+plt.xlabel("Redshift", fontsize="large")
+plt.ylabel("Number of selections", fontsize="large")
+plt.title("Selected resdhifts", fontsize="large")
+plt.legend()
+
+print("Saving plot...")
+
+plt.savefig(figures_path / "selected_redshifts_turin", bbox_inches=cfg.BBOX_INCHES)
+plt.savefig(figures_path / "selected_redshifts_turin.pdf", bbox_inches=cfg.BBOX_INCHES)
 
 print(f"Plotting {cfg.SPLINEMPE} with {cfg.TURIN} and {cfg.XRAY}...")
 
