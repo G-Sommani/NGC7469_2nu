@@ -6,6 +6,8 @@ import catalogs
 import numpy as np
 import config as cfg
 import recos
+from typing import Tuple
+import pandas as pd
 
 
 class Loader:
@@ -71,6 +73,12 @@ class Loader:
 
     def load_effective_area(self) -> np.ndarray:
         return np.genfromtxt(self.data_path / cfg.EFFECTIVE_AREA_FILENAME)
+    
+    def load_icecat(self) -> Tuple[np.ndarray, np.ndarray]:
+        icecat = pd.read_csv(self.data_path / cfg.ICECAT_FILENAME)
+        icecat_decs = icecat[cfg.ICECAT_DEC_NAME].to_numpy()
+        icecat_energies = icecat[cfg.ICECAT_ENERGY_NAME].to_numpy()
+        return icecat_decs, icecat_energies
 
     def load_reco_data(self, reco: recos.Reco) -> None:
         reco.load_reco_data(self.data_path)
