@@ -181,9 +181,9 @@ def estimate_background(
     catalog: catalogs.Catalog,
     reco: recos.Reco,
     test_stat: TestStatistic,
-    hypo: bool,
+    hypo: str,
     loader: Loader,
-    dec_jitter: bool,
+    dec_jitter: float | None,
 ) -> np.ndarray:
 
     RAs = reco.RAs

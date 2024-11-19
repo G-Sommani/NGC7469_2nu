@@ -7,7 +7,7 @@ import numpy as np
 import config as cfg
 import recos
 from typing import Tuple
-import pandas as pd
+import pandas as pd  # type: ignore
 
 
 class Loader:

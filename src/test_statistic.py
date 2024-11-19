@@ -131,7 +131,7 @@ class TestStatistic:
                 n_alerts_in_bin = np.sum(e_dec_bin_mask)
                 n_alerts_e.append(n_alerts_in_bin)
             n_alerts_per_bin.append(n_alerts_e)
-        n_alerts_per_bin = np.array(n_alerts_per_bin)
+        n_alerts_per_bin = np.array(n_alerts_per_bin)  # type: ignore
         
         self.n_alerts_per_bin = n_alerts_per_bin
 
@@ -422,7 +422,7 @@ class TestStatistic:
         ):
             if np.sum(probs_array == 0.) == 0:
                 not_empty_energy_bins_indexes.append(energy_prob_index)
-        not_empty_energy_bins_indexes = np.array(
+        not_empty_energy_bins_indexes = np.array(  # type: ignore
             not_empty_energy_bins_indexes
         )
         available_nu_indexes = np.array([])
@@ -620,7 +620,7 @@ class TestStatistic:
         Test statistic related to two alerts and a source
         """
         if self.flux == cfg.FLUX_CHOICES[cfg.NOWEIGHT_INDEX]:
-            c1 = 0
+            c1 = 0.
         else:
             c1 = self.flux_contribute(z_or_xray, decS)
         c2 = self.unc_contribute(sigma1, sigma2)
