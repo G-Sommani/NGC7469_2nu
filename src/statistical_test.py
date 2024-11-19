@@ -344,20 +344,16 @@ def estimate_background(
 
         random_ras = rng.uniform(0.0, cfg.ROUND_ANGLE, size=len(RAs))
         modified_decs = copy.copy(reco.DECs)
-        if dec_jitter:            
+        if dec_jitter:
             for index in range(len(modified_decs)):
                 dec = reco.DECs[index]
                 ene = reco.ENERGIES[index]
-                dec_jit = rng.uniform(
-                    -dec_jitter, dec_jitter, size=1
-                )[0]
+                dec_jit = rng.uniform(-dec_jitter, dec_jitter, size=1)[0]
                 new_dec = dec + dec_jit
-                while test_stat.select_bkg_prob_bin(
-                    np.deg2rad(new_dec), ene
-                ) == 0.:
-                    dec_jit = rng.uniform(
-                        -dec_jitter, dec_jitter, size=len(reco.DECs)
-                    )[0]
+                while test_stat.select_bkg_prob_bin(np.deg2rad(new_dec), ene) == 0.0:
+                    dec_jit = rng.uniform(-dec_jitter, dec_jitter, size=len(reco.DECs))[
+                        0
+                    ]
                     new_dec = dec + dec_jit
                 modified_decs[index] = new_dec
 
@@ -395,7 +391,7 @@ def estimate_background(
             dec_source = catalog.decs_catalog[inj_source_index]
             (
                 first_alert_index,
-                second_alert_index
+                second_alert_index,
             ) = test_stat.select_neutrinos_randomly(
                 dec_source,
                 reco.ENERGIES,
@@ -526,9 +522,7 @@ def perform_test(
         xray = False
         noweight = False
     print(f"The weight choice is {flux} and noweight is {noweight}")
-    catalog = catalogs.initiate_catalog(
-        catalog_name, xray=xray, noweight=noweight
-    )
+    catalog = catalogs.initiate_catalog(catalog_name, xray=xray, noweight=noweight)
     loader.load_catalog(catalog)
 
     test_stat = TestStatistic(flux=flux)

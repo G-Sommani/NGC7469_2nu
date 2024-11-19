@@ -3,7 +3,7 @@ import importlib
 import numpy as np
 from pathlib import Path
 from typing import List
-from scipy.stats import multinomial # type: ignore
+from scipy.stats import multinomial  # type: ignore
 
 
 class Catalog(ABC):
@@ -28,7 +28,9 @@ class Catalog(ABC):
     total_scrambling_possibilities: List[int]
 
     def __init__(
-            self, xray: bool = False, noweight: bool = False,
+        self,
+        xray: bool = False,
+        noweight: bool = False,
     ) -> None:
         self.xray = xray
         self.noweight = noweight
@@ -40,7 +42,7 @@ class Catalog(ABC):
 
 
 def initiate_catalog(
-        catalog_name: str, xray: bool = False, noweight: bool = False
-    ) -> Catalog:
+    catalog_name: str, xray: bool = False, noweight: bool = False
+) -> Catalog:
     module = importlib.import_module(f"{__name__}.{catalog_name.lower()}")
     return module.CATALOG_CLASS(xray=xray, noweight=noweight)

@@ -185,7 +185,7 @@ plt.plot(
     ras_err_22,
     des_err_22,
     color="tab:blue",
-    #linestyle="dotted",
+    # linestyle="dotted",
     label="IC220424A Notice",
     linewidth=2,
 )
@@ -201,34 +201,34 @@ plt.plot(
     ras_err_23,
     des_err_23,
     color="tab:orange",
-    #linestyle="dotted",
+    # linestyle="dotted",
     label="IC230416A Notice",
     linewidth=2,
 )
-#plt.plot(
+# plt.plot(
 #    cfg.CIRCULAR_22_COORDS[cfg.RA_INDEX],
 #    cfg.CIRCULAR_22_COORDS[cfg.DE_INDEX],
 #    marker="o",
 #    color="tab:blue",
-#)
-#plt.plot(
+# )
+# plt.plot(
 #    cfg.CIRCULAR_23_COORDS[cfg.RA_INDEX],
 #    cfg.CIRCULAR_23_COORDS[cfg.DE_INDEX],
 #    color="tab:orange",
 #    marker="o",
-#)
-#plt.plot(
+# )
+# plt.plot(
 #    cfg.NOTICE_22_COORDS[cfg.RA_INDEX],
 #    cfg.NOTICE_22_COORDS[cfg.DE_INDEX],
 #    marker="s",
 #    color="tab:blue",
-#)
-#plt.plot(
+# )
+# plt.plot(
 #    cfg.NOTICE_23_COORDS[cfg.RA_INDEX],
 #    cfg.NOTICE_23_COORDS[cfg.DE_INDEX],
 #    color="tab:orange",
 #    marker="s",
-#)
+# )
 plt.plot(
     cfg.NGC7469_COORDS[cfg.RA_INDEX],
     cfg.NGC7469_COORDS[cfg.DE_INDEX],

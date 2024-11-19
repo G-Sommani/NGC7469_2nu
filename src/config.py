@@ -81,7 +81,7 @@ FLUX_CHOICES = ["redshift", "xray", "noweight"]
 XRAY_INDEX = 1
 REDSHIFT_INDEX = 0
 NOWEIGHT_INDEX = 2
-MAX_DIST_FROM_SOURCE = 4.
+MAX_DIST_FROM_SOURCE = 4.0
 
 HYPO_CHOICES = ["Background", "Doublet", "Population", "Doublet-inj", "Singlet-inj"]
 DEC_JITTER_DEFAULT = None

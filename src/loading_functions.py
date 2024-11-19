@@ -73,7 +73,7 @@ class Loader:
 
     def load_effective_area(self) -> np.ndarray:
         return np.genfromtxt(self.data_path / cfg.EFFECTIVE_AREA_FILENAME)
-    
+
     def load_icecat(self) -> Tuple[np.ndarray, np.ndarray]:
         icecat = pd.read_csv(self.data_path / cfg.ICECAT_FILENAME)
         icecat_decs = icecat[cfg.ICECAT_DEC_NAME].to_numpy()

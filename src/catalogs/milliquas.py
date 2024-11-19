@@ -50,9 +50,13 @@ class Milliquas(Catalog):
         self.zipname_data = cfg.MILLIQUAS_ZIP
         self.noweight = noweight
         if self.noweight:
-            total_scrambling_splinempe = cfg.TOTAL_SCRAMBLINGS_SPLINEMPE_MILLIQUAS_NOWEIGHT
+            total_scrambling_splinempe = (
+                cfg.TOTAL_SCRAMBLINGS_SPLINEMPE_MILLIQUAS_NOWEIGHT
+            )
         else:
-            total_scrambling_splinempe = cfg.TOTAL_SCRAMBLINGS_SPLINEMPE_MILLIQUAS_WEIGHT
+            total_scrambling_splinempe = (
+                cfg.TOTAL_SCRAMBLINGS_SPLINEMPE_MILLIQUAS_WEIGHT
+            )
         self.total_scrambling_possibilities = [
             total_scrambling_splinempe,
             cfg.TOTAL_SCRAMBLINGS_MILLIPEDE_MILLIQUAS,
