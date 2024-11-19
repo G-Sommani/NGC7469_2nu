@@ -10,6 +10,7 @@ class Catalog(ABC):
 
     catalog_name: str = __name__
     xray: bool = False
+    noweight: bool = False
     zipname_data: str | None = None
     filename_names: str | None = None
     url_names: str | None = None
@@ -26,8 +27,11 @@ class Catalog(ABC):
     url_data: str
     total_scrambling_possibilities: List[int]
 
-    def __init__(self, xray: bool = False) -> None:
+    def __init__(
+            self, xray: bool = False, noweight: bool = False,
+    ) -> None:
         self.xray = xray
+        self.noweight = noweight
         pass
 
     @abstractmethod
@@ -35,6 +39,8 @@ class Catalog(ABC):
         pass
 
 
-def initiate_catalog(catalog_name: str, xray: bool = False) -> Catalog:
+def initiate_catalog(
+        catalog_name: str, xray: bool = False, noweight: bool = False
+    ) -> Catalog:
     module = importlib.import_module(f"{__name__}.{catalog_name.lower()}")
-    return module.CATALOG_CLASS(xray=xray)
+    return module.CATALOG_CLASS(xray=xray, noweight=noweight)

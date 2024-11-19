@@ -77,9 +77,10 @@ ROUND_ANGLE = 360  # deg
 TEST_STATISTIC_EMPTY_SCRAMBLE = -1000
 ERG_TO_GEV = 624.151
 TEST_STATISTIC_FILENAME = "test_statistic"
-FLUX_CHOICES = ["False", "True"]
-TRUE_INDEX = 1
-FALSE_INDEX = 0
+FLUX_CHOICES = ["redshift", "xray", "noweight"]
+XRAY_INDEX = 1
+REDSHIFT_INDEX = 0
+NOWEIGHT_INDEX = 2
 MAX_DIST_FROM_SOURCE = 4.
 
 HYPO_CHOICES = ["Background", "Doublet", "Population", "Doublet-inj", "Singlet-inj"]

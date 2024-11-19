@@ -8,7 +8,7 @@ from . import config_catalogs as cfg
 
 
 class Turin(Catalog):
-    def __init__(self, xray: bool = False) -> None:
+    def __init__(self, xray: bool = False, noweight: bool = False) -> None:
         super().__init__(xray=xray)
         self.catalog_name = cfg.TURIN
         self.filename_data = cfg.TURIN_FILENAME

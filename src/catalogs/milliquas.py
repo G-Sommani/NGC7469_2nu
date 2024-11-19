@@ -37,28 +37,8 @@ def agn_mask(dataframe: pd.DataFrame) -> np.ndarray:
     return mask_agn
 
 
-def mask_sources(dataframe: pd.DataFrame) -> pd.DataFrame:
-
-    print(f"Selecting only AGN within a redshift of {cfg.MILLIQUAS_Z_CUT}..")
-
-    # Consider only the agn in the milliquas catalog
-    mask_agn = agn_mask(dataframe)
-    dataframe_agn = dataframe[mask_agn]
-
-    # Sources that are too far away are not significant for the test and slow down the program
-    dataframe_nearby = dataframe_agn[
-        dataframe_agn[cfg.MILLIQUAS_Z] < cfg.MILLIQUAS_Z_CUT
-    ]
-
-    # There are two blazars which are reported with a redshift of zero. This is unphyisical and
-    # these two sources are therefore removed.
-    dataframe_nearby_no0 = dataframe_nearby[dataframe_nearby[cfg.MILLIQUAS_Z] != 0]
-
-    return dataframe_nearby_no0
-
-
 class Milliquas(Catalog):
-    def __init__(self, xray: bool = False) -> None:
+    def __init__(self, xray: bool = False, noweight: bool = False) -> None:
         if xray:
             raise ValueError(
                 f"Possible to use the x-ray fluxes as weighting only with the Turin catalog."
@@ -68,10 +48,34 @@ class Milliquas(Catalog):
         self.filename_data = cfg.MILLIQUAS_FILENAME
         self.url_data = cfg.MILLIQUAS_URL
         self.zipname_data = cfg.MILLIQUAS_ZIP
+        self.noweight = noweight
+        if self.noweight:
+            total_scrambling_splinempe = cfg.TOTAL_SCRAMBLINGS_SPLINEMPE_MILLIQUAS_NOWEIGHT
+        else:
+            total_scrambling_splinempe = cfg.TOTAL_SCRAMBLINGS_SPLINEMPE_MILLIQUAS_WEIGHT
         self.total_scrambling_possibilities = [
-            cfg.TOTAL_SCRAMBLINGS_SPLINEMPE_MILLIQUAS,
+            total_scrambling_splinempe,
             cfg.TOTAL_SCRAMBLINGS_MILLIPEDE_MILLIQUAS,
         ]
+
+    def mask_sources(self, dataframe: pd.DataFrame) -> pd.DataFrame:
+
+        # Consider only the agn in the milliquas catalog
+        mask_agn = agn_mask(dataframe)
+        dataframe_agn = dataframe[mask_agn]
+        print(f"noweight is {self.noweight}")
+        if not self.noweight:
+            print(f"Selecting only AGN within a redshift of {cfg.MILLIQUAS_Z_CUT}..")
+            # Sources that are too far away are not significant for the test and slow down the program
+            dataframe_agn = dataframe_agn[
+                dataframe_agn[cfg.MILLIQUAS_Z] < cfg.MILLIQUAS_Z_CUT
+            ]
+
+        # There are two blazars which are reported with a redshift of zero. This is unphyisical and
+        # these two sources are therefore removed.
+        dataframe_nearby_no0 = dataframe_agn[dataframe_agn[cfg.MILLIQUAS_Z] != 0]
+
+        return dataframe_nearby_no0
 
     def load_catalog(self, data_path: Path) -> None:
 
@@ -81,7 +85,7 @@ class Milliquas(Catalog):
             names=cfg.MILLIQUAS_HEADER,
         )
 
-        masked_dataframe = mask_sources(dataframe)
+        masked_dataframe = self.mask_sources(dataframe)
 
         self.ras_catalog = masked_dataframe[cfg.MILLIQUAS_RA].to_numpy()
         self.decs_catalog = masked_dataframe[cfg.MILLIQUAS_DEC].to_numpy()

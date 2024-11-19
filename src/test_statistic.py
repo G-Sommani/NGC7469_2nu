@@ -64,7 +64,9 @@ class TestStatistic:
     days = cfg.MJD_04102023 - cfg.MJD_GOLDBRONZE_START
     seconds = (days / cfg.DAYS_IN_YEAR) * cfg.SECONDS_IN_YEAR
 
-    def __init__(self, flux: bool = False) -> None:
+    def __init__(
+            self, flux: str = cfg.FLUX_CHOICES[cfg.REDSHIFT_INDEX]
+    ) -> None:
 
         print("Defining the test statistic...")
 
@@ -241,7 +243,7 @@ class TestStatistic:
         number of expected neutrinos from the source
         """
         area_energy_factor = self.get_area_energy_factor(dec)
-        if self.flux:
+        if self.flux == cfg.FLUX_CHOICES[cfg.XRAY_INDEX]:
             expected_nu = (
                 cfg.CONSTANT_XRAY
                 * z_or_xray
@@ -249,7 +251,7 @@ class TestStatistic:
                 * (cfg.E0 ** 2)
                 * area_energy_factor
             )
-        else:
+        elif self.flux == cfg.FLUX_CHOICES[cfg.REDSHIFT_INDEX]:
             constant = (
                 (type(self).hubble_in_s ** 2)
                 * type(self).seconds
@@ -290,7 +292,10 @@ class TestStatistic:
         raS: float,
         deS: float,
     ) -> float:
-        prob_source = self.prob_doublet_from_source(z_or_xray, deS)
+        if self.flux == cfg.FLUX_CHOICES[cfg.NOWEIGHT_INDEX]:
+            prob_source = 1.
+        else:
+            prob_source = self.prob_doublet_from_source(z_or_xray, deS)
         prob_dist = self.prob_dist_from_source(
             ra1, de1, sigma1, ra2, de2, sigma2, raS, deS
         )
@@ -339,11 +344,11 @@ class TestStatistic:
 
     def set_weights_catalog(self, catalog: catalogs.Catalog) -> None:
         for index in range(len(catalog.names_catalog)):
-            if self.flux:
+            if self.flux == cfg.FLUX_CHOICES[cfg.XRAY_INDEX]:
                 prob = self.prob_doublet_from_source(
                     catalog.xray_catalog[index], np.deg2rad(catalog.decs_catalog[index])
                 )
-            else:
+            elif self.flux == cfg.FLUX_CHOICES[cfg.REDSHIFT_INDEX]:
                 prob = self.prob_doublet_from_source(
                     catalog.redshifts_catalog[index], np.deg2rad(catalog.decs_catalog[index])
                 )
@@ -354,11 +359,11 @@ class TestStatistic:
     
     def set_expected_nus_catalog(self, catalog: catalogs.Catalog) -> None:
         for index in range(len(catalog.names_catalog)):
-            if self.flux:
+            if self.flux == cfg.FLUX_CHOICES[cfg.XRAY_INDEX]:
                 n_nu = self.expected_nu_from_source(
                     catalog.xray_catalog[index], np.deg2rad(catalog.decs_catalog[index])
                 )
-            else:
+            elif self.flux == cfg.FLUX_CHOICES[cfg.REDSHIFT_INDEX]:
                 n_nu = self.expected_nu_from_source(
                     catalog.redshifts_catalog[index], np.deg2rad(catalog.decs_catalog[index])
                 )
@@ -489,7 +494,7 @@ class TestStatistic:
         return poisson.rvs(mu=self.expected_nus_per_source, random_state=random_state)
 
     def flux_contribute(self, z_or_xray: float, dec: float) -> float:
-        if self.flux:
+        if self.flux == cfg.FLUX_CHOICES[cfg.XRAY_INDEX]:
             """
             Given the redshift (or the xray flux) and the declination of a source, determines the contribution
             to the test statistic related to the neutrino flux of the source
@@ -499,7 +504,7 @@ class TestStatistic:
                 np.log(0.5) + 2 * np.log(mu) - mu
             )  # Here we assume the limit of low fluxes as valid
 
-        else:
+        elif self.flux == cfg.FLUX_CHOICES[cfg.REDSHIFT_INDEX]:
             """
             Given the redshift and the declination of a source, determines the contribution
             to the test statistic related to the neutrino flux of the source
@@ -614,7 +619,10 @@ class TestStatistic:
         """
         Test statistic related to two alerts and a source
         """
-        c1 = self.flux_contribute(z_or_xray, decS)
+        if self.flux == cfg.FLUX_CHOICES[cfg.NOWEIGHT_INDEX]:
+            c1 = 0
+        else:
+            c1 = self.flux_contribute(z_or_xray, decS)
         c2 = self.unc_contribute(sigma1, sigma2)
         c3 = self.dir_contribute(ra1, dec1, ra2, dec2, raS, decS, sigma1, sigma2)
         c4 = self.noise_contribute(dec1, dec2, energy1, energy2)

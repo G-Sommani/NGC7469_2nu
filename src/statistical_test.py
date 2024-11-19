@@ -511,12 +511,24 @@ def estimate_background(
 
 
 def perform_test(
-    reco_name: str, catalog_name: str, flux: bool, hypo: bool, dec_jitter: float | None
+    reco_name: str, catalog_name: str, flux: str, hypo: str, dec_jitter: float | None
 ) -> None:
 
     loader = Loader()
     data_results_path = loader.data_results_path
-    catalog = catalogs.initiate_catalog(catalog_name, xray=flux)
+    if flux == cfg.FLUX_CHOICES[cfg.XRAY_INDEX]:
+        xray = True
+        noweight = False
+    elif flux == cfg.FLUX_CHOICES[cfg.NOWEIGHT_INDEX]:
+        xray = False
+        noweight = True
+    else:
+        xray = False
+        noweight = False
+    print(f"The weight choice is {flux} and noweight is {noweight}")
+    catalog = catalogs.initiate_catalog(
+        catalog_name, xray=xray, noweight=noweight
+    )
     loader.load_catalog(catalog)
 
     test_stat = TestStatistic(flux=flux)
@@ -526,8 +538,6 @@ def perform_test(
 
     reco = recos.initiate_reco(reco_name)
     loader.load_reco_data(reco)
-
-    flux = catalog.xray
 
     RAs = reco.RAs
     DECs = reco.DECs
@@ -544,10 +554,7 @@ def perform_test(
     test_statistic_filename = (
         f"{cfg.TEST_STATISTIC_FILENAME}_{reco.reco_name}_{catalog.catalog_name}"
     )
-    if flux:
-        test_statistic_filename = f"{test_statistic_filename}_xray"
-    else:
-        test_statistic_filename = f"{test_statistic_filename}_redshift"
+    test_statistic_filename = f"{test_statistic_filename}_{flux}"
     if dec_jitter:
         test_statistic_filename = f"{test_statistic_filename}_dec_jitter_{dec_jitter}"
 
@@ -613,7 +620,7 @@ def main():
         "--flux",
         "-f",
         type=str,
-        default=cfg.FLUX_CHOICES[cfg.FALSE_INDEX],
+        default=cfg.FLUX_CHOICES[cfg.REDSHIFT_INDEX],
         help="weight the sources with x-ray flux, instead of using the redshift. Possible only with Turin catalog.",
         choices=cfg.FLUX_CHOICES,
     )
@@ -636,20 +643,13 @@ def main():
     reco_name = args.reco
     catalog_name = args.catalog
     flux = args.flux
-    if flux == cfg.FLUX_CHOICES[cfg.TRUE_INDEX]:
-        flux = True
-    elif flux == cfg.FLUX_CHOICES[cfg.FALSE_INDEX]:
-        flux = False
     dec_jitter = args.declination_jitter
     hypo = args.alternative_hypothesis
 
     print(
         f"\n\nPerform test with the {catalog_name} catalog,\nthe {reco_name} reconstruction,\nunder the {hypo} hypothesis."
     )
-    if flux:
-        print("Use xray flux as weight\n\n")
-    else:
-        print("Use redshift as weight\n\n")
+    print(f"Use {flux} as weight\n\n")
     if dec_jitter:
         print(f"Apply a jitter to the declination of {dec_jitter} degrees\n\n")
     else:
