@@ -238,9 +238,7 @@ class TestStatistic:
         """
         area_energy_factor = self.get_area_energy_factor(dec)
         if self.flux == cfg.FLUX_CHOICES[cfg.NOWEIGHT_INDEX]:
-            expected_nu = (
-                cfg.FLUX_NU_NOWEIGHT * (cfg.E0 ** 2) * area_energy_factor
-            )
+            expected_nu = cfg.FLUX_NU_NOWEIGHT * (cfg.E0 ** 2) * area_energy_factor
         elif self.flux == cfg.FLUX_CHOICES[cfg.XRAY_INDEX]:
             expected_nu = (
                 cfg.CONSTANT_XRAY

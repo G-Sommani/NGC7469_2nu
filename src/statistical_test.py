@@ -529,7 +529,9 @@ def perform_test(
     catalog = catalogs.initiate_catalog(catalog_name, xray=xray, noweight=noweight)
     loader.load_catalog(catalog)
 
-    print(f"Loaded the catalog {catalog.catalog_name} with {len(catalog.ras_catalog)} sources.")
+    print(
+        f"Loaded the catalog {catalog.catalog_name} with {len(catalog.ras_catalog)} sources."
+    )
 
     test_stat = TestStatistic(flux=flux)
     if hypo is not cfg.HYPO_CHOICES[cfg.BACKGROUND_INDEX]:

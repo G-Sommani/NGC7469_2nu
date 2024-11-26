@@ -354,7 +354,7 @@ plt.hist(
 )
 plt.hist(
     -ts_spl_tur_z - np.min(-ts_spl_tur_z_alt) + 1,
-    #- (ts_spl_tur_z_alt_result - ts_spl_tur_z_result)
+    # - (ts_spl_tur_z_alt_result - ts_spl_tur_z_result)
     histtype=cfg.HISTTYPE_TS_ALT,
     bins=logbins,
     alpha=alpha,
@@ -401,7 +401,9 @@ plt.hist(
     label=f"Doublet injection",
 )
 plt.hist(
-    -ts_spl_tur_z - np.min(-ts_spl_tur_z_alt_inj) + 1
+    -ts_spl_tur_z
+    - np.min(-ts_spl_tur_z_alt_inj)
+    + 1
     - (ts_spl_tur_z_alt_inj_result - ts_spl_tur_z_result),
     histtype=cfg.HISTTYPE_TS_ALT,
     bins=logbins,
@@ -442,7 +444,9 @@ plt.subplots(figsize=cfg.FIGSIZE_TS)
 logbins = list(np.logspace(0, np.log10(4e2), cfg.NBINS_TS))
 alpha = 1
 plt.hist(
-    -ts_spl_tur_z - np.min(-ts_spl_tur_z_alt_inj) + 1
+    -ts_spl_tur_z
+    - np.min(-ts_spl_tur_z_alt_inj)
+    + 1
     - (ts_spl_tur_z_alt_inj_result - ts_spl_tur_z_result),
     histtype=cfg.HISTTYPE_TS_ALT,
     bins=logbins,
@@ -475,14 +479,15 @@ plt.axvline(
     -ts_spl_tur_z_alt_sing_inj_result - np.min(-ts_spl_tur_z_alt_inj) + 1,
     color="red",
     linestyle="dotted",
-    linewidth = 2.5,
+    linewidth=2.5,
     label=cfg.AXVLABEL_TS,
 )
 plt.gca().invert_xaxis()
 plt.xlabel(cfg.XLABEL_TS, fontsize=cfg.FONTSIZE_TS)
 plt.ylabel(cfg.YLABEL_TS, fontsize=cfg.FONTSIZE_TS)
 plt.title(
-    f"Sensitivity to the injection\nof doublet and singlet coincidences", fontsize=cfg.FONTSIZE_TS
+    f"Sensitivity to the injection\nof doublet and singlet coincidences",
+    fontsize=cfg.FONTSIZE_TS,
 )
 plt.xscale(cfg.AXISSCALE_TS)
 plt.yscale(cfg.AXISSCALE_TS)
