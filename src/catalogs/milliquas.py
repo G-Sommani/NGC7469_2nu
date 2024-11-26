@@ -64,7 +64,7 @@ class Milliquas(Catalog):
 
     def mask_sources(self, dataframe: pd.DataFrame) -> pd.DataFrame:
 
-        # Consider only the agn in the milliquas catalog
+        # Consider only the agns detected in X-ray in the milliquas catalog
         mask_agn = agn_mask(dataframe)
         dataframe_agn = dataframe[mask_agn]
         print(f"noweight is {self.noweight}")

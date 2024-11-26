@@ -152,7 +152,7 @@ print("\n\n*** Background Hypotheses ***\n\n")
 print(f"Plotting {cfg.SPLINEMPE} with {cfg.REDSHIFT}...")
 
 plt.subplots(figsize=cfg.FIGSIZE_TS)
-logbins = list(np.logspace(0, np.log10(4e2), cfg.NBINS_TS))
+logbins = list(np.logspace(0, np.log10(7e2), cfg.NBINS_TS))
 plt.hist(
     -ts_spl_tur_z - np.min(-ts_spl_tur_z) + 1,
     histtype=cfg.HISTTYPE_TS,
@@ -408,7 +408,7 @@ plt.hist(
     alpha=alpha,
     edgecolor="red",
     linewidth=cfg.LINEWIDTH_TS,
-    label=f"Background distribution",
+    label=f"Null hypothesis distribution",
 )
 plt.axvline(
     -ts_spl_tur_z_alt_inj_result - np.min(-ts_spl_tur_z_alt_inj) + 1,
@@ -450,7 +450,7 @@ plt.hist(
     edgecolor="black",
     color="grey",
     linewidth=cfg.LINEWIDTH_TS - 1,
-    label=f"Background distribution",
+    label=f"Null hypothesis",
 )
 plt.hist(
     -ts_spl_tur_z_alt_sing_inj - np.min(-ts_spl_tur_z_alt_inj) + 1,
@@ -482,7 +482,7 @@ plt.gca().invert_xaxis()
 plt.xlabel(cfg.XLABEL_TS, fontsize=cfg.FONTSIZE_TS)
 plt.ylabel(cfg.YLABEL_TS, fontsize=cfg.FONTSIZE_TS)
 plt.title(
-    f"Sensitivity to the injection of doublet and singlet coincidences", fontsize=cfg.FONTSIZE_TS
+    f"Sensitivity to the injection\nof doublet and singlet coincidences", fontsize=cfg.FONTSIZE_TS
 )
 plt.xscale(cfg.AXISSCALE_TS)
 plt.yscale(cfg.AXISSCALE_TS)

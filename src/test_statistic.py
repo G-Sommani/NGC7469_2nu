@@ -237,7 +237,11 @@ class TestStatistic:
         number of expected neutrinos from the source
         """
         area_energy_factor = self.get_area_energy_factor(dec)
-        if self.flux == cfg.FLUX_CHOICES[cfg.XRAY_INDEX]:
+        if self.flux == cfg.FLUX_CHOICES[cfg.NOWEIGHT_INDEX]:
+            expected_nu = (
+                cfg.FLUX_NU_NOWEIGHT * (cfg.E0 ** 2) * area_energy_factor
+            )
+        elif self.flux == cfg.FLUX_CHOICES[cfg.XRAY_INDEX]:
             expected_nu = (
                 cfg.CONSTANT_XRAY
                 * z_or_xray
@@ -286,10 +290,7 @@ class TestStatistic:
         raS: float,
         deS: float,
     ) -> float:
-        if self.flux == cfg.FLUX_CHOICES[cfg.NOWEIGHT_INDEX]:
-            prob_source = 1.0
-        else:
-            prob_source = self.prob_doublet_from_source(z_or_xray, deS)
+        prob_source = self.prob_doublet_from_source(z_or_xray, deS)
         prob_dist = self.prob_dist_from_source(
             ra1, de1, sigma1, ra2, de2, sigma2, raS, deS
         )
@@ -471,25 +472,14 @@ class TestStatistic:
         return poisson.rvs(mu=self.expected_nus_per_source, random_state=random_state)
 
     def flux_contribute(self, z_or_xray: float, dec: float) -> float:
-        if self.flux == cfg.FLUX_CHOICES[cfg.XRAY_INDEX]:
-            """
-            Given the redshift (or the xray flux) and the declination of a source, determines the contribution
-            to the test statistic related to the neutrino flux of the source
-            """
-            mu = self.expected_nu_from_source(z_or_xray, dec)
-            contribute = (
-                np.log(0.5) + 2 * np.log(mu) - mu
-            )  # Here we assume the limit of low fluxes as valid
-
-        elif self.flux == cfg.FLUX_CHOICES[cfg.REDSHIFT_INDEX]:
-            """
-            Given the redshift and the declination of a source, determines the contribution
-            to the test statistic related to the neutrino flux of the source
-            """
-            mu = self.expected_nu_from_source(z_or_xray, dec)
-            contribute = (
-                np.log(0.5) + 2 * np.log(mu) - mu
-            )  # Here we assume the limit of low fluxes as valid
+        """
+        Given the redshift (or the xray flux) and the declination of a source, determines the contribution
+        to the test statistic related to the neutrino flux of the source
+        """
+        mu = self.expected_nu_from_source(z_or_xray, dec)
+        contribute = (
+            np.log(0.5) + 2 * np.log(mu) - mu
+        )  # Here we assume the limit of low fluxes as valid
         return contribute
 
     def select_effective_area(self, dec: float, energy: float) -> float:
@@ -596,10 +586,7 @@ class TestStatistic:
         """
         Test statistic related to two alerts and a source
         """
-        if self.flux == cfg.FLUX_CHOICES[cfg.NOWEIGHT_INDEX]:
-            c1 = 0.0
-        else:
-            c1 = self.flux_contribute(z_or_xray, decS)
+        c1 = self.flux_contribute(z_or_xray, decS)
         c2 = self.unc_contribute(sigma1, sigma2)
         c3 = self.dir_contribute(ra1, dec1, ra2, dec2, raS, decS, sigma1, sigma2)
         c4 = self.noise_contribute(dec1, dec2, energy1, energy2)

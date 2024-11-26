@@ -238,8 +238,10 @@ def estimate_background(
             random_state=rng,
         )
         for i in range(total_scramblings):
-
-            if (i + 1) % 1000 == 0:
+            N_print = 1000
+            if catalog.catalog_name == cfg.MILLIQUAS:
+                N_print = 5
+            if (i + 1) % N_print == 0:
                 sys.stdout.write(
                     "\r"
                     + f"Scrumble nr {i + 1:6}"
@@ -327,9 +329,11 @@ def estimate_background(
         return test_statistic_per_scramble  # type: ignore
 
     rng = np.random.default_rng(seed=total_scramblings)
+    N_print = 1000
+    if catalog.catalog_name == cfg.MILLIQUAS:
+        N_print = 5
     for scrambling_number in range(total_scramblings):
-
-        if (scrambling_number + 1) % 100 == 0:
+        if (scrambling_number + 1) % N_print == 0:
             sys.stdout.write(
                 "\r"
                 + f"Scrumble nr {scrambling_number + 1:6}"
@@ -524,6 +528,8 @@ def perform_test(
     print(f"The weight choice is {flux} and noweight is {noweight}")
     catalog = catalogs.initiate_catalog(catalog_name, xray=xray, noweight=noweight)
     loader.load_catalog(catalog)
+
+    print(f"Loaded the catalog {catalog.catalog_name} with {len(catalog.ras_catalog)} sources.")
 
     test_stat = TestStatistic(flux=flux)
     if hypo is not cfg.HYPO_CHOICES[cfg.BACKGROUND_INDEX]:
