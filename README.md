@@ -34,5 +34,8 @@ Regarding `statistical_test.py`, there are several possible inputs to produce di
 ### Alternative hypotheses
 The code offers the possibility to generate the test statistic distribution under various hypotheses.
 The default one is the `Background` one, i.e., the hypothesis under which no neutrino originated from any source in the catalog.
-As alternative hypotheses are available:
-- 
+The possible alternative hypotheses are:
+- `Doublet`, the test statistic is calculated on a doublet injected on one source of the catalog randomly selected depending on the weight;
+- `Population`, by assuming the flux in the signal distribution, neutrinos are randomly injected on the sources in the catalog following a Poissonian distribution. Most of the scrambles will have no neutrinos, some will have 1, and very rarely there will be a scramble with 2 neutrinos and in some cases even on the same source;
+- `Doublet-inj`, in each scramble, a doublet is injected on one source of the catalog randomly selected depending on the weight;
+- `Singlet-inj`, in each scramble, one neutrino is injected on one source of the catalog randomly selected depending on the weight.
