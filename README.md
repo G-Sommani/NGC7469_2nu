@@ -4,7 +4,7 @@ This project is aimed to reproduce the results and the plots of the paper.
 
 The project contains 4 folders:
 - `src`, it contains all the programs necessary to reproduce the results and plots of the paper, in particular:
-  - `statistical_test.py`, it reproduces the statistical tests producing the bacground distributions of the test statistic (ts) and calculating the ts value for the neutrino doublet IC220424A & IC230416A with NGC 7469. It saves the results in `data_results`;
+  - `statistical_test.py`, it reproduces the statistical tests producing the background distributions of the test statistic (ts) and calculating the ts value for the neutrino doublet IC220424A & IC230416A with NGC 7469. It saves the results in `data_results`;
   - `areas_ratio.py`, it reproduce Figure 1, about the ratio between the contour area of Millipede and SplineMPE;
   - `coincidence_plots.py`, it reprocuces Figure 2 and 3, about the reconstructed directions of IC220424A and IC230416A by the GCN Notices and GCN Circulars and the position of NGC 7469;
   - `ts_dependence_on_flux.py`, it reproduces Figure 4, about the dependence of the test statistic on the intrinsic neutrino flux (a parameter of the Goodness-of-Fit test);
@@ -12,6 +12,7 @@ The project contains 4 folders:
   - `produce_sed.py`, to reproduce Figure 6, about the SEDs of NGC 7469 and NGC 1068 and the measured neutrino flux. It also estimates upper and lower limits for the neutrino flux of NGC 7469.
 - `data`, it contains the various data needed by the programs in `src`, the Turin and Milliquas catalogs are downloaded when launched `statistical_test.py`. In particular, it contains:
   - `IC_Alerts_Table_Energies.csv`, all the data about the GCN Circulars for the neutrino alerts from 2019 until October 2023;
+  - `IceCube_Gold_Bronze_Tracks.csv` [the IceCat-1 catalog of neutrino alerts](https://icecube.wisc.edu/news/research/2023/04/icecat-1-icecubes-first-event-catalog-of-neutrino-track-alerts/), necessary to calculate the probability distribution in case of neutrinos which have not originated from any source; 
   - `gcn_notices_gold_bronze.txt`, all the data about the GCN Notices for the neutrino alerts from 2019 until October 2023, the file consists of the source of the webpage https://gcn.gsfc.nasa.gov/amon_icecube_gold_bronze_events.html;
   - `NGC1068_SED_with_sources.txt`, the electromagnetic data for the SED of NGC 1068, with references;
   - `NGC7469_SED_with_sources.txt`, the electromagnetic data for the SED of NGC 7469, with references;
@@ -23,9 +24,18 @@ The project contains 4 folders:
 ### How to run the code
 To run the code, it is necessary to go in the `src` folder and digit `python program.py`. It is important to start the programs from the `src` folder.
 Regarding `statistical_test.py`, there are several possible inputs to produce different tests. All the possibilities are described in the following table.
-| | Reconstruction | Catalog | Weight|
-| -- | -- | -- | -- |
-| Identifier | `--reco` or `-r` | `--catalog` or `-c` | `--flux` or `-f` |
-| Possibilities | `splinempe` and `millipede` | `turin` and `milliquas` | `True` or `False`|
-| Default | `splinempe` | `turin` | `False` |
-| Description | Reconstruction for the realtime alerts | Catalog of sources for the test, a more detailed description about the catalogs is in the paper | Weight to use in the test statistic for the sources, if `True` the X-ray flux is used, if `False` the redshift is used|
+| | Reconstruction | Catalog | Weight | Alternative hypothesis | Declination jitter |
+| -- | -- | -- | -- | -- | -- |
+| Identifier | `--reco` or `-r` | `--catalog` or `-c` | `--flux` or `-f` | `--alternative_hypothesis` or `-a` | `--declination-jitter` or `-d` |
+| Possibilities | `splinempe` and `millipede` | `turin` and `milliquas` | `redshift`, `xray`, or `noweight`| `Background`, `Doublet`, `Population`, `Doublet-inj`, and `Singlet-inj` | Any `float` value or `None` |
+| Default | `splinempe` | `turin` | `redshift` | `Background` | `None` |
+| Description | Reconstruction for the realtime alerts | Catalog of sources for the test, a more detailed description about the catalogs is in the paper | Weight to use in the test statistic for the sources | Hypothesis for the generated test statistic distribution. A more detailed description is available further on in this header. | Width of the uniform distribution which will change the declination for the alerts in the scramble. |
+
+### Alternative hypotheses
+The code offers the possibility to generate the test statistic distribution under various hypotheses.
+The default is the `Background` one, i.e., the hypothesis under which no neutrino originated from any source in the catalog.
+The possible alternative hypotheses are:
+- `Doublet`, the test statistic is calculated on a doublet injected on one source of the catalog randomly selected depending on the weight;
+- `Population`, by assuming the flux in the signal distribution, neutrinos are randomly injected on the sources in the catalog following a Poissonian distribution. Most of the scrambles will have no neutrinos, some will have 1, and very rarely there will be a scramble with 2 neutrinos and in some cases even on the same source;
+- `Doublet-inj`, in each scramble, a doublet is injected on one source of the catalog randomly selected depending on the weight;
+- `Singlet-inj`, in each scramble, one neutrino is injected on one source of the catalog randomly selected depending on the weight.
