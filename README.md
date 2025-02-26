@@ -4,7 +4,7 @@ This project is aimed to reproduce the results and the plots of the paper.
 
 The project contains 4 folders:
 - `src`, it contains all the programs necessary to reproduce the results and plots of the paper, in particular:
-  - `statistical_test.py`, it reproduces the statistical tests producing the bacground distributions of the test statistic (ts) and calculating the ts value for the neutrino doublet IC220424A & IC230416A with NGC 7469. It saves the results in `data_results`;
+  - `statistical_test.py`, it reproduces the statistical tests producing the background distributions of the test statistic (ts) and calculating the ts value for the neutrino doublet IC220424A & IC230416A with NGC 7469. It saves the results in `data_results`;
   - `areas_ratio.py`, it reproduce Figure 1, about the ratio between the contour area of Millipede and SplineMPE;
   - `coincidence_plots.py`, it reprocuces Figure 2 and 3, about the reconstructed directions of IC220424A and IC230416A by the GCN Notices and GCN Circulars and the position of NGC 7469;
   - `ts_dependence_on_flux.py`, it reproduces Figure 4, about the dependence of the test statistic on the intrinsic neutrino flux (a parameter of the Goodness-of-Fit test);
