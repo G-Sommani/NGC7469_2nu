@@ -24,9 +24,9 @@ The project contains 4 folders:
 ### How to run the code
 To run the code, it is necessary to go in the `src` folder and digit `python program.py`. It is important to start the programs from the `src` folder.
 Regarding `statistical_test.py`, there are several possible inputs to produce different tests. All the possibilities are described in the following table.
-| | Reconstruction | Catalog | Weight|
-| -- | -- | -- | -- |
-| Identifier | `--reco` or `-r` | `--catalog` or `-c` | `--flux` or `-f` |
-| Possibilities | `splinempe` and `millipede` | `turin` and `milliquas` | `True` or `False`|
-| Default | `splinempe` | `turin` | `False` |
-| Description | Reconstruction for the realtime alerts | Catalog of sources for the test, a more detailed description about the catalogs is in the paper | Weight to use in the test statistic for the sources, if `True` the X-ray flux is used, if `False` the redshift is used|
+| | Reconstruction | Catalog | Weight | Alternative hypothesis | Declination jitter |
+| -- | -- | -- | -- | -- | -- |
+| Identifier | `--reco` or `-r` | `--catalog` or `-c` | `--flux` or `-f` | `--alternative_hypothesis` or `-a` | `--declination-jitter` or `-d` |
+| Possibilities | `splinempe` and `millipede` | `turin` and `milliquas` | `redshift`, `xray`, or `noweight`| `Background`, `Doublet`, `Population`, `Doublet-inj`, and `Singlet-inj` | Any `float` value or `None` |
+| Default | `splinempe` | `turin` | `redshift` | `Background` | `None` |
+| Description | Reconstruction for the realtime alerts | Catalog of sources for the test, a more detailed description about the catalogs is in the paper | Weight to use in the test statistic for the sources | Hypothesis for the generated test statistic distribution. A more detailed description is available further on in this header. |
