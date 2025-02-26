@@ -25,7 +25,12 @@ class Loader:
         self, filename: str | None, url: str | None, zipname: str | None = None
     ) -> None:
         print(f"{filename} not found, download from {url}...")
-        r = requests.get(str(url), allow_redirects=True)
+        headers = {
+            "User-Agent": "Mozilla"
+        }
+        r = requests.get(
+            str(url), headers=headers, stream=True, allow_redirects=True
+        )
         if zipname is not None:
             zip_path = self.data_path / zipname
             open(zip_path, "wb").write(r.content)
