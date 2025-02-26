@@ -30,3 +30,9 @@ Regarding `statistical_test.py`, there are several possible inputs to produce di
 | Possibilities | `splinempe` and `millipede` | `turin` and `milliquas` | `redshift`, `xray`, or `noweight`| `Background`, `Doublet`, `Population`, `Doublet-inj`, and `Singlet-inj` | Any `float` value or `None` |
 | Default | `splinempe` | `turin` | `redshift` | `Background` | `None` |
 | Description | Reconstruction for the realtime alerts | Catalog of sources for the test, a more detailed description about the catalogs is in the paper | Weight to use in the test statistic for the sources | Hypothesis for the generated test statistic distribution. A more detailed description is available further on in this header. | Width of the uniform distribution which will change the declination for the alerts in the scramble. |
+
+### Alternative hypotheses
+The code offers the possibility to generate the test statistic distribution under various hypotheses.
+The default one is the `Background` one, i.e., the hypothesis under which no neutrino originated from any source in the catalog.
+As alternative hypotheses are available:
+- 
