@@ -342,7 +342,6 @@ print(f"Plotting {cfg.SPLINEMPE} with {cfg.TURIN} and {cfg.REDSHIFT}...")
 plt.subplots(figsize=cfg.FIGSIZE_TS)
 logbins = list(np.logspace(0, np.log10(4e2), cfg.NBINS_TS))
 alpha = 0.7
-print(ts_spl_tur_z, ts_spl_mil_z_alt)
 plt.hist(
     -ts_spl_tur_z_alt - np.min(-ts_spl_tur_z_alt) + 1,
     histtype=cfg.HISTTYPE_TS_ALT,
