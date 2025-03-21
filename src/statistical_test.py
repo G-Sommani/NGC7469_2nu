@@ -599,6 +599,11 @@ def perform_test(
 
 
 def main():
+    """
+    Main function of the code.
+    This code parses the arguments given as input and calls the functions
+    to perform the statistical test.
+    """
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
