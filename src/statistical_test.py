@@ -513,6 +513,26 @@ def estimate_background(
 def perform_test(
     reco_name: str, catalog_name: str, flux: str, hypo: str, dec_jitter: float | None
 ) -> None:
+    """
+    Perform the statistical test, print out the p-value, and save the background
+    test statistic distribuion and the result with the real data.
+    args:
+        - reco_name: str. It can be splinempe or millipede (default splinempe)
+            indicates the directions and errors to use for the neutrino events.
+        - catalog_name: str. It can be turin or milliquas (default turin)
+            indicates the catalog of sources to use.
+        - flux: str. It can be redshift, xray, or noweight (default redshift)
+            it specifies how to weight the sources.
+        - hypo: str. It can be Background, Doublet, Population, Doublet-inj,
+            and Singlet-inj (default Background). It indicates how to produce
+            the mock test statistic distribution. More details in the README.
+        - dec_jitter: float. It specifies the jitter to apply to the declination
+            of the neutrino alerts. Default is 0.0, i.e., the declination remains
+            unaffected.
+
+    returns:
+        nothing
+    """
 
     loader = Loader()
     data_results_path = loader.data_results_path
