@@ -2,6 +2,7 @@
 Supplementary material related to the paper: 
 
 [Giacomo Sommani, Anna Franckowiak, Massimiliano Lincetto, and Ralf-Jürgen Dettmar, "Two 100 TeV neutrinos coincident with the Seyfert galaxy NGC 7469", The Astrophysical Journal (2025), volume 981, number 2, pages 103, DOI 10.3847/1538-4357/adb031.](https://iopscience.iop.org/article/10.3847/1538-4357/adb031)
+arXiv: [https://arxiv.org/abs/2403.03752](https://arxiv.org/abs/2403.03752)
 
 
 This project is aimed to reproduce the results and the plots of the paper.
